@@ -8,6 +8,7 @@ use App\Http\Controllers\DailyReportController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ModulePlaceholderController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\LegacyImportController;
 use App\Http\Controllers\OpenCodesController;
 use App\Http\Controllers\ReportReviewController;
 use App\Http\Controllers\SearchController;
@@ -67,6 +68,10 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::delete('/attachments/{attachment}', [AttachmentController::class, 'destroy'])->name('attachments.destroy');
 
         // ---- الاستيراد (المرحلة 3)
+        Route::get('/imports/legacy', [LegacyImportController::class, 'create'])->name('imports.legacy.create');
+        Route::post('/imports/legacy/preview', [LegacyImportController::class, 'preview'])->name('imports.legacy.preview');
+        Route::get('/imports/legacy/review', [LegacyImportController::class, 'review'])->name('imports.legacy.review');
+        Route::post('/imports/legacy', [LegacyImportController::class, 'store'])->name('imports.legacy');
         Route::post('/imports/shift', [ShiftImportController::class, 'upload'])->name('imports.shift.upload');
         Route::get('/imports/{batch}', [ShiftImportController::class, 'show'])->whereNumber('batch')->name('imports.show');
         Route::post('/imports/{batch}/mapping', [ShiftImportController::class, 'mapping'])->name('imports.mapping');

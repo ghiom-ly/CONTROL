@@ -29,9 +29,11 @@ class ReportReviewController extends Controller
         $this->authorize('review', $report);
         abort_if($report->user_id === $request->user()->id, 403, 'لا يمكنك مراجعة تقريرك.');
         $this->approvals->ensurePending($report);
-        $this->approvals->approve($report, $request->user());
+        $warnings = $this->approvals->approve($report, $request->user());
 
-        return redirect()->route('reports.show', $report)->with('success', 'تم اعتماد التقرير وأصبحت بياناته رسمية.');
+        $redirect = redirect()->route('reports.show', $report)->with('success', 'تم اعتماد التقرير وأصبحت بياناته رسمية.');
+
+        return $warnings ? $redirect->with('warning', implode("\n", $warnings)) : $redirect;
     }
 
     public function reject(Request $request, DailyReport $report): RedirectResponse

@@ -49,9 +49,11 @@ class ReportDraftService
 
             // وقت المتابعة يبقى كما سُجّل أول مرة — حتى لا يصبح تعديلٌ لاحق على تقرير قديم «آخر متابعة»
             $oldTimes = $report->followups()->pluck('followup_at', 'shipment_code');
-            $newCodeTime = $report->status === \App\Enums\ReportStatus::Draft
-                ? now()
-                : ($report->submitted_at ?? $report->shift_started_at ?? now());
+            $newCodeTime = match (true) {
+                $report->is_legacy => $report->work_date->copy()->startOfDay(),   // التقرير القديم يُؤرَّخ بيومه
+                $report->status === \App\Enums\ReportStatus::Draft => now(),
+                default => $report->submitted_at ?? $report->shift_started_at ?? now(),
+            };
 
             // أرقام ملف المنظومة ومصدر كل قيمة تبقى عبر الحفظ (المرحلة 3)
             $oldStores = $report->stores()->get()->keyBy('store_id');
@@ -164,7 +166,8 @@ class ReportDraftService
         foreach ($codes as $code => &$c) {
             $owner = $owners[$code] ?? null;
             if ($c['from'] !== 'card') {
-                $c['store_id'] = $owner ?? $c['store_id'];
+                // التقرير القديم يحتفظ بمتجره كما في النص؛ التعارض يصبح تحذيراً (سجل تاريخي)
+                $c['store_id'] = $report->is_legacy ? ($c['store_id'] ?? $owner) : ($owner ?? $c['store_id']);
                 if ($c['store_id'] === null || ! $stores->has($c['store_id'])) {
                     $errors["unanswered.{$c['from']}_store_id"] = $c['store_id'] === null
                         ? 'اختر المتجر الذي تتبع له الأكواد الملصوقة.'
@@ -174,7 +177,12 @@ class ReportDraftService
                 }
             }
             if ($owner !== null && $owner !== $c['store_id']) {
-                $errors['codes'] = 'الكود '.$code.' مسجّل لمتجر '.(Store::find($owner)?->name ?? $owner);
+                $msg = 'الكود '.$code.' مسجّل لمتجر '.(Store::find($owner)?->name ?? $owner);
+                if ($report->is_legacy) {
+                    $warnings[] = $msg.' — سيُحفظ كسجل تاريخي فقط.';
+                } else {
+                    $errors['codes'] = $msg;
+                }
 
                 continue;
             }

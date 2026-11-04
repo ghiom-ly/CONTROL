@@ -3,6 +3,7 @@
 namespace App\Services\Reports;
 
 use App\Enums\IssueStatus;
+use App\Enums\ProcessingStatus;
 use App\Enums\ReportStatus;
 use App\Models\DailyReport;
 use App\Models\Issue;
@@ -40,10 +41,14 @@ class ReportApprovalService
         ];
     }
 
-    /** @param list<ReportStatus> $allowed الحالات المسموح اعتمادها (تُفحص بعد القفل) */
-    public function approve(DailyReport $report, User $actor, ?array $previous = null, array $allowed = [ReportStatus::PendingReview]): void
+    /**
+     * @param  list<ReportStatus>  $allowed  الحالات المسموح اعتمادها (تُفحص بعد القفل)
+     * @return list<string> تحذيرات (تعارضات التقارير القديمة)
+     */
+    public function approve(DailyReport $report, User $actor, ?array $previous = null, array $allowed = [ReportStatus::PendingReview]): array
     {
-        DB::transaction(function () use ($report, $actor, $previous, $allowed) {
+        return DB::transaction(function () use ($report, $actor, $previous, $allowed) {
+            $warnings = [];
             $report = DailyReport::whereKey($report->id)->lockForUpdate()->firstOrFail();
             if (! in_array($report->status, $allowed, true)) {
                 throw ValidationException::withMessages(['status' => 'تغيّرت حالة التقرير — لم يعد قيد المراجعة.']);
@@ -51,7 +56,12 @@ class ReportApprovalService
             $previous ??= $this->affectedKeys($report);
             $followups = $report->followups()->get();
 
-            $this->guardOwnership($report, $followups);
+            $historical = $report->is_legacy;
+            if ($historical) {
+                $warnings = $this->legacyConflicts($followups);
+            } else {
+                $this->guardOwnership($report, $followups);
+            }
 
             // 3) ربط/إنشاء الشحنات وجعل المتابعات رسمية
             $shipmentIds = [];
@@ -61,6 +71,8 @@ class ReportApprovalService
                     $shipment = Shipment::create([
                         'code' => $f->shipment_code, 'store_id' => $f->store_id, 'registered_at' => $report->work_date,
                         'first_report_id' => $report->id, 'created_by' => $actor->id,
+                        // كود ظهر في تقرير قديم فقط: سجل تاريخي لا يظهر كمفتوح
+                        'processing_status' => $historical ? ProcessingStatus::Closed : ProcessingStatus::Open,
                     ]);
                 } elseif ($shipment->trashed()) {
                     // شحنة محذوفة تُستعاد كأنها جديدة من هذا التقرير
@@ -74,6 +86,7 @@ class ReportApprovalService
                     'courier_status' => $implied['courier'],
                     'customer_status' => $implied['customer'],
                     'is_official' => true,
+                    'is_historical' => $historical,
                 ])->save();
                 $shipmentIds[] = $shipment->id;
             }
@@ -115,6 +128,8 @@ class ReportApprovalService
             }
 
             $report->loadMissing('user')->user->notify(new ReportReviewedNotification($report));
+
+            return $warnings;
         });
     }
 
@@ -136,6 +151,21 @@ class ReportApprovalService
         if ($report->status !== ReportStatus::PendingReview) {
             throw ValidationException::withMessages(['status' => 'التقرير ليس قيد المراجعة.']);
         }
+    }
+
+    /** للتقارير القديمة: التعارض لا يمنع، يُذكر فقط */
+    private function legacyConflicts($followups): array
+    {
+        $existing = Shipment::whereIn('code', $followups->pluck('shipment_code'))->get()->keyBy('code');
+        $out = [];
+        foreach ($followups as $f) {
+            $s = $existing[$f->shipment_code] ?? null;
+            if ($s && $s->store_id !== $f->store_id) {
+                $out[] = "الكود {$f->shipment_code} مسجّل لمتجر ".(Store::find($s->store_id)?->name ?? $s->store_id).' — حُفظ كسجل تاريخي دون تغيير حالته.';
+            }
+        }
+
+        return $out;
     }
 
     /** الكود المعتمد لمتجر آخر يمنع الاعتماد (إلا إن كان هذا التقرير وحده من أنشأه) */

@@ -15,7 +15,8 @@ class ShipmentSummaryRefresher
     public function refresh(Shipment $shipment, ?int $approvingReportId = null): void
     {
         $official = ShipmentFollowup::official()->where('shipment_id', $shipment->id);
-        $last = (clone $official)->orderByDesc('followup_at')->orderByDesc('id')->first();
+        // المتابعات التاريخية (تقارير قديمة) تُعدّ ولا تحدد «آخر حالة» أبداً
+        $last = (clone $official)->where('is_historical', false)->orderByDesc('followup_at')->orderByDesc('id')->first();
 
         $data = [
             'followups_count' => (clone $official)->count(),

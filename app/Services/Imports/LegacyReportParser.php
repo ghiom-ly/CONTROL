@@ -40,7 +40,7 @@ class LegacyReportParser
     {
         $out = ['date' => null, 'employee_name' => null, 'stores' => [], 'attempt_times' => [],
             'customer_codes' => [], 'courier_codes' => [], 'notes' => null, 'errors' => [],
-            'hash' => hash('sha256', trim(implode("\n", $rawLines)))];
+            'hash' => hash('sha256', trim(implode("\n", $rawLines))), 'text' => trim(implode("\n", $rawLines))];
         $notes = [];
         $section = 0;
 
