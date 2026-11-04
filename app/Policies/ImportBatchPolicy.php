@@ -10,7 +10,7 @@ class ImportBatchPolicy
 {
     public function viewAny(User $actor): bool
     {
-        return $actor->hasPermission('imports.create') || $actor->hasPermission('imports.view_all');
+        return $actor->hasPermission('imports.view_all');   // مركز الاستيراد للمسؤول؛ الموظف يرفع ملف الشفت من صفحة التقرير
     }
 
     public function view(User $actor, ImportBatch $batch): bool

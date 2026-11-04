@@ -104,11 +104,20 @@ class OpenCodesTest extends TestCase
         $this->actingAs($this->emp)->post('/open-codes/mark', ['shipment_ids' => [Shipment::value('id')], 'action' => 'resolved'])->assertForbidden();
     }
 
-    public function test_employee_sees_only_own_codes(): void
+    public function test_employee_cannot_open_codes_screen(): void
     {
         $this->approved(['OC-MINE1-X' => 'customer_no_answer']);
+        $this->actingAs($this->emp)->get('/open-codes?tab=customer')->assertForbidden();
+    }
+
+    public function test_role_without_view_all_sees_only_own_codes(): void
+    {
+        // دور مخصص يملك عرض الشحنات دون عرض كل التقارير
+        $this->emp->role->permissions()->attach(\App\Models\Permission::where('name', 'shipments.view')->value('id'));
+        $this->emp->flushPermissionCache();
+        $this->approved(['OC-MINE1-X' => 'customer_no_answer']);
         $this->approved(['OC-THEIRS1-X' => 'customer_no_answer'], $this->makeUser());
-        $this->actingAs($this->emp)->get('/open-codes?tab=customer')->assertOk()->assertSee('OC-MINE1-X')->assertDontSee('OC-THEIRS1-X');
+        $this->actingAs($this->emp->fresh())->get('/open-codes?tab=customer')->assertOk()->assertSee('OC-MINE1-X')->assertDontSee('OC-THEIRS1-X');
     }
 
     public function test_filters_by_store(): void

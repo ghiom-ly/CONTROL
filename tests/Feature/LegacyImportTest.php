@@ -48,10 +48,10 @@ class LegacyImportTest extends TestCase
 
     public function test_paste_preview_and_create_pending_report(): void
     {
-        $this->actingAs($this->emp)->post('/imports/legacy/preview', ['text' => $this->text()]);
-        $this->actingAs($this->emp)->get('/imports/legacy/review')->assertOk()->assertSee('2026-10-20')->assertSee('متجر الأمل');
+        $this->actingAs($this->admin)->post('/imports/legacy/preview', ['text' => $this->text()]);
+        $this->actingAs($this->admin)->get('/imports/legacy/review')->assertOk()->assertSee('2026-10-20')->assertSee('متجر الأمل');
 
-        $this->actingAs($this->emp)->post('/imports/legacy', ['index' => 0, 'user_id' => $this->emp->id])->assertSessionHasNoErrors();
+        $this->actingAs($this->admin)->post('/imports/legacy', ['index' => 0, 'user_id' => $this->emp->id])->assertSessionHasNoErrors();
 
         $r = DailyReport::sole();
         $this->assertTrue($r->is_legacy);
@@ -72,10 +72,10 @@ class LegacyImportTest extends TestCase
         Storage::disk('private')->assertExists($b->stored_path);
     }
 
-    public function test_employee_cannot_import_for_others(): void
+    public function test_employee_cannot_import_legacy_reports(): void
     {
-        $other = $this->makeUser();
-        $this->import($this->emp, $this->text(), ['user_id' => $other->id])->assertForbidden();
+        $this->actingAs($this->emp)->get('/imports/legacy')->assertForbidden();
+        $this->actingAs($this->emp)->post('/imports/legacy/preview', ['text' => $this->text()])->assertForbidden();
         $this->assertSame(0, DailyReport::count());
     }
 
@@ -88,19 +88,19 @@ class LegacyImportTest extends TestCase
     public function test_duplicate_date_warns(): void
     {
         DailyReport::factory()->approved()->for($this->emp)->create(['work_date' => '2026-10-20']);
-        $this->actingAs($this->emp)->post('/imports/legacy/preview', ['text' => $this->text()]);
-        $this->actingAs($this->emp)->get('/imports/legacy/review')->assertSee('يوجد تقرير لنفس الموظف في هذا التاريخ');
+        $this->actingAs($this->admin)->post('/imports/legacy/preview', ['text' => $this->text()]);
+        $this->actingAs($this->admin)->get('/imports/legacy/review')->assertSee('يوجد تقرير لنفس الموظف في هذا التاريخ');
     }
 
     public function test_missing_date_cannot_be_created(): void
     {
-        $this->import($this->emp, str_replace('2026-10-20', '??', $this->text()))->assertSessionHasErrors('date');
+        $this->import($this->admin, str_replace('2026-10-20', '??', $this->text()))->assertSessionHasErrors('date');
         $this->assertSame(0, DailyReport::count());
     }
 
     public function test_unmatched_store_choice_saved_as_alias(): void
     {
-        $this->import($this->emp, $this->text(store: 'الأمل - الفرع'), ['store_choices' => ['الأمل - الفرع' => $this->amal->id]])
+        $this->import($this->admin, $this->text(store: 'الأمل - الفرع'), ['store_choices' => ['الأمل - الفرع' => $this->amal->id]])
             ->assertSessionHasNoErrors();
         $this->assertSame($this->amal->id, StoreAlias::sole()->store_id);
         $this->assertSame($this->amal->id, ReportStore::sole()->store_id);
@@ -108,7 +108,7 @@ class LegacyImportTest extends TestCase
 
     public function test_legacy_approval_is_historical(): void
     {
-        $this->import($this->emp, $this->text());
+        $this->import($this->admin, $this->text());
         $r = DailyReport::sole();
         app(ReportApprovalService::class)->approve($r, $this->admin);
 
@@ -140,7 +140,7 @@ class LegacyImportTest extends TestCase
         $other = Store::factory()->create();
         $this->normalApproved($other, 'LG-C1', 'courier_no_answer');
 
-        $this->import($this->emp, $this->text(codes: 'LG-C1'))->assertSessionHasNoErrors();
+        $this->import($this->admin, $this->text(codes: 'LG-C1'))->assertSessionHasNoErrors();
         $r = DailyReport::where('is_legacy', true)->sole();
         $this->actingAs($this->admin)->post("/reports/{$r->id}/approve")->assertSessionHasNoErrors()->assertSessionHas('warning');
 
@@ -155,7 +155,7 @@ class LegacyImportTest extends TestCase
     public function test_legacy_followup_does_not_become_latest(): void
     {
         $this->normalApproved($this->amal, 'LG-L1', 'courier_promised_delivery');
-        $this->import($this->emp, $this->text(codes: 'LG-L1'));
+        $this->import($this->admin, $this->text(codes: 'LG-L1'));
         app(ReportApprovalService::class)->approve(DailyReport::where('is_legacy', true)->sole(), $this->admin);
 
         $this->assertSame('courier_promised_delivery', Shipment::where('code', 'LG-L1')->sole()->last_result->value);

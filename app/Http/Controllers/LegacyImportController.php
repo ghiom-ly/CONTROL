@@ -20,14 +20,14 @@ class LegacyImportController extends Controller
 
     public function create(): View
     {
-        $this->authorize('imports.create');
+        $this->authorize('imports.view_all');
 
         return view('imports.legacy-paste');
     }
 
     public function preview(Request $request, LegacyReportParser $parser): RedirectResponse
     {
-        $this->authorize('imports.create');
+        $this->authorize('imports.view_all');
         $data = $request->validate(['text' => ['required', 'string', 'max:200000']], [], ['text' => 'نص التقارير']);
 
         $items = $parser->parse($data['text']);
@@ -41,7 +41,7 @@ class LegacyImportController extends Controller
 
     public function review(Request $request): View|RedirectResponse
     {
-        $this->authorize('imports.create');
+        $this->authorize('imports.view_all');
         $items = $request->session()->get(self::SESSION, []);
         if ($items === []) {
             return redirect()->route('imports.legacy.create');
@@ -65,7 +65,7 @@ class LegacyImportController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $this->authorize('imports.create');
+        $this->authorize('imports.view_all');
         $data = $request->validate([
             'index' => ['required', 'integer', 'min:0'],
             'user_id' => ['required', 'integer', 'exists:users,id'],

@@ -155,10 +155,11 @@ class Phase3ReviewFixesTest extends TestCase
     public function test_legacy_store_choice_must_be_existing_active_store(): void
     {
         $text = "ريبورت تاريخ: 2026-10-20\n1) ملخص:\n- متجر غريب: 3";
-        $this->actingAs($this->emp)->post('/imports/legacy/preview', ['text' => $text]);
+        $admin = $this->makeUser(Role::ADMIN);
+        $this->actingAs($admin)->post('/imports/legacy/preview', ['text' => $text]);
         $archived = Store::factory()->create(['status' => 'archived']);
         foreach ([999999, $archived->id] as $bad) {
-            $this->actingAs($this->emp)->post('/imports/legacy', ['index' => 0, 'user_id' => $this->emp->id, 'store_choices' => ['متجر غريب' => $bad]])
+            $this->actingAs($admin)->post('/imports/legacy', ['index' => 0, 'user_id' => $this->emp->id, 'store_choices' => ['متجر غريب' => $bad]])
                 ->assertSessionHasErrors('store_choices.متجر غريب');
         }
         $this->assertSame(0, DailyReport::count());

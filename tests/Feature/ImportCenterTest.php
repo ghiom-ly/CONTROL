@@ -37,11 +37,12 @@ class ImportCenterTest extends TestCase
         return $b->fresh();
     }
 
-    public function test_employee_sees_only_own_batches(): void
+    public function test_import_center_is_for_managers_only(): void
     {
         $this->applied($this->emp, 'mine-file.xlsx');
         $this->applied($this->makeUser(), 'theirs-file.xlsx');
-        $this->actingAs($this->emp)->get('/imports')->assertOk()->assertSee('mine-file.xlsx')->assertDontSee('theirs-file.xlsx');
+        $this->actingAs($this->emp)->get('/imports')->assertForbidden();
+        $this->actingAs($this->makeUser(Role::ADMIN))->get('/imports')->assertOk()->assertSee('mine-file.xlsx')->assertSee('theirs-file.xlsx');
     }
 
     public function test_admin_filters_by_type(): void
@@ -88,18 +89,20 @@ class ImportCenterTest extends TestCase
         $store = Store::first();
         $alias = StoreAlias::create(['store_id' => $store->id, 'alias' => 'الأمل القديم', 'normalized_alias' => 'الامل القديم', 'created_by' => $this->emp->id]);
 
-        $this->actingAs($this->emp)->get("/stores/{$store->id}")->assertSee('الأمل القديم');
-        $this->actingAs($this->emp)->delete("/store-aliases/{$alias->id}")->assertForbidden();
+        $viewer = $this->makeUser(Role::VIEWER);
+        $this->actingAs($viewer)->get("/stores/{$store->id}")->assertSee('الأمل القديم');
+        $this->actingAs($viewer)->delete("/store-aliases/{$alias->id}")->assertForbidden();
         $this->actingAs($this->makeUser(Role::ADMIN))->delete("/store-aliases/{$alias->id}")->assertRedirect();
         $this->assertSame(0, StoreAlias::count());
     }
 
     public function test_sidebar_imports_link_works_for_roles(): void
     {
-        foreach ([Role::SUPER_ADMIN, Role::ADMIN, Role::EMPLOYEE] as $role) {
+        foreach ([Role::SUPER_ADMIN, Role::ADMIN] as $role) {
             $this->actingAs($this->makeUser($role))->get('/imports')->assertOk();
         }
         $this->actingAs($this->makeUser(Role::VIEWER))->get('/imports')->assertForbidden();
-        $this->actingAs($this->makeUser(Role::EMPLOYEE))->get('/')->assertSee(route('imports.index'));
+        $this->actingAs($this->makeUser(Role::EMPLOYEE))->get('/imports')->assertForbidden();
+        $this->actingAs($this->makeUser(Role::ADMIN))->get('/')->assertSee(route('imports.index'));
     }
 }

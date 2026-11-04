@@ -52,7 +52,7 @@ class StoreManagementTest extends TestCase
         $this->post('/stores', $this->payload())->assertForbidden();
         $this->put("/stores/{$store->id}", $this->payload())->assertForbidden();
         $this->patch("/stores/{$store->id}/archive")->assertForbidden();
-        $this->get('/stores')->assertOk();
+        $this->get('/stores')->assertForbidden();   // الموظف لا يرى المتاجر (يدخل تقريره فقط)
     }
 
     public function test_archive_keeps_store_with_reports(): void

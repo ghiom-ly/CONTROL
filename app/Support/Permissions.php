@@ -64,10 +64,9 @@ class Permissions
                 'issues.view', 'issues.create', 'issues.manage',
                 'analytics.view', 'exports.generate', 'audit.view',
             ],
+            // الموظف يدخل تقريره ويرسله فقط، ويرى إحصائيات تقاريره (قرار صاحب المشروع 2026-11-04)
             Role::EMPLOYEE => [
-                'dashboard.view', 'stores.view', 'reports.create', 'imports.create',
-                'shipments.view', 'shipments.followup', 'contacts.view', 'contacts.create',
-                'issues.view', 'issues.create',
+                'dashboard.view', 'reports.create', 'imports.create', 'issues.create',
             ],
             Role::VIEWER => [
                 'dashboard.view', 'stores.view', 'reports.view_all', 'shipments.view',
