@@ -120,6 +120,11 @@ class ReportApprovalService
                 'rejection_reason' => null,
             ])->save();
 
+            // عمليات الاستيراد المطبّقة على التقرير تصبح معتمدة معه (الملغاة تبقى ملغاة)
+            \App\Models\ImportBatch::where('daily_report_id', $report->id)
+                ->where('status', \App\Enums\ImportStatus::NeedsReview)
+                ->update(['status' => \App\Enums\ImportStatus::Approved, 'approved_by' => $actor->id, 'approved_at' => now()]);
+
             // 7) المقاييس للمفاتيح القديمة والجديدة
             $keys = collect($previous['metric_keys'])->merge($this->affectedKeys($report)['metric_keys'])
                 ->unique(fn ($k) => $k[0].'|'.$k[1]);

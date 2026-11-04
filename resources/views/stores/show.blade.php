@@ -21,6 +21,24 @@
         <div><p class="label">ملاحظات</p><p>{{ $store->notes ?? '—' }}</p></div>
     </div>
 
+    @php $aliases = $store->aliases()->with('creator:id,name')->latest()->get(); @endphp
+    @if($aliases->isNotEmpty())
+        <div class="card p-5 mt-5 text-sm">
+            <h3 class="font-bold text-navy-900 mb-2">أسماء بديلة (من ملفات الاستيراد)</h3>
+            @foreach($aliases as $al)
+                <div class="flex items-center gap-3 border-b border-slate-100 py-1">
+                    <span class="font-bold">{{ $al->alias }}</span>
+                    <span class="text-xs text-slate-400">{{ $al->creator?->name }} — {{ $al->created_at?->format('Y/m/d') }}</span>
+                    @can('stores.manage')
+                        <form method="POST" action="{{ route('stores.aliases.destroy', $al) }}" class="ms-auto">@csrf @method('DELETE')
+                            <button class="btn btn-ghost btn-sm text-red-600"><x-icon name="trash" class="size-4"/></button>
+                        </form>
+                    @endcan
+                </div>
+            @endforeach
+        </div>
+    @endif
+
     @isset($insights)
         @include('stores._insights')
     @endisset

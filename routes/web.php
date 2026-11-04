@@ -8,7 +8,9 @@ use App\Http\Controllers\DailyReportController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ModulePlaceholderController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ImportController;
 use App\Http\Controllers\LegacyImportController;
+use App\Http\Controllers\StoreAliasController;
 use App\Http\Controllers\OpenCodesController;
 use App\Http\Controllers\ReportReviewController;
 use App\Http\Controllers\SearchController;
@@ -68,6 +70,9 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::delete('/attachments/{attachment}', [AttachmentController::class, 'destroy'])->name('attachments.destroy');
 
         // ---- الاستيراد (المرحلة 3)
+        Route::get('/imports', [ImportController::class, 'index'])->name('imports.index');
+        Route::get('/imports/{batch}/download', [ImportController::class, 'download'])->whereNumber('batch')->name('imports.download');
+        Route::delete('/store-aliases/{alias}', [StoreAliasController::class, 'destroy'])->name('stores.aliases.destroy');
         Route::get('/imports/legacy', [LegacyImportController::class, 'create'])->name('imports.legacy.create');
         Route::post('/imports/legacy/preview', [LegacyImportController::class, 'preview'])->name('imports.legacy.preview');
         Route::get('/imports/legacy/review', [LegacyImportController::class, 'review'])->name('imports.legacy.review');

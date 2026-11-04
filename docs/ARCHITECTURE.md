@@ -24,6 +24,10 @@ app/
 │   └── Reports/     ShiftService, ReportDraftService, ReportSubmissionService, ReportRevisionService,
 │                    ReportApprovalService, StoreMetricsBuilder, ShipmentSummaryRefresher, ShipmentCodeGuard
 ├── Queries/         OpenCodesQuery
+├── Services/Imports/ SpreadsheetReader, HeaderSignature, ShiftFileCalculator, ShiftFileImporter,
+│                    StoreMatcher, LegacyReportParser, LegacyReportImporter   (المرحلة 3)
+│   جداول جديدة: store_aliases, import_mappings؛ أعمدة: daily_reports.is_legacy/file_values/value_sources،
+│   report_stores.file_*، shipment_followups.is_historical، import_batches.daily_report_id
 └── Support/         Permissions (سجل الصلاحيات المركزي), Period (الفترات الزمنية), ArabicNormalizer
 config/nours.php     إعدادات خاصة بالنظام (الرفع، OCR، الترقيم)
 database/
@@ -91,7 +95,7 @@ audit_logs, notifications, alert_rules, system_settings
 |---|---|---|
 | 1 | التأسيس، قاعدة البيانات الكاملة، الدخول، الصلاحيات، التصميم العام، الموظفون، الإعدادات، سجل العمليات، النسخ الاحتياطي | ✅ مكتملة — 39 اختبار ناجح |
 | 2 | CRUD المتاجر + صفحة التفاصيل والمقارنات، نموذج التقرير اليومي (متاجر غير محدودة + أكواد لكل متجر + أوقات الاتصال + مرفقات)، المراجعة والاعتماد/الرفض، إعادة التقديم وسجل النسخ، بناء store_daily_metrics عند الاعتماد داخل Transaction، شاشة الأكواد المفتوحة، نسخ التقرير كنص واتساب | ✅ مكتملة — 131 اختبار ناجح (التصميم: `docs/superpowers/specs/2026-11-04-phase2-stores-daily-report-design.md`) |
-| 3 | مركز الاستيراد: رفع XLSX/XLS/PDF، Queue للملفات الكبيرة، استخراج الجداول، OCR للمصور، مطابقة الأعمدة وأسماء المتاجر، كشف الأخطاء والتكرار (داخل الملف ومع قاعدة البيانات)، تصحيح الصفوف، اعتماد ذري، تنزيل Excel بالصفوف المرفوضة | |
+| 3 | مركز الاستيراد: ملف منظومة الشحن (XLSX/XLS/CSV) عند بداية الشفت ونهايته يملأ التقرير، مطابقة أعمدة محفوظة بتوقيع العناوين، مطابقة المتاجر وأسماؤها البديلة، تتبّع مصدر كل قيمة (ملف/يدوي)، الفروق مع الملف للمسؤول، استيراد تقارير واتساب القديمة كسجل تاريخي. (PDF/OCR مؤجَّل — لم يُطلب) | ✅ مكتملة — 206 اختبار ناجح (التصميم: `docs/superpowers/specs/2026-11-04-phase3-imports-design.md`) |
 | 4 | البحث بالكود وسجل المتابعات المتعددة، سجل الاتصالات وإحصائياته، إدارة المشكلات مع سجل التحديثات والإسناد | |
 | 5 | Analytics Center، الرسوم البيانية الستة في لوحة التحكم، مقارنة فترتين (سابق/حالي/فرق/نسبة)، تشغيل قواعد التنبيه المجدولة | |
 | 6 | مركز التقارير الإدارية (9 تقارير) PDF عربي عبر mPDF + Excel + طباعة بهوية الشركة، تحسين الأداء والكاش، اختبارات القبول النهائية الـ18 | |

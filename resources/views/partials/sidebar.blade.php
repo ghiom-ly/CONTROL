@@ -8,7 +8,7 @@
         ['مراجعة التقارير', 'check-circle', 'reports.review.queue', [], 'reports.review', 'reports.review.*', null],
         ['الأكواد المفتوحة', 'alert', 'open-codes.index', [], 'shipments.view', 'open-codes.*', null],
         ['إدخال تقرير جديد', 'plus-doc', 'reports.create', [], 'reports.create', 'reports.create', null],
-        ['استيراد الملفات', 'upload', null, ['imports'], 'imports.create|imports.view_all', null, 3],
+        ['استيراد الملفات', 'upload', 'imports.index', [], 'imports.create|imports.view_all', 'imports.*', null],
         ['متابعة الشحنات', 'truck', null, ['shipments'], 'shipments.view', null, 4],
         ['سجل الاتصالات', 'phone', null, ['contacts'], 'contacts.view', null, 4],
         ['إدارة المشكلات', 'alert', null, ['issues'], 'issues.view', null, 4],
