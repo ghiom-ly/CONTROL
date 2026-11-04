@@ -23,13 +23,14 @@ class DailyReport extends Model
         'approved_at', 'rejection_reason', 'created_by', 'updated_by',
         'shift_started_at', 'start_total_orders', 'start_delivery_rate', 'end_delivery_rate',
         'attempt_times', 'attempts_over_limit_reason', 'issue_requests',
-        'is_legacy', 'file_values', 'value_sources',
+        'is_legacy', 'file_values', 'value_sources', 'first_submitted_at',
     ];
 
     protected $casts = [
         'status' => ReportStatus::class,
         'work_date' => 'date',
         'submitted_at' => 'datetime',
+        'first_submitted_at' => 'datetime',
         'reviewed_at' => 'datetime',
         'approved_at' => 'datetime',
         'shift_started_at' => 'datetime',

@@ -18,6 +18,7 @@ class Permissions
 
             'users.view' => ['عرض الموظفين وأدائهم', 'الموظفون'],
             'users.manage' => ['إدارة الموظفين (إضافة/تعديل/إيقاف)', 'الموظفون'],
+            'attendance.manage' => ['إدارة الحضور والإجازات', 'الموظفون'],
 
             'stores.view' => ['عرض المتاجر', 'المتاجر'],
             'stores.manage' => ['إدارة المتاجر', 'المتاجر'],
@@ -57,7 +58,7 @@ class Permissions
         return [
             Role::SUPER_ADMIN => $all,
             Role::ADMIN => [
-                'dashboard.view', 'users.view', 'stores.view', 'stores.manage',
+                'dashboard.view', 'users.view', 'attendance.manage', 'stores.view', 'stores.manage',
                 'reports.create', 'reports.view_all', 'reports.review',
                 'imports.create', 'imports.view_all', 'imports.approve',
                 'shipments.view', 'shipments.followup', 'contacts.view', 'contacts.create',

@@ -40,6 +40,8 @@ class ReportSubmissionService
                 'value_sources' => $sources,
                 'end_delivery_rate' => $endRate,
                 'submitted_at' => now(),
+                // الانصراف = أول إرسال؛ لا يتغير بإعادة التقديم بعد الإرجاع
+                'first_submitted_at' => $report->first_submitted_at ?? now(),
                 'status' => ReportStatus::PendingReview,
                 'total_shipments' => $known->isEmpty() ? null : (int) $known->sum(),
                 'contact_attempts_count' => count($report->attempt_times ?? []),

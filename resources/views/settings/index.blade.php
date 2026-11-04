@@ -1,7 +1,7 @@
 <x-layouts.app title="الإعدادات">
     <x-page-header title="الإعدادات" subtitle="إعدادات النظام وقواعد العمل"/>
     @include('settings._tabs')
-    @php $groupLabels = ['general' => 'بيانات الشركة', 'reports' => 'التقارير', 'stores' => 'المتاجر', 'issues' => 'المشكلات', 'imports' => 'الاستيراد']; @endphp
+    @php $groupLabels = ['general' => 'بيانات الشركة', 'reports' => 'التقارير', 'stores' => 'المتاجر', 'issues' => 'المشكلات', 'imports' => 'الاستيراد', 'attendance' => 'الحضور والانصراف']; @endphp
 
     <form method="POST" action="{{ route('settings.update') }}" class="space-y-6">
         @csrf @method('PUT')
@@ -22,7 +22,7 @@
                             @else
                                 <label class="label">{{ $s->label }}</label>
                                 <input name="{{ $name }}" value="{{ $val }}"
-                                       type="{{ $s->type === 'integer' ? 'number' : ($s->type === 'time' ? 'time' : 'text') }}"
+                                       type="{{ $s->type === 'integer' ? 'number' : ($s->type === 'time' ? 'time' : ($s->type === 'date' ? 'date' : 'text')) }}"
                                        class="input @error("settings.{$s->key}") input-error @enderror">
                                 @if($s->description)<p class="hint">{{ $s->description }}</p>@endif
                                 @error("settings.{$s->key}")<p class="field-error">{{ $message }}</p>@enderror

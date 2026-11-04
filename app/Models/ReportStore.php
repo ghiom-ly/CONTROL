@@ -12,12 +12,13 @@ class ReportStore extends Model
     use HasFactory;
 
     protected $fillable = [
-        'daily_report_id', 'store_id', 'shipments_count', 'contact_attempts', 'contact_times', 'notes', 'is_outside_assignment',
+        'daily_report_id', 'store_id', 'start_orders', 'start_rate', 'start_source', 'shipments_count', 'contact_attempts', 'contact_times', 'notes', 'is_outside_assignment',
         'shipments_count_source', 'file_orders_count', 'file_delivered_count', 'end_file_orders_count', 'end_file_delivered_count',
     ];
 
     protected $casts = [
         'contact_times' => 'array', 'is_outside_assignment' => 'boolean', 'shipments_count' => 'integer',
+        'start_orders' => 'integer', 'start_rate' => 'decimal:2',
         'file_orders_count' => 'integer', 'file_delivered_count' => 'integer',
         'end_file_orders_count' => 'integer', 'end_file_delivered_count' => 'integer',
     ];
