@@ -7,10 +7,13 @@ use App\Enums\IssueType;
 use App\Enums\StoreStatus;
 use App\Http\Requests\Reports\SaveReportRequest;
 use App\Http\Requests\Reports\StartShiftRequest;
+use App\Http\Requests\Reports\SubmitReportRequest;
 use App\Models\DailyReport;
 use App\Models\Store;
 use App\Services\Reports\ReportDraftService;
+use App\Services\Reports\ReportSubmissionService;
 use App\Services\Reports\ShiftService;
+use App\Support\ReportWhatsappFormatter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -62,6 +65,27 @@ class DailyReportController extends Controller
         $result = $drafts->save($report, $request->validated(), $request->user());
 
         $redirect = redirect()->route('reports.edit', $report)->with('success', 'تم حفظ التقرير.');
+
+        return $result['warnings'] ? $redirect->with('warning', implode("\n", $result['warnings'])) : $redirect;
+    }
+
+    public function show(DailyReport $report): View
+    {
+        $this->authorize('view', $report);
+        $report->load(['user:id,name', 'stores.store:id,name,code', 'followups.store:id,name', 'revisions.changer:id,name', 'approver:id,name', 'reviewer:id,name']);
+
+        return view('reports.show', [
+            'report' => $report,
+            'flags' => $report->warningFlags(),
+            'whatsapp' => ReportWhatsappFormatter::format($report),
+        ]);
+    }
+
+    public function submit(SubmitReportRequest $request, DailyReport $report, ReportSubmissionService $submissions): RedirectResponse
+    {
+        $result = $submissions->submit($report, (float) $request->validated('end_delivery_rate'), $request->user());
+
+        $redirect = redirect()->route('reports.show', $report)->with('success', 'تم إرسال التقرير للمراجعة. انتهى الشفت.');
 
         return $result['warnings'] ? $redirect->with('warning', implode("\n", $result['warnings'])) : $redirect;
     }

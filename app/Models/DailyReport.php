@@ -116,6 +116,34 @@ class DailyReport extends Model
         return $this->morphMany(Attachment::class, 'attachable');
     }
 
+    /**
+     * تنبيهات للمسؤول: over_attempts, outside_assignment, courier_without_screens
+     *
+     * @return list<string>
+     */
+    public function warningFlags(): array
+    {
+        $flags = [];
+        if (count($this->attempt_times ?? []) > \App\Services\Reports\ReportDraftService::maxAttempts()) {
+            $flags[] = 'over_attempts';
+        }
+        if ($this->stores()->where('is_outside_assignment', true)->exists()) {
+            $flags[] = 'outside_assignment';
+        }
+        if ($this->followups()->where('result', \App\Enums\FollowupResult::CourierNoAnswer)->exists()
+            && ! $this->screens('courier_screens')->exists()) {
+            $flags[] = 'courier_without_screens';
+        }
+
+        return $flags;
+    }
+
+    public const WARNING_LABELS = [
+        'over_attempts' => 'تجاوز حد المحاولات',
+        'outside_assignment' => 'متاجر خارج الإسناد',
+        'courier_without_screens' => 'قائمة المندوب بدون سكرينات',
+    ];
+
     public function screens(string $category): MorphMany
     {
         return $this->attachments()->where('category', $category);
