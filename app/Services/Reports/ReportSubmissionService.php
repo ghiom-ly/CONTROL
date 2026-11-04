@@ -32,7 +32,12 @@ class ReportSubmissionService
 
             $known = $report->stores->pluck('shipments_count')->filter(fn ($c) => $c !== null);
 
+            $fileEnd = $report->file_values['end_rate'] ?? null;
+            $sources = $report->value_sources ?? [];
+            $sources['end_delivery_rate'] = ($fileEnd !== null && round((float) $fileEnd, 2) === round($endRate, 2)) ? 'file' : 'manual';
+
             $report->fill([
+                'value_sources' => $sources,
                 'end_delivery_rate' => $endRate,
                 'submitted_at' => now(),
                 'status' => ReportStatus::PendingReview,

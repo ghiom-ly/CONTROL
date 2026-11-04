@@ -26,7 +26,7 @@
         <section class="card p-5">
             <h2 class="card-title mb-3">⓪ بداية الشفت</h2>
             <div class="grid gap-3 sm:grid-cols-3 text-sm">
-                <div><p class="label">إجمالي الطلبيات المكلّف بها</p><p class="font-bold tabular-nums">{{ $report->start_total_orders ?? 'غير متوفر' }}</p></div>
+                <div><p class="label">إجمالي الطلبيات المكلّف بها</p><p class="font-bold tabular-nums">{{ $report->start_total_orders ?? 'غير متوفر' }} @if(($report->value_sources['start_total_orders'] ?? null) === 'file')<span class="badge badge-blue">من الملف</span>@endif</p></div>
                 <div><p class="label">نسبة التسليم عند البداية</p><p class="font-bold tabular-nums">{{ $report->start_delivery_rate !== null ? $report->start_delivery_rate.'%' : 'غير متوفر' }}</p></div>
                 <div><p class="label">بدأ الشفت</p><p class="font-bold">{{ $report->shift_started_at?->format('Y/m/d H:i') ?? '—' }}</p></div>
             </div>

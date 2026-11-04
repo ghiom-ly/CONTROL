@@ -14,6 +14,23 @@
         </x-slot:actions>
     </x-page-header>
 
+    @php $diffs = $report->fileDiscrepancies(); @endphp
+    @if($diffs)
+        <section class="card mb-5 border-amber-200">
+            <h2 class="card-title px-5 pt-4">الفروق مع ملف المنظومة</h2>
+            <div class="table-wrap">
+                <table class="table">
+                    <thead><tr><th>البند</th><th>في التقرير</th><th>في الملف</th></tr></thead>
+                    <tbody>
+                    @foreach($diffs as $d)
+                        <tr><td class="font-bold">{{ $d['label'] }}</td><td class="tabular-nums">{{ $d['report'] ?? 'غير متوفر' }}</td><td class="tabular-nums">{{ $d['file'] ?? 'غير متوفر' }}</td></tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    @endif
+
     @if($flags)
         <div class="mb-5 flex flex-wrap gap-2">
             @foreach($flags as $f)<span class="badge badge-yellow">⚠ {{ \App\Models\DailyReport::WARNING_LABELS[$f] }}</span>@endforeach

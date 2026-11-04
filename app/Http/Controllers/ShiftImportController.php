@@ -51,6 +51,14 @@ class ShiftImportController extends Controller
         return redirect()->route('imports.show', $batch);
     }
 
+    public function apply(Request $request, ImportBatch $batch): RedirectResponse
+    {
+        $this->authorize('update', $batch);
+        $report = $this->importer->apply($batch, $request->user(), $request->boolean('replace_end_rate'));
+
+        return redirect()->route('reports.edit', $report)->with('success', 'طُبّق ملف المنظومة على التقرير.');
+    }
+
     public function cancel(Request $request, ImportBatch $batch): RedirectResponse
     {
         $this->authorize('update', $batch);

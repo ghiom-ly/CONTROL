@@ -138,14 +138,47 @@ class DailyReport extends Model
             && ! $this->screens('courier_screens')->exists()) {
             $flags[] = 'courier_without_screens';
         }
+        if ($this->fileDiscrepancies() !== []) {
+            $flags[] = 'file_mismatch';
+        }
 
         return $flags;
+    }
+
+    /**
+     * الفروق بين أرقام التقرير وأرقام ملف المنظومة (فقط حيث يوجد رقم في الملف ويختلف).
+     *
+     * @return list<array{label: string, report: int|float|null, file: int|float|null}>
+     */
+    public function fileDiscrepancies(): array
+    {
+        $file = $this->file_values ?? [];
+        $out = [];
+        $rate = fn ($v) => $v === null ? null : round((float) $v, 2);
+        foreach ([
+            ['إجمالي الطلبيات عند البداية', $this->start_total_orders, $file['start_total'] ?? null, fn ($v) => $v === null ? null : (int) $v],
+            ['نسبة التسليم عند البداية', $this->start_delivery_rate, $file['start_rate'] ?? null, $rate],
+            ['نسبة التسليم النهائية', $this->end_delivery_rate, $file['end_rate'] ?? null, $rate],
+        ] as [$label, $mine, $theirs, $cast]) {
+            if ($theirs !== null && $cast($mine) !== $cast($theirs)) {
+                $out[] = ['label' => $label, 'report' => $cast($mine), 'file' => $cast($theirs)];
+            }
+        }
+
+        $this->stores()->with('store:id,name')->whereNotNull('file_orders_count')->get()
+            ->filter(fn ($rs) => $rs->shipments_count !== $rs->file_orders_count)
+            ->each(function ($rs) use (&$out) {
+                $out[] = ['label' => $rs->store->name, 'report' => $rs->shipments_count, 'file' => $rs->file_orders_count];
+            });
+
+        return $out;
     }
 
     public const WARNING_LABELS = [
         'over_attempts' => 'تجاوز حد المحاولات',
         'outside_assignment' => 'متاجر خارج الإسناد',
         'courier_without_screens' => 'قائمة المندوب بدون سكرينات',
+        'file_mismatch' => 'فرق مع ملف المنظومة',
     ];
 
     public function screens(string $category): MorphMany

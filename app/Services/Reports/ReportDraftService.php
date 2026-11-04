@@ -26,6 +26,16 @@ class ReportDraftService
         return (int) SystemSetting::get('reports.max_attempts_per_shift', 2);
     }
 
+    /** «file» إن بقي الرقم كما جاء من الملف، «manual» إن كتبه/عدّله الموظف، null إن كان فارغاً */
+    private static function countSource(?int $count, ?ReportStore $old): ?string
+    {
+        if ($count === null) {
+            return null;
+        }
+
+        return ($old?->shipments_count_source === 'file' && $old->shipments_count === $count) ? 'file' : 'manual';
+    }
+
     /** @return array{warnings: list<string>} */
     public function save(DailyReport $report, array $data, User $actor): array
     {
@@ -43,16 +53,26 @@ class ReportDraftService
                 ? now()
                 : ($report->submitted_at ?? $report->shift_started_at ?? now());
 
+            // أرقام ملف المنظومة ومصدر كل قيمة تبقى عبر الحفظ (المرحلة 3)
+            $oldStores = $report->stores()->get()->keyBy('store_id');
+
             $report->followups()->delete();
             $report->stores()->delete();
 
             $reportStores = [];
             foreach ($storeRows as $storeId => $row) {
+                $old = $oldStores[$storeId] ?? null;
+                $count = isset($row['shipments_count']) && $row['shipments_count'] !== '' ? (int) $row['shipments_count'] : null;
                 $reportStores[$storeId] = ReportStore::create([
                     'daily_report_id' => $report->id,
                     'store_id' => $storeId,
                     'is_outside_assignment' => $stores[$storeId]->assigned_user_id !== $report->user_id,
-                    'shipments_count' => $row['shipments_count'] ?? null,
+                    'shipments_count' => $count,
+                    'shipments_count_source' => self::countSource($count, $old),
+                    'file_orders_count' => $old?->file_orders_count,
+                    'file_delivered_count' => $old?->file_delivered_count,
+                    'end_file_orders_count' => $old?->end_file_orders_count,
+                    'end_file_delivered_count' => $old?->end_file_delivered_count,
                     'notes' => $row['notes'] ?? null,
                 ]);
             }
