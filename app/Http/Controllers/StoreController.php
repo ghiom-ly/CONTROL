@@ -6,6 +6,8 @@ use App\Enums\StoreStatus;
 use App\Http\Requests\Stores\StoreRequest;
 use App\Models\Store;
 use App\Models\User;
+use App\Queries\OpenCodesQuery;
+use App\Services\StoreInsightsService;
 use App\Services\StoreService;
 use App\Support\ArabicNormalizer;
 use Illuminate\Http\RedirectResponse;
@@ -59,14 +61,22 @@ class StoreController extends Controller
         return redirect()->route('stores.show', $store)->with('success', "تم إضافة المتجر {$store->name} ({$store->code}).");
     }
 
-    public function show(Store $store): View
+    public function show(Store $store, StoreInsightsService $insights): View
     {
         $this->authorize('view', $store);
         $store->load('assignedUser:id,name');
+        $today = today();
 
         return view('stores.show', [
             'store' => $store,
             'employees' => $this->assignableEmployees(),
+            'insights' => [
+                'daily' => $insights->dailyOrders($store, $today->copy()->subDays(13), $today),
+                'week' => $insights->weekComparison($store, $today),
+                'notes' => $insights->recentNotes($store),
+                'openCodes' => OpenCodesQuery::forStore($store->id)->with('lastFollowupUser:id,name')
+                    ->orderByDesc('last_followup_at')->limit(100)->get(),
+            ],
         ]);
     }
 
