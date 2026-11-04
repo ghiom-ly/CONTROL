@@ -11,6 +11,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OpenCodesController;
 use App\Http\Controllers\ReportReviewController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\ShiftImportController;
 use App\Http\Controllers\Settings\RoleController;
 use App\Http\Controllers\Settings\SettingController;
 use App\Http\Controllers\StoreController;
@@ -64,6 +65,13 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('/reports/{report}/attachments', [AttachmentController::class, 'store'])->name('reports.attachments.store');
         Route::get('/attachments/{attachment}', [AttachmentController::class, 'show'])->name('attachments.show');
         Route::delete('/attachments/{attachment}', [AttachmentController::class, 'destroy'])->name('attachments.destroy');
+
+        // ---- الاستيراد (المرحلة 3)
+        Route::post('/imports/shift', [ShiftImportController::class, 'upload'])->name('imports.shift.upload');
+        Route::get('/imports/{batch}', [ShiftImportController::class, 'show'])->whereNumber('batch')->name('imports.show');
+        Route::post('/imports/{batch}/mapping', [ShiftImportController::class, 'mapping'])->name('imports.mapping');
+        Route::post('/imports/{batch}/apply', [ShiftImportController::class, 'apply'])->name('imports.apply');
+        Route::post('/imports/{batch}/cancel', [ShiftImportController::class, 'cancel'])->name('imports.cancel');
 
         // ---- الأكواد المفتوحة (المرحلة 2)
         Route::get('/open-codes', [OpenCodesController::class, 'index'])->name('open-codes.index');

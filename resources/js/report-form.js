@@ -20,6 +20,7 @@ export default function reportForm(state, storeOptions, results, maxAttempts) {
     return {
         results,
         maxAttempts,
+        dirty: false,   // تعديلات غير محفوظة — تحذير قبل مغادرة الصفحة
         storeSearch: '',
         stores: (state.stores || []).map((s) => ({
             store_id: Number(s.store_id),

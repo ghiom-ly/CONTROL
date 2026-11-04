@@ -15,7 +15,9 @@
     @endif
 
     <form method="POST" action="{{ route('reports.update', $report) }}" id="report-form" enctype="multipart/form-data"
-          x-data="reportForm(@js($formState), @js($storeOptions), @js($resultOptions), {{ $maxAttempts }})" class="space-y-5">
+          x-data="reportForm(@js($formState), @js($storeOptions), @js($resultOptions), {{ $maxAttempts }})" class="space-y-5"
+          x-on:input="dirty = true" x-on:change="dirty = true" x-on:submit="dirty = false"
+          x-init="window.addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } })">
         @csrf
         @method('PUT')
         @if(request('approve_after')) <input type="hidden" name="approve_after" value="1"> @endif
@@ -193,6 +195,27 @@
             @error('stores')<p class="field-error w-full">{{ $message }}</p>@enderror
         </div>
     </form>
+
+    @can('imports.create')
+        @php $batches = \App\Models\ImportBatch::where('daily_report_id', $report->id)->whereIn('report_type', ['shift_start', 'shift_end'])->latest('id')->get(); @endphp
+        <section class="card p-5 mt-5 space-y-3">
+            <h2 class="card-title">ملفات منظومة الشحن</h2>
+            <p class="hint">احفظ المسودة قبل رفع ملف — الرفع ينقلك لصفحة المعاينة.</p>
+            @foreach(['shift_start' => 'رفع ملف البداية', 'shift_end' => 'رفع ملف النهاية'] as $kind => $label)
+                <form method="POST" action="{{ route('imports.shift.upload') }}" enctype="multipart/form-data" class="flex flex-wrap items-center gap-2">
+                    @csrf
+                    <input type="hidden" name="kind" value="{{ $kind }}">
+                    <input type="hidden" name="report_id" value="{{ $report->id }}">
+                    <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="text-sm">
+                    <button class="btn btn-light btn-sm"><x-icon name="upload" class="size-4"/> {{ $label }}</button>
+                </form>
+            @endforeach
+            @error('file')<p class="field-error">{{ $message }}</p>@enderror
+            @foreach($batches as $b)
+                <p class="text-sm"><a class="text-sky-700 underline" href="{{ route('imports.show', $b) }}">{{ \App\Models\ImportBatch::TYPES[$b->report_type] }} — {{ $b->original_name }}</a> <x-badge :enum="$b->status"/></p>
+            @endforeach
+        </section>
+    @endcan
 
     @include('reports._screens', ['editable' => true])
 </x-layouts.app>
