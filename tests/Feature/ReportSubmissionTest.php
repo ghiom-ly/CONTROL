@@ -101,6 +101,31 @@ class ReportSubmissionTest extends TestCase
         $this->assertContains('courier_without_screens', $r->warningFlags());
     }
 
+    public function test_save_and_submit_in_one_request(): void
+    {
+        $r = DailyReport::factory()->draft()->for($this->emp)->create();
+        $s = Store::factory()->create();
+        $this->actingAs($this->emp)->put("/reports/{$r->id}", [
+            'stores' => [['store_id' => $s->id, 'shipments_count' => 7]],
+            'action' => 'submit', 'end_delivery_rate' => 66,
+        ])->assertRedirect(route('reports.show', $r));
+
+        $r->refresh();
+        $this->assertSame('pending_review', $r->status->value);
+        $this->assertSame(7, $r->total_shipments);
+        $this->assertSame('66.00', $r->end_delivery_rate);
+    }
+
+    public function test_save_and_submit_requires_end_rate_and_keeps_draft_saved(): void
+    {
+        $r = DailyReport::factory()->draft()->for($this->emp)->create();
+        $s = Store::factory()->create();
+        $this->actingAs($this->emp)->put("/reports/{$r->id}", [
+            'stores' => [['store_id' => $s->id]], 'action' => 'submit',
+        ])->assertSessionHasErrors('end_delivery_rate');
+        $this->assertSame('draft', $r->fresh()->status->value);
+    }
+
     public function test_warning_flags(): void
     {
         $other = $this->makeUser();

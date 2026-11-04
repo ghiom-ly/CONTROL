@@ -16,6 +16,7 @@ use App\Services\Reports\ShiftService;
 use App\Support\ReportWhatsappFormatter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class DailyReportController extends Controller
@@ -60,13 +61,27 @@ class DailyReportController extends Controller
         ]);
     }
 
-    public function update(SaveReportRequest $request, DailyReport $report, ReportDraftService $drafts): RedirectResponse
+    public function update(SaveReportRequest $request, DailyReport $report, ReportDraftService $drafts, ReportSubmissionService $submissions): RedirectResponse
     {
-        $result = $drafts->save($report, $request->validated(), $request->user());
+        $submit = $request->validated('action') === 'submit';
+        if ($submit) {
+            $this->authorize('submit', $report);
+        }
 
-        $redirect = redirect()->route('reports.edit', $report)->with('success', 'تم حفظ التقرير.');
+        $warnings = DB::transaction(function () use ($request, $report, $drafts, $submissions, $submit) {
+            $w = $drafts->save($report, $request->validated(), $request->user())['warnings'];
+            if ($submit) {
+                $w = array_merge($w, $submissions->submit($report, (float) $request->validated('end_delivery_rate'), $request->user())['warnings']);
+            }
 
-        return $result['warnings'] ? $redirect->with('warning', implode("\n", $result['warnings'])) : $redirect;
+            return $w;
+        });
+
+        $redirect = $submit
+            ? redirect()->route('reports.show', $report)->with('success', 'تم حفظ التقرير وإرساله للمراجعة. انتهى الشفت.')
+            : redirect()->route('reports.edit', $report)->with('success', 'تم حفظ التقرير.');
+
+        return $warnings ? $redirect->with('warning', implode("\n", $warnings)) : $redirect;
     }
 
     public function show(DailyReport $report): View

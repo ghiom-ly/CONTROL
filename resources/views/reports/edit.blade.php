@@ -167,11 +167,22 @@
             @foreach($errors->get('issue_requests.*') as $msgs) @foreach($msgs as $m)<p class="field-error">{{ $m }}</p>@endforeach @endforeach
         </section>
 
-        <div class="flex flex-wrap gap-2">
-            <button type="submit" class="btn btn-primary">حفظ مسودة</button>
+        <div class="card p-5 flex flex-wrap items-end gap-3">
+            <input type="hidden" name="action" value="save" x-ref="action">
+            <button type="submit" class="btn btn-primary" x-on:click="$refs.action.value = 'save'">حفظ مسودة</button>
+            @can('submit', $report)
+                <div class="ms-auto flex flex-wrap items-end gap-2">
+                    <div>
+                        <label class="label">نسبة التسليم النهائية % (عند إنهاء الشفت)</label>
+                        <input name="end_delivery_rate" inputmode="decimal" value="{{ old('end_delivery_rate', $report->end_delivery_rate) }}" class="input !w-32 @error('end_delivery_rate') input-error @enderror">
+                    </div>
+                    <button type="submit" class="btn btn-accent" x-on:click="$refs.action.value = 'submit'">حفظ وإرسال للمراجعة</button>
+                </div>
+            @endcan
+            @error('end_delivery_rate')<p class="field-error w-full">{{ $message }}</p>@enderror
+            @error('stores')<p class="field-error w-full">{{ $message }}</p>@enderror
         </div>
     </form>
 
     @include('reports._screens', ['editable' => true])
-    @includeWhen(View::exists('reports._submit'), 'reports._submit')
 </x-layouts.app>

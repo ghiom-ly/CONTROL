@@ -33,11 +33,17 @@ class SaveReportRequest extends FormRequest
             ->filter(fn ($t) => $t !== null && $t !== '')->values()->all();
 
         $this->merge(['stores' => $stores, 'attempt_times' => $times]);
+
+        if ($this->filled('end_delivery_rate')) {
+            $this->merge(['end_delivery_rate' => str_replace(['٫', ','], '.', ArabicNormalizer::digits((string) $this->input('end_delivery_rate')))]);
+        }
     }
 
     public function rules(): array
     {
         return [
+            'action' => ['nullable', 'in:save,submit'],
+            'end_delivery_rate' => ['required_if:action,submit', 'nullable', 'numeric', 'min:0', 'max:100'],
             'stores' => ['array', 'max:200'],
             'stores.*.store_id' => ['required', 'integer', 'distinct',
                 Rule::exists('stores', 'id')->where(fn ($q) => $q->where('status', '!=', StoreStatus::Archived->value)->whereNull('deleted_at'))],
@@ -77,6 +83,7 @@ class SaveReportRequest extends FormRequest
     public function attributes(): array
     {
         return [
+            'end_delivery_rate' => 'نسبة التسليم النهائية',
             'stores.*.store_id' => 'المتجر', 'stores.*.shipments_count' => 'عدد الأوردرات',
             'stores.*.codes.*.code' => 'الكود', 'stores.*.codes.*.result' => 'نتيجة الكود',
             'attempt_times.*' => 'وقت المحاولة', 'attempts_over_limit_reason' => 'سبب تجاوز المحاولات',
