@@ -1,0 +1,94 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Enums\StoreStatus;
+use App\Http\Requests\Stores\StoreRequest;
+use App\Models\Store;
+use App\Models\User;
+use App\Services\StoreService;
+use App\Support\ArabicNormalizer;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Illuminate\View\View;
+
+class StoreController extends Controller
+{
+    public function __construct(private readonly StoreService $stores) {}
+
+    public function index(Request $request): View
+    {
+        $this->authorize('viewAny', Store::class);
+
+        $filters = $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+            'status' => ['nullable', Rule::enum(StoreStatus::class)],
+            'assigned_user_id' => ['nullable', 'integer'],
+        ]);
+
+        $stores = Store::query()
+            ->with('assignedUser:id,name')
+            ->when($filters['q'] ?? null, function ($q, $term) {
+                $normalized = ArabicNormalizer::normalize($term);
+                $q->where(fn ($w) => $w->where('name', 'like', "%{$term}%")
+                    ->orWhere('normalized_name', 'like', "%{$normalized}%")
+                    ->orWhere('code', 'like', "%{$term}%")
+                    ->orWhere('phone', 'like', '%'.ArabicNormalizer::digits($term).'%'));
+            })
+            ->when($filters['status'] ?? null, fn ($q, $s) => $q->where('status', $s))
+            ->when($filters['assigned_user_id'] ?? null, fn ($q, $u) => $q->where('assigned_user_id', $u))
+            ->orderBy('name')
+            ->paginate(config('nours.per_page'))
+            ->withQueryString();
+
+        $counts = Store::query()->selectRaw('status, COUNT(*) c')->groupBy('status')->pluck('c', 'status');
+
+        return view('stores.index', [
+            'stores' => $stores,
+            'filters' => $filters,
+            'counts' => $counts,
+            'employees' => $this->assignableEmployees(),
+        ]);
+    }
+
+    public function store(StoreRequest $request): RedirectResponse
+    {
+        $store = $this->stores->create($request->validated(), $request->user());
+
+        return redirect()->route('stores.show', $store)->with('success', "تم إضافة المتجر {$store->name} ({$store->code}).");
+    }
+
+    public function show(Store $store): View
+    {
+        $this->authorize('view', $store);
+        $store->load('assignedUser:id,name');
+
+        return view('stores.show', [
+            'store' => $store,
+            'employees' => $this->assignableEmployees(),
+        ]);
+    }
+
+    public function update(StoreRequest $request, Store $store): RedirectResponse
+    {
+        $this->stores->update($store, $request->validated(), $request->user());
+
+        return back()->with('success', 'تم حفظ بيانات المتجر.');
+    }
+
+    public function archive(Request $request, Store $store): RedirectResponse
+    {
+        $this->authorize('archive', $store);
+        $this->stores->archive($store, $request->user());
+
+        return back()->with('success', 'تمت أرشفة المتجر مع الاحتفاظ بتقاريره.');
+    }
+
+    /** الموظفون النشطون الذين يمكنهم إدخال التقارير */
+    private function assignableEmployees()
+    {
+        return User::query()->with('role')->where('status', 'active')->orderBy('name')->get()
+            ->filter(fn (User $u) => $u->hasPermission('reports.create'))->values();
+    }
+}

@@ -1,0 +1,33 @@
+<x-layouts.app :title="$store->name">
+    <x-page-header :title="$store->name" :subtitle="$store->code.' — '.($store->assignedUser?->name ?? 'غير مسند لموظف')">
+        <x-slot:actions>
+            @can('update', $store)
+                <button type="button" class="btn btn-light" x-on:click="$dispatch('open-modal', 'edit-store')"><x-icon name="pencil" class="size-4"/> تعديل</button>
+                @if($store->status !== \App\Enums\StoreStatus::Archived)
+                    <x-confirm-form :action="route('stores.archive', $store)" method="PATCH" message="أرشفة المتجر {{ $store->name }}؟ ستبقى تقاريره محفوظة.">
+                        <x-icon name="box" class="size-4"/> أرشفة
+                    </x-confirm-form>
+                @endif
+            @endcan
+        </x-slot:actions>
+    </x-page-header>
+
+    <div class="card p-5 grid gap-4 sm:grid-cols-3 text-sm">
+        <div><p class="label">الحالة</p><x-badge :enum="$store->status"/></div>
+        <div><p class="label">الهاتف</p><p class="ltr text-right">{{ $store->phone ?? '—' }}</p></div>
+        <div><p class="label">صاحب المتجر</p><p>{{ $store->owner_name ?? '—' }}</p></div>
+        <div><p class="label">بدء التعامل</p><p>{{ $store->started_at?->format('Y/m/d') ?? '—' }}</p></div>
+        <div><p class="label">متوسط الشحنات المتوقع</p><p>{{ $store->expected_avg_shipments ?? 'غير متوفر' }}</p></div>
+        <div><p class="label">ملاحظات</p><p>{{ $store->notes ?? '—' }}</p></div>
+    </div>
+
+    @isset($insights)
+        @include('stores._insights')
+    @endisset
+
+    @can('update', $store)
+        <x-modal name="edit-store" title="تعديل المتجر" :show="$errors->any() && old('_modal') === 'edit'">
+            @include('stores._form', ['store' => $store])
+        </x-modal>
+    @endcan
+</x-layouts.app>

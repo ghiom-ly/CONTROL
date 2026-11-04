@@ -3,7 +3,7 @@
     // [label, icon, route|null, params, permission, active pattern, phase(null = متاح)]
     $nav = [
         ['لوحة التحكم', 'dashboard', 'dashboard', [], 'dashboard.view', 'dashboard', null],
-        ['إدارة المتاجر', 'store', null, ['stores'], 'stores.view', null, 2],
+        ['إدارة المتاجر', 'store', 'stores.index', [], 'stores.view', 'stores.*', null],
         ['التقارير اليومية', 'report', null, ['reports'], 'reports.create|reports.view_all', null, 2],
         ['إدخال تقرير جديد', 'plus-doc', null, ['reports-create'], 'reports.create', null, 2],
         ['استيراد الملفات', 'upload', null, ['imports'], 'imports.create|imports.view_all', null, 3],
