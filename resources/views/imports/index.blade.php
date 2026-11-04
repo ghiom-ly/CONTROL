@@ -51,7 +51,7 @@
                             <td>@if($b->report)<a class="text-sky-700 underline" href="{{ route('reports.show', $b->report) }}">{{ $b->report->report_number }}</a>@else — @endif</td>
                             <td><x-badge :enum="$b->status"/></td>
                             <td class="text-left whitespace-nowrap">
-                                @if($b->report_type !== 'legacy_whatsapp')<a href="{{ route('imports.show', $b) }}" class="btn btn-light btn-sm"><x-icon name="eye" class="size-4"/></a>@endif
+                                @if($b->report_type !== 'legacy_whatsapp')<a href="{{ $b->report_type === 'stores' ? route('stores.import.show', $b) : route('imports.show', $b) }}" class="btn btn-light btn-sm"><x-icon name="eye" class="size-4"/></a>@endif
                                 <a href="{{ route('imports.download', $b) }}" class="btn btn-light btn-sm">تنزيل الأصل</a>
                             </td>
                         </tr>

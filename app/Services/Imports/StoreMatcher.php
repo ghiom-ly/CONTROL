@@ -26,6 +26,18 @@ class StoreMatcher
         return $this->cache[$key] ??= $this->lookup($key);
     }
 
+    /** مثل match لكن يشمل المتاجر المؤرشفة (لاستيراد قائمة المتاجر: لا نُنشئ نسخة من مؤرشف) */
+    public function matchAny(string $name): ?int
+    {
+        $key = ArabicNormalizer::normalize($name);
+        if ($key === '') {
+            return null;
+        }
+
+        return Store::withTrashed()->where('normalized_name', $key)->value('id')
+            ?? StoreAlias::where('normalized_alias', $key)->value('store_id');
+    }
+
     public function remember(string $name, int $storeId, User $actor): void
     {
         $key = ArabicNormalizer::normalize($name);

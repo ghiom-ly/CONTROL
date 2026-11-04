@@ -38,6 +38,7 @@ class ImportBatch extends Model
         'shift_start' => 'ملف بداية الشفت',
         'shift_end' => 'ملف نهاية الشفت',
         'legacy_whatsapp' => 'تقرير قديم (واتساب)',
+        'stores' => 'قائمة متاجر',
     ];
 
     protected static function booted(): void

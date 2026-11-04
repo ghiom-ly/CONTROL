@@ -11,6 +11,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\LegacyImportController;
 use App\Http\Controllers\StoreAliasController;
+use App\Http\Controllers\StoreImportController;
 use App\Http\Controllers\OpenCodesController;
 use App\Http\Controllers\ReportReviewController;
 use App\Http\Controllers\SearchController;
@@ -50,7 +51,12 @@ Route::middleware(['auth', 'active'])->group(function () {
         // ---- المتاجر (المرحلة 2)
         Route::get('/stores', [StoreController::class, 'index'])->name('stores.index');
         Route::post('/stores', [StoreController::class, 'store'])->name('stores.store');
-        Route::get('/stores/{store}', [StoreController::class, 'show'])->name('stores.show');
+        Route::get('/stores/import', [StoreImportController::class, 'create'])->name('stores.import');
+        Route::post('/stores/import', [StoreImportController::class, 'upload'])->name('stores.import.upload');
+        Route::get('/stores/import/{batch}', [StoreImportController::class, 'show'])->name('stores.import.show');
+        Route::post('/stores/import/{batch}/mapping', [StoreImportController::class, 'mapping'])->name('stores.import.mapping');
+        Route::post('/stores/import/{batch}/apply', [StoreImportController::class, 'apply'])->name('stores.import.apply');
+        Route::get('/stores/{store}', [StoreController::class, 'show'])->whereNumber('store')->name('stores.show');
         Route::put('/stores/{store}', [StoreController::class, 'update'])->name('stores.update');
         Route::patch('/stores/{store}/archive', [StoreController::class, 'archive'])->name('stores.archive');
 

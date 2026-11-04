@@ -2,6 +2,8 @@
     <x-page-header title="المتاجر" subtitle="قائمة المتاجر والموظف المسؤول عن كل متجر">
         <x-slot:actions>
             @can('create', \App\Models\Store::class)
+                <a href="{{ route('stores.import') }}" class="btn btn-light"><x-icon name="upload" class="size-4"/> استيراد من Excel</a>
+                @if(Route::has('stores.assignment'))<a href="{{ route('stores.assignment') }}" class="btn btn-light"><x-icon name="users" class="size-4"/> تعيين المتاجر</a>@endif
                 <button type="button" class="btn btn-accent" x-on:click="$dispatch('open-modal', 'create-store')"><x-icon name="plus" class="size-4"/> إضافة متجر</button>
             @endcan
         </x-slot:actions>
