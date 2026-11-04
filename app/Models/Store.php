@@ -42,6 +42,11 @@ class Store extends Model
         });
     }
 
+    public function aliases(): HasMany
+    {
+        return $this->hasMany(StoreAlias::class);
+    }
+
     public function assignedUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_user_id');

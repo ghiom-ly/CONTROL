@@ -13,7 +13,7 @@ class ShipmentFollowup extends Model
 {
     protected $fillable = [
         'shipment_id', 'shipment_code', 'store_id', 'daily_report_id', 'report_store_id', 'import_row_id', 'user_id', 'followup_at',
-        'result', 'customer_status', 'courier_status', 'is_official', 'notes',
+        'result', 'customer_status', 'courier_status', 'is_official', 'is_historical', 'notes',
     ];
 
     protected $casts = [
@@ -22,6 +22,7 @@ class ShipmentFollowup extends Model
         'customer_status' => CustomerStatus::class,
         'courier_status' => CourierStatus::class,
         'is_official' => 'boolean',
+        'is_historical' => 'boolean',
     ];
 
     protected static function booted(): void

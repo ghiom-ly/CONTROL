@@ -15,7 +15,7 @@ class ImportBatch extends Model
 
     protected $fillable = [
         'batch_number', 'original_name', 'disk', 'stored_path', 'file_hash', 'file_size', 'file_type',
-        'report_type', 'work_date', 'uploaded_by', 'uploaded_at', 'status', 'total_rows', 'accepted_rows',
+        'report_type', 'daily_report_id', 'work_date', 'uploaded_by', 'uploaded_at', 'status', 'total_rows', 'accepted_rows',
         'rejected_rows', 'errors', 'column_mapping', 'meta', 'approved_by', 'approved_at',
         'processing_started_at', 'processing_finished_at',
     ];
@@ -33,6 +33,31 @@ class ImportBatch extends Model
         'column_mapping' => 'array',
         'meta' => 'array',
     ];
+
+    public const TYPES = [
+        'shift_start' => 'ملف بداية الشفت',
+        'shift_end' => 'ملف نهاية الشفت',
+        'legacy_whatsapp' => 'تقرير قديم (واتساب)',
+    ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $b) {
+            $b->batch_number ??= 'TMP-'.\Illuminate\Support\Str::random(20);
+            $b->uploaded_at ??= now();
+        });
+        static::created(function (self $b) {
+            if (str_starts_with((string) $b->batch_number, 'TMP-')) {
+                $b->forceFill(['batch_number' => sprintf('IMP-%s-%06d', now()->format('Y'), $b->id)])->saveQuietly();
+            }
+        });
+    }
+
+    /** التقرير الذي طُبّق عليه الملف (أو أُنشئ منه) */
+    public function report(): BelongsTo
+    {
+        return $this->belongsTo(DailyReport::class, 'daily_report_id');
+    }
 
     public function uploader(): BelongsTo
     {

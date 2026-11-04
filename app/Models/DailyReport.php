@@ -23,6 +23,7 @@ class DailyReport extends Model
         'approved_at', 'rejection_reason', 'created_by', 'updated_by',
         'shift_started_at', 'start_total_orders', 'start_delivery_rate', 'end_delivery_rate',
         'attempt_times', 'attempts_over_limit_reason', 'issue_requests',
+        'is_legacy', 'file_values', 'value_sources',
     ];
 
     protected $casts = [
@@ -37,6 +38,9 @@ class DailyReport extends Model
         'end_delivery_rate' => 'decimal:2',
         'attempt_times' => 'array',
         'issue_requests' => 'array',
+        'is_legacy' => 'boolean',
+        'file_values' => 'array',
+        'value_sources' => 'array',
     ];
 
     protected static function booted(): void
