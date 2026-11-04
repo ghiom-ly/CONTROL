@@ -39,4 +39,32 @@ enum FollowupResult: string
             self::OtherIssue => 'gray',
         };
     }
+
+    /**
+     * الحالات المستنتجة من نتيجة المتابعة (جدول التصميم §6.5). ما لا يُستنتج يبقى null.
+     *
+     * @return array{courier: ?CourierStatus, customer: ?CustomerStatus, processing: ?ProcessingStatus}
+     */
+    public function impliedStatuses(): array
+    {
+        return match ($this) {
+            self::CourierNoAnswer => ['courier' => CourierStatus::NoAnswer, 'customer' => null, 'processing' => ProcessingStatus::Open],
+            self::CustomerNoAnswer => ['courier' => CourierStatus::Answered, 'customer' => CustomerStatus::NoAnswer, 'processing' => ProcessingStatus::Open],
+            self::CourierAnsweredStillDelayed,
+            self::CourierPromisedDelivery => ['courier' => CourierStatus::Answered, 'customer' => null, 'processing' => null],
+            self::DeliveredAfterFollowup => ['courier' => null, 'customer' => null, 'processing' => ProcessingStatus::Resolved],
+            self::ReturnedOrNotWithCourier,
+            self::OtherIssue => ['courier' => null, 'customer' => null, 'processing' => null],
+        };
+    }
+
+    /** القائمة التي ينتمي إليها الكود في القسم ③: customer | courier | null */
+    public function isUnanswered(): ?string
+    {
+        return match ($this) {
+            self::CustomerNoAnswer => 'customer',
+            self::CourierNoAnswer => 'courier',
+            default => null,
+        };
+    }
 }

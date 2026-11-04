@@ -17,6 +17,7 @@ class SystemSettingsSeeder extends Seeder
             ['report_submission_deadline', '18:00', 'time', 'reports', 'آخر موعد لتقديم التقرير اليومي', 'بعده يعتبر التقرير متأخراً'],
             ['report_review_sla_hours', '24', 'integer', 'reports', 'مهلة اعتماد التقرير (ساعات)', 'بعدها يظهر تنبيه تأخر الاعتماد'],
             ['employee_can_edit_rejected', '1', 'boolean', 'reports', 'السماح للموظف بتعديل التقرير المرفوض وإعادة تقديمه', null],
+            ['reports.max_attempts_per_shift', '2', 'integer', 'reports', 'الحد الأقصى للمحاولات في الشفت', 'تجاوزه يتطلب ذكر السبب ويظهر للمسؤول'],
             ['store_inactive_days', '3', 'integer', 'stores', 'عدد الأيام المتتالية دون شحنات لاعتبار المتجر متوقفاً', 'لا يُصنف المتجر متوقفاً بناءً على يوم واحد'],
             ['store_decline_percent', '30', 'integer', 'stores', 'نسبة انخفاض الشحنات عن المتوسط لإطلاق تنبيه (%)', null],
             ['issue_resolution_sla_hours', '48', 'integer', 'issues', 'المهلة الافتراضية لحل المشكلة (ساعات)', null],

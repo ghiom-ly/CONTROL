@@ -2,15 +2,18 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ReportStore extends Model
 {
-    protected $fillable = ['daily_report_id', 'store_id', 'shipments_count', 'contact_attempts', 'contact_times', 'notes'];
+    use HasFactory;
 
-    protected $casts = ['contact_times' => 'array'];
+    protected $fillable = ['daily_report_id', 'store_id', 'shipments_count', 'contact_attempts', 'contact_times', 'notes', 'is_outside_assignment'];
+
+    protected $casts = ['contact_times' => 'array', 'is_outside_assignment' => 'boolean', 'shipments_count' => 'integer'];
 
     public function report(): BelongsTo
     {

@@ -17,7 +17,7 @@ class Issue extends Model
     use Auditable, SoftDeletes;
 
     protected $fillable = [
-        'issue_number', 'store_id', 'shipment_id', 'daily_report_id', 'reported_by', 'reported_at', 'type',
+        'issue_number', 'source_key', 'store_id', 'shipment_id', 'daily_report_id', 'reported_by', 'reported_at', 'type',
         'title', 'description', 'priority', 'assigned_to', 'status', 'action_taken', 'due_at',
         'resolved_at', 'closed_at',
     ];

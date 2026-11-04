@@ -21,6 +21,8 @@ class DailyReport extends Model
         'total_shipments', 'contact_attempts_count', 'notes', 'inquiries', 'version',
         'submitted_at', 'reviewed_by', 'reviewed_at', 'review_notes', 'approved_by',
         'approved_at', 'rejection_reason', 'created_by', 'updated_by',
+        'shift_started_at', 'start_total_orders', 'start_delivery_rate', 'end_delivery_rate',
+        'attempt_times', 'attempts_over_limit_reason', 'issue_requests',
     ];
 
     protected $casts = [
@@ -29,6 +31,12 @@ class DailyReport extends Model
         'submitted_at' => 'datetime',
         'reviewed_at' => 'datetime',
         'approved_at' => 'datetime',
+        'shift_started_at' => 'datetime',
+        'start_total_orders' => 'integer',
+        'start_delivery_rate' => 'decimal:2',
+        'end_delivery_rate' => 'decimal:2',
+        'attempt_times' => 'array',
+        'issue_requests' => 'array',
     ];
 
     protected static function booted(): void
@@ -50,6 +58,12 @@ class DailyReport extends Model
     public function scopeOfficial(Builder $query): Builder
     {
         return $query->where('status', ReportStatus::Approved);
+    }
+
+    /** الشفت المفتوح (مسودة) */
+    public function scopeOpenDraft(Builder $query): Builder
+    {
+        return $query->where('status', ReportStatus::Draft);
     }
 
     public function user(): BelongsTo
