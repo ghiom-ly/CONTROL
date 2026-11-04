@@ -14,11 +14,16 @@ app/
 │   │   ├── Auth/ (Login, Password)
 │   │   ├── Settings/ (Setting, Role)
 │   │   ├── Dashboard, User, AuditLog, Search, Notification, ModulePlaceholder
+│   │   ├── Store, DailyReport, ReportReview, Attachment, OpenCodes   (المرحلة 2)
 │   ├── Middleware/  EnsureUserIsActive, ForcePasswordChange, RequirePermission, SecurityHeaders
 │   └── Requests/    كل التحقق من المدخلات في الـ Backend
 ├── Models/          19 نموذج + Concerns/Auditable (تسجيل تلقائي في audit_logs)
-├── Policies/        UserPolicy (تُضاف سياسات المتاجر/التقارير/المشكلات في مراحلها)
-├── Services/        منطق العمل: UserService, DashboardService, EmployeePerformanceService, AuditLogger
+├── Policies/        UserPolicy, StorePolicy, DailyReportPolicy
+├── Services/        منطق العمل: UserService, DashboardService, EmployeePerformanceService, AuditLogger,
+│                    StoreService, StoreInsightsService, AttachmentService, OpenCodesService
+│   └── Reports/     ShiftService, ReportDraftService, ReportSubmissionService, ReportRevisionService,
+│                    ReportApprovalService, StoreMetricsBuilder, ShipmentSummaryRefresher, ShipmentCodeGuard
+├── Queries/         OpenCodesQuery
 └── Support/         Permissions (سجل الصلاحيات المركزي), Period (الفترات الزمنية), ArabicNormalizer
 config/nours.php     إعدادات خاصة بالنظام (الرفع، OCR، الترقيم)
 database/
@@ -85,7 +90,7 @@ audit_logs, notifications, alert_rules, system_settings
 | المرحلة | المحتوى | الحالة |
 |---|---|---|
 | 1 | التأسيس، قاعدة البيانات الكاملة، الدخول، الصلاحيات، التصميم العام، الموظفون، الإعدادات، سجل العمليات، النسخ الاحتياطي | ✅ مكتملة — 39 اختبار ناجح |
-| 2 | CRUD المتاجر + صفحة التفاصيل والمقارنات، نموذج التقرير اليومي (متاجر غير محدودة + أكواد لكل متجر + أوقات الاتصال + مرفقات)، المراجعة والاعتماد/الرفض، إعادة التقديم وسجل النسخ، بناء store_daily_metrics عند الاعتماد داخل Transaction | التالية |
+| 2 | CRUD المتاجر + صفحة التفاصيل والمقارنات، نموذج التقرير اليومي (متاجر غير محدودة + أكواد لكل متجر + أوقات الاتصال + مرفقات)، المراجعة والاعتماد/الرفض، إعادة التقديم وسجل النسخ، بناء store_daily_metrics عند الاعتماد داخل Transaction، شاشة الأكواد المفتوحة، نسخ التقرير كنص واتساب | ✅ مكتملة — 131 اختبار ناجح (التصميم: `docs/superpowers/specs/2026-11-04-phase2-stores-daily-report-design.md`) |
 | 3 | مركز الاستيراد: رفع XLSX/XLS/PDF، Queue للملفات الكبيرة، استخراج الجداول، OCR للمصور، مطابقة الأعمدة وأسماء المتاجر، كشف الأخطاء والتكرار (داخل الملف ومع قاعدة البيانات)، تصحيح الصفوف، اعتماد ذري، تنزيل Excel بالصفوف المرفوضة | |
 | 4 | البحث بالكود وسجل المتابعات المتعددة، سجل الاتصالات وإحصائياته، إدارة المشكلات مع سجل التحديثات والإسناد | |
 | 5 | Analytics Center، الرسوم البيانية الستة في لوحة التحكم، مقارنة فترتين (سابق/حالي/فرق/نسبة)، تشغيل قواعد التنبيه المجدولة | |

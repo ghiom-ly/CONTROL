@@ -51,6 +51,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::patch('/stores/{store}/archive', [StoreController::class, 'archive'])->name('stores.archive');
 
         // ---- التقارير اليومية (المرحلة 2)
+        Route::get('/reports', [DailyReportController::class, 'index'])->name('reports.index');
         Route::get('/reports/new', [DailyReportController::class, 'create'])->name('reports.create');
         Route::post('/reports/start', [DailyReportController::class, 'start'])->name('reports.start');
         Route::get('/reports/{report}/edit', [DailyReportController::class, 'edit'])->name('reports.edit');

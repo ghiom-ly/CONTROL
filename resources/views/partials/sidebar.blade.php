@@ -4,7 +4,8 @@
     $nav = [
         ['لوحة التحكم', 'dashboard', 'dashboard', [], 'dashboard.view', 'dashboard', null],
         ['إدارة المتاجر', 'store', 'stores.index', [], 'stores.view', 'stores.*', null],
-        ['التقارير اليومية', 'report', null, ['reports'], 'reports.create|reports.view_all', null, 2],
+        ['التقارير اليومية', 'report', 'reports.index', [], 'reports.create|reports.view_all', 'reports.index|reports.show|reports.edit', null],
+        ['مراجعة التقارير', 'check-circle', 'reports.review.queue', [], 'reports.review', 'reports.review.*', null],
         ['الأكواد المفتوحة', 'alert', 'open-codes.index', [], 'shipments.view', 'open-codes.*', null],
         ['إدخال تقرير جديد', 'plus-doc', 'reports.create', [], 'reports.create', 'reports.create', null],
         ['استيراد الملفات', 'upload', null, ['imports'], 'imports.create|imports.view_all', null, 3],
@@ -40,7 +41,7 @@
             @continue(! $allowed($perm))
             @php
                 $href = $route ? route($route) : route('modules.placeholder', $params);
-                $active = $pattern ? request()->routeIs($pattern) : request()->is('modules/'.$params[0]);
+                $active = $pattern ? request()->routeIs(...explode('|', $pattern)) : request()->is('modules/'.$params[0]);
             @endphp
             <a href="{{ $href }}" class="nav-link {{ $active ? 'active' : '' }}" title="{{ $label }}">
                 <x-icon :name="$icon" class="nav-icon size-5 shrink-0"/>

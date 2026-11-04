@@ -24,6 +24,37 @@ use Illuminate\View\View;
 
 class DailyReportController extends Controller
 {
+    public function index(Request $request): View
+    {
+        $this->authorize('viewAny', DailyReport::class);
+        $user = $request->user();
+        $all = $user->hasPermission('reports.view_all');
+
+        $filters = $request->validate([
+            'status' => ['nullable', \Illuminate\Validation\Rule::enum(ReportStatus::class)],
+            'user_id' => ['nullable', 'integer'],
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date'],
+        ]);
+
+        $reports = DailyReport::query()->with('user:id,name')->withCount('stores')
+            ->when(! $all, fn ($q) => $q->where('user_id', $user->id))
+            ->when($all && ($filters['user_id'] ?? null), fn ($q) => $q->where('user_id', $filters['user_id']))
+            ->when($filters['status'] ?? null, fn ($q, $s) => $q->where('status', $s))
+            ->when($filters['from'] ?? null, fn ($q, $d) => $q->whereDate('work_date', '>=', $d))
+            ->when($filters['to'] ?? null, fn ($q, $d) => $q->whereDate('work_date', '<=', $d))
+            ->orderByDesc('work_date')->orderByDesc('id')
+            ->paginate(config('nours.per_page'))->withQueryString();
+
+        return view('reports.index', [
+            'reports' => $reports,
+            'filters' => $filters,
+            'all' => $all,
+            'users' => $all ? \App\Models\User::orderBy('name')->get(['id', 'name']) : collect(),
+            'openDraft' => DailyReport::where('user_id', $user->id)->openDraft()->latest('id')->first(),
+        ]);
+    }
+
     public function create(Request $request): View|RedirectResponse
     {
         $this->authorize('create', DailyReport::class);

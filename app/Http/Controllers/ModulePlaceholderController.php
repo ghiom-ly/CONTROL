@@ -10,9 +10,6 @@ use Illuminate\View\View;
 class ModulePlaceholderController extends Controller
 {
     public const MODULES = [
-        'stores' => ['إدارة المتاجر', 2],
-        'reports' => ['التقارير اليومية', 2],
-        'reports-create' => ['إدخال تقرير جديد', 2],
         'imports' => ['استيراد الملفات', 3],
         'shipments' => ['متابعة الشحنات', 4],
         'contacts' => ['سجل الاتصالات', 4],
