@@ -40,10 +40,14 @@ class ReportApprovalService
         ];
     }
 
-    public function approve(DailyReport $report, User $actor, ?array $previous = null): void
+    /** @param list<ReportStatus> $allowed الحالات المسموح اعتمادها (تُفحص بعد القفل) */
+    public function approve(DailyReport $report, User $actor, ?array $previous = null, array $allowed = [ReportStatus::PendingReview]): void
     {
-        DB::transaction(function () use ($report, $actor, $previous) {
+        DB::transaction(function () use ($report, $actor, $previous, $allowed) {
             $report = DailyReport::whereKey($report->id)->lockForUpdate()->firstOrFail();
+            if (! in_array($report->status, $allowed, true)) {
+                throw ValidationException::withMessages(['status' => 'تغيّرت حالة التقرير — لم يعد قيد المراجعة.']);
+            }
             $previous ??= $this->affectedKeys($report);
             $followups = $report->followups()->get();
 
@@ -59,8 +63,9 @@ class ReportApprovalService
                         'first_report_id' => $report->id, 'created_by' => $actor->id,
                     ]);
                 } elseif ($shipment->trashed()) {
+                    // شحنة محذوفة تُستعاد كأنها جديدة من هذا التقرير
                     $shipment->restore();
-                    $shipment->fill(['store_id' => $f->store_id])->save();
+                    $shipment->fill(['store_id' => $f->store_id, 'first_report_id' => $report->id, 'registered_at' => $report->work_date])->save();
                 }
 
                 $implied = $f->result->impliedStatuses();

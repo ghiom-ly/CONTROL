@@ -20,14 +20,6 @@
                     </div>
                 @endforeach
             </div>
-            @if($editable ?? false)
-                <form method="POST" action="{{ route('reports.attachments.store', $report) }}" enctype="multipart/form-data" class="mt-2 flex flex-wrap items-center gap-2">
-                    @csrf
-                    <input type="hidden" name="category" value="{{ $cat }}">
-                    <input type="file" name="files[]" accept="image/png,image/jpeg,image/webp" multiple required class="text-sm">
-                    <button class="btn btn-light btn-sm"><x-icon name="upload" class="size-4"/> رفع</button>
-                </form>
-            @endif
         </div>
     @endforeach
     @error('files')<p class="field-error">{{ $message }}</p>@enderror

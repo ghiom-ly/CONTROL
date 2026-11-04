@@ -24,7 +24,8 @@ class ReportSubmissionService
             }
 
             if ($report->status === ReportStatus::Rejected) {
-                $this->revisions->snapshot($report, 'إعادة تقديم بعد الإرجاع', $actor);
+                // النسخة المرفوضة حُفظت عند أول تعديل عليها (أو تُحفظ الآن إن لم يُعدَّل شيء)
+                $this->revisions->snapshotOnce($report, 'إعادة تقديم بعد الإرجاع', $actor);
                 $report->version++;
                 $report->rejection_reason = null;
             }

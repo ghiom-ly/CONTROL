@@ -8,6 +8,13 @@ use App\Models\User;
 
 class ReportRevisionService
 {
+    /** نسخة واحدة فقط لكل رقم نسخة — تحفظ التقرير كما كان قبل أول تعديل عليه */
+    public function snapshotOnce(DailyReport $report, string $reason, User $actor): ReportRevision
+    {
+        return ReportRevision::where('daily_report_id', $report->id)->where('version', $report->version)->first()
+            ?? $this->snapshot($report, $reason, $actor);
+    }
+
     /** نسخة كاملة من التقرير بحالته الحالية قبل أي تعديل جوهري */
     public function snapshot(DailyReport $report, string $reason, User $actor): ReportRevision
     {

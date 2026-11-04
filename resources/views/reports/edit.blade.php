@@ -14,7 +14,7 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('reports.update', $report) }}" id="report-form"
+    <form method="POST" action="{{ route('reports.update', $report) }}" id="report-form" enctype="multipart/form-data"
           x-data="reportForm(@js($formState), @js($storeOptions), @js($resultOptions), {{ $maxAttempts }})" class="space-y-5">
         @csrf
         @method('PUT')
@@ -130,7 +130,17 @@
                     @error("unanswered.{$bucket}_store_id")<p class="field-error">{{ $message }}</p>@enderror
                 </div>
             @endforeach
-            <p class="hint">السكرينات تُرفع من قسم «السكرينات» أسفل الصفحة.</p>
+            <div class="grid gap-3 sm:grid-cols-2">
+                @foreach(\App\Models\Attachment::REPORT_CATEGORIES as $cat => $catLabel)
+                    <div>
+                        <label class="label">رفع {{ $catLabel }}</label>
+                        <input type="file" name="screens[{{ $cat }}][]" accept="image/png,image/jpeg,image/webp" multiple class="text-sm">
+                    </div>
+                @endforeach
+            </div>
+            <p class="hint">تُرفع الصور مع «حفظ مسودة» أو «حفظ وإرسال» — الصور المرفوعة سابقاً تظهر أسفل الصفحة.</p>
+            @error('screens.*')<p class="field-error">{{ $message }}</p>@enderror
+            @foreach($errors->get('screens.*.*') as $msgs) @foreach($msgs as $m)<p class="field-error">{{ $m }}</p>@endforeach @endforeach
         </section>
 
         {{-- ④ ملاحظات واستفسارات --}}

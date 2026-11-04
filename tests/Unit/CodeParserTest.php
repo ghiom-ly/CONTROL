@@ -18,6 +18,11 @@ class CodeParserTest extends TestCase
         $this->assertSame([], CodeParser::split("  \n ،, "));
     }
 
+    public function test_strips_invisible_marks_and_persian_digits(): void
+    {
+        $this->assertSame(['AB12', '345'], CodeParser::split("\u{200F}ab12\u{200E} \u{FEFF}۳۴٥\u{2066}"));
+    }
+
     public function test_too_long_code_throws(): void
     {
         $this->expectException(\InvalidArgumentException::class);

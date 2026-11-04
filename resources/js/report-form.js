@@ -1,11 +1,15 @@
 // نموذج التقرير اليومي (Alpine). الخادم يعيد التحقق والتطبيع لكل الأكواد.
-const AR_DIGITS = { '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4', '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9' };
+const AR_DIGITS = {
+    '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4', '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9',
+    '۰': '0', '۱': '1', '۲': '2', '۳': '3', '۴': '4', '۵': '5', '۶': '6', '۷': '7', '۸': '8', '۹': '9',
+};
 
 export function splitCodes(raw) {
     const seen = new Set();
     return String(raw || '')
+        .replace(/\p{Cf}+/gu, '')
         .split(/[\s,،;؛]+/u)
-        .map((c) => c.replace(/[٠-٩]/g, (d) => AR_DIGITS[d]).trim().toUpperCase())
+        .map((c) => c.replace(/[٠-٩۰-۹]/g, (d) => AR_DIGITS[d]).trim().toUpperCase())
         .filter((c) => c && !seen.has(c) && seen.add(c));
 }
 
@@ -51,7 +55,7 @@ export default function reportForm(state, storeOptions, results, maxAttempts) {
             s.paste = '';
         },
         totalOrders() {
-            const nums = this.stores.map((s) => parseInt(String(s.shipments_count).replace(/[٠-٩]/g, (d) => AR_DIGITS[d]), 10)).filter((n) => !Number.isNaN(n));
+            const nums = this.stores.map((s) => parseInt(String(s.shipments_count).replace(/[٠-٩۰-۹]/g, (d) => AR_DIGITS[d]), 10)).filter((n) => !Number.isNaN(n));
             return nums.length ? nums.reduce((a, b) => a + b, 0) : 'غير متوفر';
         },
         codesWithResult(result) {

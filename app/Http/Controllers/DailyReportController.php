@@ -98,6 +98,7 @@ class DailyReportController extends Controller
     public function update(
         SaveReportRequest $request, DailyReport $report, ReportDraftService $drafts,
         ReportSubmissionService $submissions, ReportRevisionService $revisions, ReportApprovalService $approvals,
+        \App\Services\AttachmentService $attachments,
     ): RedirectResponse {
         $actor = $request->user();
         $submit = $request->validated('action') === 'submit';
@@ -107,24 +108,35 @@ class DailyReportController extends Controller
         if ($submit) {
             $this->authorize('submit', $report);
         }
-        if ($approveAfter && ! $adminEdit) {
-            $this->authorize('review', $report);
-            abort_if($report->user_id === $actor->id, 403, 'لا يمكنك مراجعة تقريرك.');
+        if ($approveAfter) {
+            if (! $adminEdit) {
+                $this->authorize('review', $report);
+            }
+            // لا أحد يعتمد تقريره بنفسه — ولا عبر التعديل الإداري
+            abort_if($report->user_id === $actor->id, 403, 'لا يمكنك اعتماد تقريرك.');
         }
 
-        $warnings = DB::transaction(function () use ($request, $report, $drafts, $submissions, $revisions, $approvals, $actor, $submit, $adminEdit, $correcting, $approveAfter) {
+        $warnings = DB::transaction(function () use ($request, $report, $drafts, $submissions, $revisions, $approvals, $attachments, $actor, $submit, $adminEdit, $correcting, $approveAfter) {
             $previous = $adminEdit ? $approvals->affectedKeys($report) : null;
             if ($adminEdit || $correcting) {
                 $revisions->snapshot($report, $adminEdit ? 'تعديل إداري بعد الاعتماد' : 'تصحيح المسؤول', $actor);
                 $report->increment('version');
+            } elseif ($report->status === ReportStatus::Rejected) {
+                // حفظ النسخة التي رُفضت قبل أول تعديل عليها
+                $revisions->snapshotOnce($report, 'إعادة تقديم بعد الإرجاع', $actor);
             }
 
             $w = $drafts->save($report, $request->validated(), $actor)['warnings'];
+            foreach ($request->file('screens', []) as $category => $files) {
+                foreach ($files as $file) {
+                    $attachments->storeForReport($report, $file, $category, $actor);
+                }
+            }
             if ($submit) {
                 $w = array_merge($w, $submissions->submit($report, (float) $request->validated('end_delivery_rate'), $actor)['warnings']);
             }
             if ($approveAfter) {
-                $approvals->approve($report, $actor, $previous);
+                $approvals->approve($report, $actor, $previous, [$adminEdit ? ReportStatus::Approved : ReportStatus::PendingReview]);
             }
 
             return $w;

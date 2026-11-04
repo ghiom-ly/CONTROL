@@ -24,6 +24,10 @@ class SaveReportRequest extends FormRequest
             if (isset($row['shipments_count']) && $row['shipments_count'] !== '') {
                 $row['shipments_count'] = ArabicNormalizer::digits((string) $row['shipments_count']);
             }
+            // صفوف «+ إضافة كود» التي تُركت فارغة لا تمنع الحفظ
+            if (isset($row['codes']) && is_array($row['codes'])) {
+                $row['codes'] = array_values(array_filter($row['codes'], fn ($c) => is_array($c) && filled($c['code'] ?? null)));
+            }
 
             return $row;
         })->values()->all();
@@ -44,6 +48,9 @@ class SaveReportRequest extends FormRequest
         return [
             'action' => ['nullable', 'in:save,submit'],
             'approve_after' => ['nullable', 'boolean'],
+            'screens' => ['array:courier_screens,customer_calls'],
+            'screens.*' => ['array', 'max:20'],
+            'screens.*.*' => ['file', 'mimes:jpg,jpeg,png,webp', 'max:'.config('nours.uploads.max_size_kb')],
             'end_delivery_rate' => ['required_if:action,submit', 'nullable', 'numeric', 'min:0', 'max:100'],
             'stores' => ['array', 'max:200'],
             'stores.*.store_id' => ['required', 'integer', 'distinct',

@@ -37,6 +37,12 @@ class ReportDraftService
             $codes = $this->collectCodes($storeRows->all(), $data['unanswered'] ?? []);
             $warnings = $this->checkOwnership($codes, $stores, $report);
 
+            // وقت المتابعة يبقى كما سُجّل أول مرة — حتى لا يصبح تعديلٌ لاحق على تقرير قديم «آخر متابعة»
+            $oldTimes = $report->followups()->pluck('followup_at', 'shipment_code');
+            $newCodeTime = $report->status === \App\Enums\ReportStatus::Draft
+                ? now()
+                : ($report->submitted_at ?? $report->shift_started_at ?? now());
+
             $report->followups()->delete();
             $report->stores()->delete();
 
@@ -58,7 +64,7 @@ class ReportDraftService
                     'store_id' => $c['store_id'],
                     'shipment_code' => (string) $code,
                     'user_id' => $report->user_id,
-                    'followup_at' => now(),
+                    'followup_at' => $oldTimes[(string) $code] ?? $newCodeTime,
                     'result' => $c['result'],
                     'is_official' => false,
                 ]);
