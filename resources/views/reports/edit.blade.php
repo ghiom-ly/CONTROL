@@ -1,0 +1,176 @@
+<x-layouts.app :title="'تقرير '.$report->report_number">
+    <x-page-header :title="'ريبورت تاريخ '.$report->work_date->format('Y-m-d')"
+                   :subtitle="'الموظف: '.$report->user->name.' — '.$report->report_number.' — '.$report->status->label()">
+        @if(Route::has('reports.show'))
+            <x-slot:actions>
+                <a href="{{ route('reports.show', $report) }}" class="btn btn-light"><x-icon name="eye" class="size-4"/> عرض</a>
+            </x-slot:actions>
+        @endif
+    </x-page-header>
+
+    @if($report->rejection_reason && $report->status === \App\Enums\ReportStatus::Rejected)
+        <div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            <p class="font-bold">أُرجع التقرير للتعديل:</p><p>{{ $report->rejection_reason }}</p>
+        </div>
+    @endif
+
+    <form method="POST" action="{{ route('reports.update', $report) }}" id="report-form"
+          x-data="reportForm(@js($formState), @js($storeOptions), @js($resultOptions), {{ $maxAttempts }})" class="space-y-5">
+        @csrf
+        @method('PUT')
+        @if(request('approve_after')) <input type="hidden" name="approve_after" value="1"> @endif
+
+        {{-- ⓪ بداية الشفت --}}
+        <section class="card p-5">
+            <h2 class="card-title mb-3">⓪ بداية الشفت</h2>
+            <div class="grid gap-3 sm:grid-cols-3 text-sm">
+                <div><p class="label">إجمالي الطلبيات المكلّف بها</p><p class="font-bold tabular-nums">{{ $report->start_total_orders ?? 'غير متوفر' }}</p></div>
+                <div><p class="label">نسبة التسليم عند البداية</p><p class="font-bold tabular-nums">{{ $report->start_delivery_rate !== null ? $report->start_delivery_rate.'%' : 'غير متوفر' }}</p></div>
+                <div><p class="label">بدأ الشفت</p><p class="font-bold">{{ $report->shift_started_at?->format('Y/m/d H:i') ?? '—' }}</p></div>
+            </div>
+        </section>
+
+        {{-- ① ملخص حركة الأوردرات --}}
+        <section class="card p-5">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <h2 class="card-title">① ملخص حركة الأوردرات</h2>
+                <p class="text-sm text-slate-600">عدد المتاجر: <b x-text="stores.length"></b> — الإجمالي: <b x-text="totalOrders()"></b></p>
+            </div>
+            @error('codes')<p class="field-error mb-2">{{ $message }}</p>@enderror
+
+            <template x-for="(s, i) in stores" :key="s.store_id">
+                <div class="mb-3 rounded-xl border border-slate-200" :class="s.open && 'bg-slate-50/60'">
+                    <div class="flex flex-wrap items-center gap-3 p-3">
+                        <button type="button" class="font-bold text-navy-900" x-on:click="s.open = !s.open">
+                            <span x-text="s.open ? '▼' : '►'"></span> <span x-text="storeName(s.store_id)"></span>
+                        </button>
+                        <span x-show="!isMine(s.store_id)" class="badge badge-yellow">خارج متاجري</span>
+                        <label class="text-sm text-slate-600">الأوردرات التي اشتغلت عليها في هذا الشفت:</label>
+                        <input type="text" inputmode="numeric" class="input !w-24" :name="`stores[${i}][shipments_count]`" x-model="s.shipments_count">
+                        <span class="text-xs text-slate-400" x-text="`${s.codes.length} كود`"></span>
+                        <button type="button" class="btn btn-ghost btn-sm ms-auto" x-on:click="removeStore(i)"><x-icon name="trash" class="size-4"/></button>
+                        <input type="hidden" :name="`stores[${i}][store_id]`" :value="s.store_id">
+                    </div>
+                    <div x-show="s.open" class="border-t border-slate-200 p-3 space-y-2">
+                        <p class="label">أكواد تابعتها في هذا المتجر (اختياري) ونتيجة كل كود</p>
+                        <template x-for="(c, j) in s.codes" :key="j">
+                            <div class="flex flex-wrap gap-2">
+                                <input class="input !w-40 ltr" :name="`stores[${i}][codes][${j}][code]`" x-model="c.code" placeholder="الكود">
+                                <select class="input !w-auto" :name="`stores[${i}][codes][${j}][result]`" x-model="c.result">
+                                    <template x-for="(label, val) in results" :key="val"><option :value="val" x-text="label" :selected="val === c.result"></option></template>
+                                </select>
+                                <button type="button" class="btn btn-ghost btn-sm" x-on:click="s.codes.splice(j, 1)"><x-icon name="x" class="size-4"/></button>
+                            </div>
+                        </template>
+                        <div class="flex flex-wrap items-start gap-2">
+                            <button type="button" class="btn btn-light btn-sm" x-on:click="s.codes.push({code: '', result: 'courier_promised_delivery'})">+ إضافة كود</button>
+                            <textarea class="input !w-56" rows="1" x-model="s.paste" placeholder="لصق عدة أكواد"></textarea>
+                            <select class="input !w-auto" x-model="s.pasteResult">
+                                <template x-for="(label, val) in results" :key="val"><option :value="val" x-text="label"></option></template>
+                            </select>
+                            <button type="button" class="btn btn-light btn-sm" x-on:click="pasteInto(s)">إضافة الملصوق</button>
+                        </div>
+                        <div>
+                            <label class="label">ملاحظة عن المتجر</label>
+                            <input class="input" :name="`stores[${i}][notes]`" x-model="s.notes" maxlength="2000">
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <div class="flex flex-wrap gap-2">
+                <input list="store-options" class="input !w-72" x-model="storeSearch" placeholder="+ إضافة متجر (ابحث بالاسم)" x-on:change="addStoreFromSearch()">
+                <datalist id="store-options">
+                    <template x-for="o in availableStores()" :key="o.id"><option :value="o.name + ' — ' + o.code" x-text="o.mine ? 'متاجري' : ''"></option></template>
+                </datalist>
+            </div>
+            @error('stores')<p class="field-error">{{ $message }}</p>@enderror
+            @foreach($errors->get('stores.*') as $msgs) @foreach($msgs as $m)<p class="field-error">{{ $m }}</p>@endforeach @endforeach
+        </section>
+
+        {{-- ② أوقات المحاولات --}}
+        <section class="card p-5">
+            <h2 class="card-title mb-3">② أوقات المحاولات — <span x-text="attempts.length"></span> محاولة بالمجمل</h2>
+            <div class="flex flex-wrap gap-2">
+                <template x-for="(t, k) in attempts" :key="k">
+                    <div class="flex items-center gap-1">
+                        <span class="text-sm text-slate-500" x-text="`المحاولة ${k + 1}:`"></span>
+                        <input type="time" class="input !w-32" :name="`attempt_times[${k}]`" x-model="attempts[k]">
+                        <button type="button" class="btn btn-ghost btn-sm" x-on:click="attempts.splice(k, 1)"><x-icon name="x" class="size-4"/></button>
+                    </div>
+                </template>
+                <button type="button" class="btn btn-light btn-sm" x-on:click="attempts.push('')">+ إضافة محاولة</button>
+            </div>
+            <div x-show="attempts.length > maxAttempts" class="mt-3">
+                <p class="text-sm font-semibold text-amber-700">⚠ الحد الأقصى {{ $maxAttempts }} محاولة في الشفت. اذكر سبب التجاوز (سيظهر للمسؤول):</p>
+                <input class="input mt-1" name="attempts_over_limit_reason" x-model="overLimitReason" maxlength="1000">
+            </div>
+            @error('attempts_over_limit_reason')<p class="field-error">{{ $message }}</p>@enderror
+            @error('attempt_times.*')<p class="field-error">{{ $message }}</p>@enderror
+        </section>
+
+        {{-- ③ الأكواد غير المُجاب عليها --}}
+        <section class="card p-5 space-y-4">
+            <h2 class="card-title">③ الأكواد غير المُجاب عليها</h2>
+            @foreach(['customer' => ['أكواد لم يرد عليها الزبون (لتحويلها للمتاجر)', 'customer_no_answer'], 'courier' => ['أكواد لم يرد عليها المندوب أو لا تستجيب ولا تُحل', 'courier_no_answer']] as $bucket => [$title, $result])
+                <div>
+                    <p class="label">{{ $title }}</p>
+                    <div class="flex flex-wrap gap-1 mb-2">
+                        <template x-for="code in codesWithResult('{{ $result }}')" :key="code.code">
+                            <span class="badge badge-navy ltr"><span x-text="code.code"></span> <span class="text-xs opacity-70" x-text="'(' + code.store + ')'"></span></span>
+                        </template>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <textarea class="input !w-80" rows="2" name="unanswered[{{ $bucket }}]" x-model="unanswered.{{ $bucket }}" placeholder="لصق أكواد إضافية هنا"></textarea>
+                        <select class="input !w-56" name="unanswered[{{ $bucket }}_store_id]" x-model="unanswered.{{ $bucket }}_store_id">
+                            <option value="">لأي متجر؟</option>
+                            <template x-for="s in stores" :key="s.store_id"><option :value="s.store_id" x-text="storeName(s.store_id)"></option></template>
+                        </select>
+                    </div>
+                    @error("unanswered.{$bucket}_store_id")<p class="field-error">{{ $message }}</p>@enderror
+                </div>
+            @endforeach
+            @includeWhen(View::exists('reports._screens'), 'reports._screens')
+        </section>
+
+        {{-- ④ ملاحظات واستفسارات --}}
+        <section class="card p-5 space-y-3">
+            <h2 class="card-title">④ ملاحظات واجهتني أو استفسارات</h2>
+            <div>
+                <label class="label">ملاحظات</label>
+                <textarea name="notes" rows="3" class="input" x-model="notes" maxlength="5000"></textarea>
+            </div>
+            <div>
+                <label class="label">استفسارات</label>
+                <textarea name="inquiries" rows="2" class="input" x-model="inquiries" maxlength="5000"></textarea>
+            </div>
+            <div>
+                <p class="label">مشكلات تُحوَّل للإدارة (تُنشأ عند اعتماد التقرير)</p>
+                <template x-for="(iss, n) in issues" :key="iss.key">
+                    <div class="mb-2 grid gap-2 rounded-xl border border-slate-200 p-3 sm:grid-cols-4">
+                        <input type="hidden" :name="`issue_requests[${n}][key]`" :value="iss.key">
+                        <select class="input" :name="`issue_requests[${n}][store_id]`" x-model="iss.store_id">
+                            <template x-for="s in stores" :key="s.store_id"><option :value="s.store_id" x-text="storeName(s.store_id)" :selected="s.store_id == iss.store_id"></option></template>
+                        </select>
+                        <select class="input" :name="`issue_requests[${n}][type]`" x-model="iss.type">
+                            @foreach($issueTypes as $val => $label)<option value="{{ $val }}">{{ $label }}</option>@endforeach
+                        </select>
+                        <input class="input" :name="`issue_requests[${n}][title]`" x-model="iss.title" placeholder="العنوان" maxlength="200">
+                        <div class="flex gap-1">
+                            <input class="input" :name="`issue_requests[${n}][description]`" x-model="iss.description" placeholder="الوصف">
+                            <button type="button" class="btn btn-ghost btn-sm" x-on:click="issues.splice(n, 1)"><x-icon name="x" class="size-4"/></button>
+                        </div>
+                    </div>
+                </template>
+                <button type="button" class="btn btn-light btn-sm" x-on:click="addIssue()" x-bind:disabled="!stores.length">+ تحويل ملاحظة إلى مشكلة على متجر</button>
+            </div>
+            @foreach($errors->get('issue_requests.*') as $msgs) @foreach($msgs as $m)<p class="field-error">{{ $m }}</p>@endforeach @endforeach
+        </section>
+
+        <div class="flex flex-wrap gap-2">
+            <button type="submit" class="btn btn-primary">حفظ مسودة</button>
+        </div>
+    </form>
+
+    @includeWhen(View::exists('reports._submit'), 'reports._submit')
+</x-layouts.app>

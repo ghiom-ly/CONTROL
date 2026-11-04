@@ -1,5 +1,6 @@
 import Alpine from 'alpinejs';
 import Chart from 'chart.js/auto';
+import reportForm from './report-form';
 
 window.Chart = Chart;
 Chart.defaults.font.family = "'Cairo', sans-serif";
@@ -46,6 +47,8 @@ window.addEventListener('pageshow', () => {
         btn.innerHTML = btn.dataset.originalText;
     });
 });
+
+Alpine.data('reportForm', reportForm);
 
 window.Alpine = Alpine;
 Alpine.start();

@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordController;
+use App\Http\Controllers\DailyReportController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ModulePlaceholderController;
 use App\Http\Controllers\NotificationController;
@@ -45,6 +46,12 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/stores/{store}', [StoreController::class, 'show'])->name('stores.show');
         Route::put('/stores/{store}', [StoreController::class, 'update'])->name('stores.update');
         Route::patch('/stores/{store}/archive', [StoreController::class, 'archive'])->name('stores.archive');
+
+        // ---- التقارير اليومية (المرحلة 2)
+        Route::get('/reports/new', [DailyReportController::class, 'create'])->name('reports.create');
+        Route::post('/reports/start', [DailyReportController::class, 'start'])->name('reports.start');
+        Route::get('/reports/{report}/edit', [DailyReportController::class, 'edit'])->name('reports.edit');
+        Route::put('/reports/{report}', [DailyReportController::class, 'update'])->name('reports.update');
 
         // ---- الإعدادات والصلاحيات
         Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
