@@ -90,7 +90,7 @@ class Phase3ReviewFixesTest extends TestCase
         $rs = DailyReport::sole()->stores()->sole();
         $this->assertSame(40, $rs->file_orders_count);
         $this->assertSame(25, $rs->file_delivered_count);
-        $this->assertSame(40, $rs->shipments_count);
+        $this->assertSame(40, $rs->start_orders);
     }
 
     // #4

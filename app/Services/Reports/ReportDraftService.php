@@ -36,6 +36,22 @@ class ReportDraftService
         return ($old?->shipments_count_source === 'file' && $old->shipments_count === $count) ? 'file' : 'manual';
     }
 
+    /**
+     * أرقام بداية المتجر: المُرسلة في النموذج إن وُجد المفتاح، وإلا تبقى المحفوظة.
+     * المصدر يبقى «file» فقط إن لم تتغير القيمتان عمّا جاء من الملف.
+     */
+    private static function startValues(array $row, ?ReportStore $old): array
+    {
+        $posted = array_key_exists('start_orders', $row) || array_key_exists('start_rate', $row);
+        $orders = $posted ? (isset($row['start_orders']) && $row['start_orders'] !== '' ? (int) $row['start_orders'] : null) : $old?->start_orders;
+        $rate = $posted ? (isset($row['start_rate']) && $row['start_rate'] !== '' ? round((float) $row['start_rate'], 2) : null) : ($old?->start_rate === null ? null : (float) $old->start_rate);
+
+        $unchanged = $old && $old->start_orders === $orders && ($old->start_rate === null ? null : (float) $old->start_rate) === $rate;
+        $source = ($orders === null && $rate === null) ? null : ($unchanged ? ($old->start_source ?? 'manual') : 'manual');
+
+        return ['start_orders' => $orders, 'start_rate' => $rate, 'start_source' => $source];
+    }
+
     /** @return array{warnings: list<string>} */
     public function save(DailyReport $report, array $data, User $actor): array
     {
@@ -71,6 +87,7 @@ class ReportDraftService
                     'is_outside_assignment' => $stores[$storeId]->assigned_user_id !== $report->user_id,
                     'shipments_count' => $count,
                     'shipments_count_source' => self::countSource($count, $old),
+                    ...self::startValues($row, $old),
                     'file_orders_count' => $old?->file_orders_count,
                     'file_delivered_count' => $old?->file_delivered_count,
                     'end_file_orders_count' => $old?->end_file_orders_count,
@@ -102,6 +119,7 @@ class ReportDraftService
                 'issue_requests' => array_values($data['issue_requests'] ?? []),
                 'updated_by' => $actor->id,
             ])->save();
+            \App\Support\StartTotals::refresh($report);
 
             return ['warnings' => $warnings];
         });

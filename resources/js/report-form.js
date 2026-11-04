@@ -25,6 +25,7 @@ export default function reportForm(state, storeOptions, results, maxAttempts) {
         stores: (state.stores || []).map((s) => ({
             store_id: Number(s.store_id),
             shipments_count: s.shipments_count ?? '',
+            start_orders: s.start_orders ?? '', start_rate: s.start_rate ?? '', start_source: s.start_source ?? null,
             notes: s.notes ?? '',
             codes: (s.codes || []).map((c) => ({ code: c.code, result: c.result })),
             open: false, paste: '', pasteResult: 'courier_promised_delivery',
@@ -45,7 +46,7 @@ export default function reportForm(state, storeOptions, results, maxAttempts) {
         addStoreFromSearch() {
             const found = storeOptions.find((o) => `${o.name} — ${o.code}` === this.storeSearch || o.name === this.storeSearch);
             if (found && !this.stores.some((s) => s.store_id === found.id)) {
-                this.stores.push({ store_id: found.id, shipments_count: '', notes: '', codes: [], open: true, paste: '', pasteResult: 'courier_promised_delivery' });
+                this.stores.push({ store_id: found.id, shipments_count: '', start_orders: '', start_rate: '', start_source: null, notes: '', codes: [], open: true, paste: '', pasteResult: 'courier_promised_delivery' });
             }
             this.storeSearch = '';
         },
@@ -54,6 +55,17 @@ export default function reportForm(state, storeOptions, results, maxAttempts) {
             const existing = new Set(s.codes.map((c) => c.code.toUpperCase()));
             splitCodes(s.paste).forEach((code) => { if (!existing.has(code)) s.codes.push({ code, result: s.pasteResult }); });
             s.paste = '';
+        },
+        // مثل StartTotals في الخادم: الإجمالي = مجموع الطلبيات، والنسبة مرجّحة بعدد الطلبيات
+        startTotals() {
+            const num = (v) => { const n = parseFloat(String(v ?? '').replace(/[٠-٩۰-۹]/g, (d) => AR_DIGITS[d]).replace(/[٫,]/, '.')); return Number.isNaN(n) ? null : n; };
+            let total = null; let w = 0; let sum = 0;
+            this.stores.forEach((s) => {
+                const o = num(s.start_orders); const r = num(s.start_rate);
+                if (o !== null) total = (total ?? 0) + o;
+                if (o !== null && r !== null && o > 0) { sum += o * r; w += o; }
+            });
+            return { total, rate: w > 0 ? Math.round((sum / w) * 100) / 100 : null };
         },
         totalOrders() {
             const nums = this.stores.map((s) => parseInt(String(s.shipments_count).replace(/[٠-٩۰-۹]/g, (d) => AR_DIGITS[d]), 10)).filter((n) => !Number.isNaN(n));

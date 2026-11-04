@@ -2,10 +2,13 @@
 
 namespace App\Http\Requests\Reports;
 
+use App\Enums\StoreStatus;
 use App\Models\DailyReport;
 use App\Support\ArabicNormalizer;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
+/** بدء الشفت: لكل متجر طلبياته ونسبة تسليمه عند البداية */
 class StartShiftRequest extends FormRequest
 {
     public function authorize(): bool
@@ -15,23 +18,36 @@ class StartShiftRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        foreach (['start_total_orders', 'start_delivery_rate'] as $f) {
-            if ($this->filled($f)) {
-                $this->merge([$f => str_replace(['٫', ','], '.', ArabicNormalizer::digits((string) $this->input($f)))]);
-            }
-        }
+        $num = fn ($v) => ($v === null || trim((string) $v) === '') ? null
+            : str_replace(['٫', ',', '%', '٪', ' '], ['.', '.', '', '', ''], ArabicNormalizer::digits((string) $v));
+
+        $rows = collect($this->input('stores', []))
+            ->filter(fn ($r) => is_array($r) && ! empty($r['store_id']))
+            ->map(fn ($r) => ['store_id' => $r['store_id'], 'start_orders' => $num($r['start_orders'] ?? null), 'start_rate' => $num($r['start_rate'] ?? null)])
+            ->filter(fn ($r) => $r['start_orders'] !== null || $r['start_rate'] !== null)
+            ->values()->all();
+
+        $this->merge(['stores' => $rows]);
     }
 
     public function rules(): array
     {
         return [
-            'start_total_orders' => ['required', 'integer', 'min:0', 'max:100000'],
-            'start_delivery_rate' => ['required', 'numeric', 'min:0', 'max:100'],
+            'stores' => ['required', 'array', 'min:1', 'max:200'],
+            'stores.*.store_id' => ['required', 'integer', 'distinct',
+                Rule::exists('stores', 'id')->where(fn ($q) => $q->where('status', '!=', StoreStatus::Archived->value)->whereNull('deleted_at'))],
+            'stores.*.start_orders' => ['nullable', 'integer', 'min:0', 'max:100000'],
+            'stores.*.start_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
         ];
+    }
+
+    public function messages(): array
+    {
+        return ['stores.required' => 'أدخل طلبيات ونسبة تسليم متجر واحد على الأقل.', 'stores.min' => 'أدخل طلبيات ونسبة تسليم متجر واحد على الأقل.'];
     }
 
     public function attributes(): array
     {
-        return ['start_total_orders' => 'إجمالي الطلبيات المكلّف بها', 'start_delivery_rate' => 'نسبة التسليم الحالية'];
+        return ['stores.*.start_orders' => 'طلبيات المتجر', 'stores.*.start_rate' => 'نسبة التسليم', 'stores.*.store_id' => 'المتجر'];
     }
 }

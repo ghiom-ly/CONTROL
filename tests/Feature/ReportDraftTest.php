@@ -30,10 +30,17 @@ class ReportDraftTest extends TestCase
         return $this->actingAs($this->emp)->put("/reports/{$r->id}", $payload);
     }
 
+    /** بدء الشفت بأرقام متجر واحد (المرحلة 4: لكل متجر) */
+    private function startPayload(int $orders = 140, $rate = 72): array
+    {
+        $store = Store::factory()->assignedTo($this->emp->id)->create();
+
+        return ['stores' => [['store_id' => $store->id, 'start_orders' => $orders, 'start_rate' => $rate]]];
+    }
+
     public function test_employee_starts_shift(): void
     {
-        $this->actingAs($this->emp)->post('/reports/start', ['start_total_orders' => '١٤٠', 'start_delivery_rate' => 72])
-            ->assertRedirect();
+        $this->actingAs($this->emp)->post('/reports/start', $this->startPayload())->assertRedirect();
 
         $r = DailyReport::sole();
         $this->assertSame('draft', $r->status->value);
@@ -46,20 +53,19 @@ class ReportDraftTest extends TestCase
 
     public function test_start_validates_rate_range(): void
     {
-        $this->actingAs($this->emp)->post('/reports/start', ['start_total_orders' => 10, 'start_delivery_rate' => 120])
-            ->assertSessionHasErrors('start_delivery_rate');
+        $this->actingAs($this->emp)->post('/reports/start', $this->startPayload(10, 120))->assertSessionHasErrors('stores.0.start_rate');
     }
 
     public function test_cannot_start_second_open_shift(): void
     {
         $this->actingAs($this->emp);
-        $this->post('/reports/start', ['start_total_orders' => 10, 'start_delivery_rate' => 50]);
-        $this->post('/reports/start', ['start_total_orders' => 10, 'start_delivery_rate' => 50])->assertSessionHasErrors('shift');
+        $this->post('/reports/start', $this->startPayload(10, 50));
+        $this->post('/reports/start', $this->startPayload(10, 50))->assertSessionHasErrors('shift');
         $this->assertSame(1, DailyReport::count());
 
         // تقرير مرفوض لا يمنع شفتاً جديداً
         DailyReport::query()->update(['status' => 'rejected']);
-        $this->post('/reports/start', ['start_total_orders' => 10, 'start_delivery_rate' => 50])->assertSessionHasNoErrors();
+        $this->post('/reports/start', $this->startPayload(10, 50))->assertSessionHasNoErrors();
         $this->assertSame(2, DailyReport::count());
     }
 

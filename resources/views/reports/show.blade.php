@@ -54,11 +54,13 @@
                 <h2 class="card-title px-5 pt-4">① المتاجر ({{ $report->stores->count() }}) — الإجمالي: {{ $report->total_shipments ?? 'غير متوفر' }}</h2>
                 <div class="table-wrap">
                     <table class="table">
-                        <thead><tr><th>المتجر</th><th>الأوردرات</th><th>الأكواد</th><th>ملاحظة</th></tr></thead>
+                        <thead><tr><th>المتجر</th><th>طلبيات البداية</th><th>نسبة البداية</th><th>اشتغلت عليها</th><th>الأكواد</th><th>ملاحظة</th></tr></thead>
                         <tbody>
                         @foreach($report->stores as $rs)
                             <tr>
                                 <td class="font-bold">{{ $rs->store->name }} @if($rs->is_outside_assignment)<span class="badge badge-yellow">خارج الإسناد</span>@endif</td>
+                                <td class="tabular-nums">{{ $rs->start_orders ?? '—' }}</td>
+                                <td class="tabular-nums">{{ $rs->start_rate !== null ? $rs->start_rate.'%' : '—' }}</td>
                                 <td class="tabular-nums">{{ $rs->shipments_count ?? 'غير متوفر' }}</td>
                                 <td class="text-xs">
                                     @foreach($report->followups->where('store_id', $rs->store_id) as $f)

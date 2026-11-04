@@ -24,6 +24,11 @@ class SaveReportRequest extends FormRequest
             if (isset($row['shipments_count']) && $row['shipments_count'] !== '') {
                 $row['shipments_count'] = ArabicNormalizer::digits((string) $row['shipments_count']);
             }
+            foreach (['start_orders', 'start_rate'] as $k) {
+                if (isset($row[$k]) && $row[$k] !== '') {
+                    $row[$k] = str_replace(['٫', ',', '%', '٪', ' '], ['.', '.', '', '', ''], ArabicNormalizer::digits((string) $row[$k]));
+                }
+            }
             // صفوف «+ إضافة كود» التي تُركت فارغة لا تمنع الحفظ
             if (isset($row['codes']) && is_array($row['codes'])) {
                 $row['codes'] = array_values(array_filter($row['codes'], fn ($c) => is_array($c) && filled($c['code'] ?? null)));
@@ -56,6 +61,8 @@ class SaveReportRequest extends FormRequest
             'stores.*.store_id' => ['required', 'integer', 'distinct',
                 Rule::exists('stores', 'id')->where(fn ($q) => $q->where('status', '!=', StoreStatus::Archived->value)->whereNull('deleted_at'))],
             'stores.*.shipments_count' => ['nullable', 'integer', 'min:0', 'max:100000'],
+            'stores.*.start_orders' => ['nullable', 'integer', 'min:0', 'max:100000'],
+            'stores.*.start_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'stores.*.notes' => ['nullable', 'string', 'max:2000'],
             'stores.*.codes' => ['array', 'max:500'],
             'stores.*.codes.*.code' => ['required', 'string', 'max:80'],
@@ -93,6 +100,7 @@ class SaveReportRequest extends FormRequest
         return [
             'end_delivery_rate' => 'نسبة التسليم النهائية',
             'stores.*.store_id' => 'المتجر', 'stores.*.shipments_count' => 'عدد الأوردرات',
+            'stores.*.start_orders' => 'طلبيات البداية', 'stores.*.start_rate' => 'نسبة البداية',
             'stores.*.codes.*.code' => 'الكود', 'stores.*.codes.*.result' => 'نتيجة الكود',
             'attempt_times.*' => 'وقت المحاولة', 'attempts_over_limit_reason' => 'سبب تجاوز المحاولات',
             'issue_requests.*.title' => 'عنوان المشكلة', 'issue_requests.*.description' => 'وصف المشكلة',

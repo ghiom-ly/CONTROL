@@ -28,11 +28,19 @@ class ReportWhatsappFormatter
             'اسم الموظف: '.$report->user->name,
             '',
             'بداية الشفت: إجمالي الطلبيات '.$num($report->start_total_orders).' — نسبة التسليم '.$rate($report->start_delivery_rate).' ← '.$rate($report->end_delivery_rate),
+        ];
+        // بداية كل متجر (المرحلة 4)
+        foreach ($report->stores->sortBy('id') as $rs) {
+            if ($rs->start_orders !== null || $rs->start_rate !== null) {
+                $lines[] = '- '.$rs->store->name.': '.$num($rs->start_orders).' طلبية — '.$rate($rs->start_rate);
+            }
+        }
+        array_push($lines,
             '',
             '1) ملخص حركة الأوردرات:',
             '- كام متجر تم العمل عليه: '.$report->stores->count(),
             '- إجمالي الأوردرات التي عملت عليها اليوم: '.($known->isEmpty() ? $na : $known->sum()),
-        ];
+        );
         foreach ($report->stores->sortBy('id') as $rs) {
             $lines[] = '  - '.$rs->store->name.': '.$num($rs->shipments_count);
         }

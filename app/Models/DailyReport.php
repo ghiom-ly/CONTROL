@@ -166,11 +166,18 @@ class DailyReport extends Model
             }
         }
 
-        $this->stores()->with('store:id,name')->whereNotNull('file_orders_count')->get()
-            ->filter(fn ($rs) => $rs->shipments_count !== $rs->file_orders_count)
-            ->each(function ($rs) use (&$out) {
-                $out[] = ['label' => $rs->store->name, 'report' => $rs->shipments_count, 'file' => $rs->file_orders_count];
-            });
+        // لكل متجر: طلبيات ونسبة البداية في التقرير مقابل الملف (المرحلة 4)
+        foreach ($this->stores()->with('store:id,name')->whereNotNull('file_orders_count')->get() as $rs) {
+            if ($rs->start_orders !== $rs->file_orders_count) {
+                $out[] = ['label' => 'طلبيات البداية — '.$rs->store->name, 'report' => $rs->start_orders, 'file' => $rs->file_orders_count];
+            }
+            $fileRate = ($rs->file_delivered_count === null || $rs->file_orders_count === 0) ? null
+                : round($rs->file_delivered_count / $rs->file_orders_count * 100, 2);
+            $mine = $rate($rs->start_rate);
+            if ($fileRate !== null && $mine !== $fileRate) {
+                $out[] = ['label' => 'نسبة البداية — '.$rs->store->name, 'report' => $mine, 'file' => $fileRate];
+            }
+        }
 
         return $out;
     }

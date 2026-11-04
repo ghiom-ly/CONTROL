@@ -153,8 +153,10 @@ class ShiftFileImporter
                 throw ValidationException::withMessages(['apply' => 'التقرير أُرسل أو اعتُمد — لا يمكن تطبيق ملف عليه.']);
             }
             if (! $report) {
-                $report = $this->shifts->start($actor, (int) $preview['total'], (float) ($preview['rate'] ?? 0));
-                $report->forceFill(['start_delivery_rate' => $preview['rate'], 'value_sources' => ['start_total_orders' => 'file', 'start_delivery_rate' => 'file']])->save();
+                // بدء الشفت من الملف: أرقام بداية كل متجر من الملف (المرحلة 4)
+                $report = $this->shifts->start($actor, array_map(fn ($id, $s) => [
+                    'store_id' => $id, 'start_orders' => $s['total'], 'start_rate' => self::rate($s),
+                ], array_keys($this->matchedStores($preview)), $this->matchedStores($preview)), 'file');
             }
 
             $batch->report_type === 'shift_start'
@@ -184,27 +186,30 @@ class ShiftFileImporter
         });
     }
 
+    /** نسبة تسليم المتجر من أرقام الملف */
+    private static function rate(array $s): ?float
+    {
+        return ($s['delivered'] === null || $s['total'] === 0) ? null : round($s['delivered'] / $s['total'] * 100, 2);
+    }
+
+    /**
+     * ملف البداية يملأ أرقام بداية كل متجر (طلبيات + نسبة) — لا يلمس «الأوردرات التي اشتغل عليها»
+     * ولا يكتب فوق قيمة يدوية. الإجمالي والنسبة العامة يُعاد حسابهما من المتاجر.
+     */
     private function applyStart(DailyReport $report, array $preview): void
     {
-        $sources = $report->value_sources ?? [];
-        $fill = ['file_values' => array_merge($report->file_values ?? [], ['start_total' => $preview['total'], 'start_rate' => $preview['rate']])];
-        foreach (['start_total_orders' => $preview['total'], 'start_delivery_rate' => $preview['rate']] as $field => $value) {
-            if ($report->{$field} === null || ($sources[$field] ?? 'manual') === 'file') {
-                $fill[$field] = $value;
-                $sources[$field] = 'file';
-            }
-        }
-        $report->fill($fill + ['value_sources' => $sources])->save();
+        $report->forceFill(['file_values' => array_merge($report->file_values ?? [], ['start_total' => $preview['total'], 'start_rate' => $preview['rate']])])->save();
 
         $matched = $this->matchedStores($preview);
 
-        // آخر ملف هو المرجع: متاجر لم تعد في الملف تفقد أرقام الملف السابق (والرقم اليدوي يبقى)
+        // آخر ملف هو المرجع: متاجر لم تعد في الملف تفقد أرقام الملف السابق (واليدوي يبقى)
         $report->stores()->whereNotIn('store_id', array_keys($matched) ?: [0])->get()->each(function (ReportStore $rs) {
             $rs->file_orders_count = null;
             $rs->file_delivered_count = null;
-            if ($rs->shipments_count_source === 'file') {
-                $rs->shipments_count = null;
-                $rs->shipments_count_source = null;
+            if ($rs->start_source === 'file') {
+                $rs->start_orders = null;
+                $rs->start_rate = null;
+                $rs->start_source = null;
             }
             $rs->save();
         });
@@ -216,12 +221,16 @@ class ShiftFileImporter
             }
             $rs->file_orders_count = $s['total'];
             $rs->file_delivered_count = $s['delivered'];
-            if ($rs->shipments_count === null || $rs->shipments_count_source === 'file') {
-                $rs->shipments_count = $s['total'];
-                $rs->shipments_count_source = 'file';
+            $empty = $rs->start_orders === null && $rs->start_rate === null;
+            if ($empty || $rs->start_source === 'file') {
+                $rs->start_orders = $s['total'];
+                $rs->start_rate = self::rate($s);
+                $rs->start_source = 'file';
             }
             $rs->save();
         }
+
+        \App\Support\StartTotals::refresh($report);
     }
 
     private function applyEnd(DailyReport $report, array $preview, bool $replace): void

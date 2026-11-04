@@ -64,12 +64,22 @@ class DailyReportController extends Controller
             return redirect()->route('reports.edit', $open);
         }
 
-        return view('reports.start');
+        $active = fn ($q) => $q->where('status', '!=', StoreStatus::Archived);
+
+        return view('reports.start', [
+            'myStores' => Store::where('assigned_user_id', $request->user()->id)->where($active)->orderBy('name')->get(['id', 'name', 'code']),
+            'otherStores' => Store::where(fn ($q) => $q->whereNull('assigned_user_id')->orWhere('assigned_user_id', '!=', $request->user()->id))
+                ->where($active)->orderBy('name')->get(['id', 'name']),
+        ]);
     }
 
     public function start(StartShiftRequest $request, ShiftService $shifts): RedirectResponse
     {
-        $report = $shifts->start($request->user(), (int) $request->validated('start_total_orders'), (float) $request->validated('start_delivery_rate'));
+        $report = $shifts->start($request->user(), array_map(fn ($r) => [
+            'store_id' => (int) $r['store_id'],
+            'start_orders' => $r['start_orders'] === null ? null : (int) $r['start_orders'],
+            'start_rate' => $r['start_rate'] === null ? null : (float) $r['start_rate'],
+        ], $request->validated('stores')));
 
         return redirect()->route('reports.edit', $report)->with('success', 'بدأ الشفت. أضف المتاجر وأكمل التقرير ثم أرسله في نهاية الشفت.');
     }
@@ -196,6 +206,7 @@ class DailyReportController extends Controller
             'stores' => $report->stores->map(fn ($rs) => [
                 'store_id' => $rs->store_id,
                 'shipments_count' => $rs->shipments_count,
+                'start_orders' => $rs->start_orders, 'start_rate' => $rs->start_rate, 'start_source' => $rs->start_source,
                 'notes' => $rs->notes,
                 'codes' => $rs->followups->map(fn ($f) => ['code' => $f->shipment_code, 'result' => $f->result->value])->values(),
             ])->values(),

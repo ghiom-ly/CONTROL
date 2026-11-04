@@ -24,12 +24,28 @@
 
         {{-- ⓪ بداية الشفت --}}
         <section class="card p-5">
-            <h2 class="card-title mb-3">⓪ بداية الشفت</h2>
-            <div class="grid gap-3 sm:grid-cols-3 text-sm">
-                <div><p class="label">إجمالي الطلبيات المكلّف بها</p><p class="font-bold tabular-nums">{{ $report->start_total_orders ?? 'غير متوفر' }} @if(($report->value_sources['start_total_orders'] ?? null) === 'file')<span class="badge badge-blue">من الملف</span>@endif</p></div>
-                <div><p class="label">نسبة التسليم عند البداية</p><p class="font-bold tabular-nums">{{ $report->start_delivery_rate !== null ? $report->start_delivery_rate.'%' : 'غير متوفر' }}</p></div>
-                <div><p class="label">بدأ الشفت</p><p class="font-bold">{{ $report->shift_started_at?->format('Y/m/d H:i') ?? '—' }}</p></div>
+            <h2 class="card-title mb-3">⓪ بداية الشفت — طلبيات ونسبة تسليم كل متجر</h2>
+            <div class="table-wrap mb-3">
+                <table class="table">
+                    <thead><tr><th>المتجر</th><th>طلبيات البداية</th><th>نسبة التسليم %</th></tr></thead>
+                    <tbody>
+                    <template x-for="(s, i) in stores" :key="'st' + s.store_id">
+                        <tr>
+                            <td class="font-bold" x-text="storeName(s.store_id)"></td>
+                            <td><input class="input !w-28" inputmode="numeric" :name="`stores[${i}][start_orders]`" x-model="s.start_orders">
+                                <span x-show="s.start_source === 'file'" class="badge badge-blue">من الملف</span></td>
+                            <td><input class="input !w-28" inputmode="decimal" :name="`stores[${i}][start_rate]`" x-model="s.start_rate"></td>
+                        </tr>
+                    </template>
+                    </tbody>
+                </table>
             </div>
+            <div class="grid gap-3 sm:grid-cols-3 text-sm">
+                <div><p class="label">إجمالي الطلبيات (محسوب)</p><p class="font-bold tabular-nums" x-text="startTotals().total ?? 'غير متوفر'"></p></div>
+                <div><p class="label">نسبة التسليم العامة (محسوبة)</p><p class="font-bold tabular-nums" x-text="startTotals().rate === null ? 'غير متوفر' : startTotals().rate + '%'"></p></div>
+                <div><p class="label">بدأ الشفت (الحضور)</p><p class="font-bold">{{ $report->shift_started_at?->format('Y/m/d H:i') ?? '—' }}</p></div>
+            </div>
+            @foreach($errors->get('stores.*.start_*') as $msgs) @foreach($msgs as $m)<p class="field-error">{{ $m }}</p>@endforeach @endforeach
         </section>
 
         {{-- ① ملخص حركة الأوردرات --}}
