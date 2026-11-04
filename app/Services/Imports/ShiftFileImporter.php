@@ -149,6 +149,9 @@ class ShiftFileImporter
             }
 
             $report = $batch->daily_report_id ? DailyReport::whereKey($batch->daily_report_id)->lockForUpdate()->first() : null;
+            if ($report && ! \App\Policies\ImportBatchPolicy::reportOpenForFiles($report, $actor)) {
+                throw ValidationException::withMessages(['apply' => 'التقرير أُرسل أو اعتُمد — لا يمكن تطبيق ملف عليه.']);
+            }
             if (! $report) {
                 $report = $this->shifts->start($actor, (int) $preview['total'], (float) ($preview['rate'] ?? 0));
                 $report->forceFill(['start_delivery_rate' => $preview['rate'], 'value_sources' => ['start_total_orders' => 'file', 'start_delivery_rate' => 'file']])->save();
@@ -193,7 +196,20 @@ class ShiftFileImporter
         }
         $report->fill($fill + ['value_sources' => $sources])->save();
 
-        foreach ($this->matchedStores($preview) as $storeId => $s) {
+        $matched = $this->matchedStores($preview);
+
+        // آخر ملف هو المرجع: متاجر لم تعد في الملف تفقد أرقام الملف السابق (والرقم اليدوي يبقى)
+        $report->stores()->whereNotIn('store_id', array_keys($matched) ?: [0])->get()->each(function (ReportStore $rs) {
+            $rs->file_orders_count = null;
+            $rs->file_delivered_count = null;
+            if ($rs->shipments_count_source === 'file') {
+                $rs->shipments_count = null;
+                $rs->shipments_count_source = null;
+            }
+            $rs->save();
+        });
+
+        foreach ($matched as $storeId => $s) {
             $rs = ReportStore::firstOrNew(['daily_report_id' => $report->id, 'store_id' => $storeId]);
             if (! $rs->exists) {
                 $rs->is_outside_assignment = Store::find($storeId)?->assigned_user_id !== $report->user_id;
@@ -227,11 +243,18 @@ class ShiftFileImporter
     /** @return array<int, array{total:int, delivered:?int}> */
     private function matchedStores(array $preview): array
     {
+        // اسمان في الملف لنفس المتجر (اسم + اسم بديل) تُجمع أرقامهما
         $out = [];
         foreach ($preview['stores'] as $s) {
-            if ($s['store_id'] !== null) {
-                $out[$s['store_id']] = $s;
+            if ($s['store_id'] === null) {
+                continue;
             }
+            $cur = $out[$s['store_id']] ?? ['total' => 0, 'delivered' => null];
+            $cur['total'] += $s['total'];
+            if ($s['delivered'] !== null) {
+                $cur['delivered'] = ($cur['delivered'] ?? 0) + $s['delivered'];
+            }
+            $out[$s['store_id']] = $cur;
         }
 
         return $out;

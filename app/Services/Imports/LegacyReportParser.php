@@ -11,7 +11,7 @@ use App\Support\CodeParser;
  */
 class LegacyReportParser
 {
-    private const SECTION_TITLES = [1 => 'ملخص حركة', 2 => 'أوقات المحاولات', 3 => 'الأكواد غير', 4 => 'ملاحظات'];
+    private const SECTION_TITLES = [1 => 'ملخص', 2 => 'المحاولات', 3 => 'الأكواد', 4 => 'ملاحظات'];
 
     /** @return list<array> */
     public function parse(string $text): array
@@ -67,10 +67,17 @@ class LegacyReportParser
                 continue;
             }
 
+            if ($section === 3) {
+                // القائمة «لاصقة»: الأكواد في الأسطر التالية تتبع آخر عنوان (زبون/مندوب)
+                $bucket = $this->bucketOf($key) ?? $bucket ?? null;
+                $this->addCodes($bucket, $this->bucketOf($key) ? $value : $line, $out);
+
+                continue;
+            }
+
             match ($section) {
                 1 => $this->storeLine($key, $value, $out),
                 2 => $this->timeLine($line, $out),
-                3 => $this->codesLine($key, $value, $out),
                 4 => $notes[] = $line,
                 default => null,
             };
@@ -96,11 +103,12 @@ class LegacyReportParser
 
     private function sectionOf(string $line): ?int
     {
-        if (preg_match('/^([1-4])\s*[\)\-.]/u', $line, $m)) {
+        // «1) ملخص…» عنوان قسم؛ «1- متجر الأمل: 34» سطر متجر مرقّم وليس عنواناً
+        if (preg_match('/^([1-4])\s*[\)\-.]\s*(.*)$/u', $line, $m) && str_contains($m[2], self::SECTION_TITLES[(int) $m[1]])) {
             return (int) $m[1];
         }
         foreach (self::SECTION_TITLES as $n => $title) {
-            if (str_starts_with($line, $title) && ! str_contains($line, ': ')) {
+            if (str_starts_with($line, $title) && ! preg_match('/[:：]\s*\S/u', $line)) {
                 return $n;
             }
         }
@@ -134,8 +142,9 @@ class LegacyReportParser
         if ($key === '' || str_contains($key, 'كام متجر') || str_contains($key, 'إجمالي') || str_contains($key, 'اجمالي')) {
             return;
         }
-        if (preg_match('/^\d+$/', $value)) {
-            $out['stores'][] = ['name' => $key, 'count' => (int) $value];
+        $key = preg_replace('/^\d+\s*[\-.\)]\s*/u', '', $key);   // ترقيم «1- »
+        if (preg_match('/^(\d+)/', $value, $m)) {                // «15 طلب»
+            $out['stores'][] = ['name' => $key, 'count' => (int) $m[1]];
         } elseif ($value === 'غير متوفر') {
             $out['stores'][] = ['name' => $key, 'count' => null];
         }
@@ -158,9 +167,13 @@ class LegacyReportParser
         }
     }
 
-    private function codesLine(string $key, string $value, array &$out): void
+    private function bucketOf(string $key): ?string
     {
-        $bucket = str_contains($key, 'الزبون') ? 'customer_codes' : (str_contains($key, 'المندوب') ? 'courier_codes' : null);
+        return str_contains($key, 'الزبون') ? 'customer_codes' : (str_contains($key, 'المندوب') ? 'courier_codes' : null);
+    }
+
+    private function addCodes(?string $bucket, string $value, array &$out): void
+    {
         if ($bucket === null) {
             return;
         }

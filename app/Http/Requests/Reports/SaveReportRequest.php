@@ -51,7 +51,7 @@ class SaveReportRequest extends FormRequest
             'screens' => ['array:courier_screens,customer_calls'],
             'screens.*' => ['array', 'max:20'],
             'screens.*.*' => ['file', 'mimes:jpg,jpeg,png,webp', 'max:'.config('nours.uploads.max_size_kb')],
-            'end_delivery_rate' => ['required_if:action,submit', 'nullable', 'numeric', 'min:0', 'max:100'],
+            'end_delivery_rate' => [Rule::requiredIf(fn () => $this->input('action') === 'submit' && ! $this->route('report')->is_legacy), 'nullable', 'numeric', 'min:0', 'max:100'],
             'stores' => ['array', 'max:200'],
             'stores.*.store_id' => ['required', 'integer', 'distinct',
                 Rule::exists('stores', 'id')->where(fn ($q) => $q->where('status', '!=', StoreStatus::Archived->value)->whereNull('deleted_at'))],

@@ -26,6 +26,18 @@ class ImportBatchPolicy
     /** تعديل المطابقة/التطبيق/الإلغاء: صاحب الرفع وقبل التطبيق فقط */
     public function update(User $actor, ImportBatch $batch): bool
     {
-        return $batch->uploaded_by === $actor->id && $batch->status === ImportStatus::Uploaded;
+        if ($batch->uploaded_by !== $actor->id || $batch->status !== ImportStatus::Uploaded) {
+            return false;
+        }
+        $report = $batch->daily_report_id ? \App\Models\DailyReport::find($batch->daily_report_id) : null;
+
+        return $report === null || self::reportOpenForFiles($report, $actor);
+    }
+
+    /** الملف يُطبَّق فقط على تقرير ما زال بيد الموظف (مسودة أو مُرجَع) */
+    public static function reportOpenForFiles(\App\Models\DailyReport $report, User $actor): bool
+    {
+        return in_array($report->status, [\App\Enums\ReportStatus::Draft, \App\Enums\ReportStatus::Rejected], true)
+            && $actor->can('update', $report);
     }
 }

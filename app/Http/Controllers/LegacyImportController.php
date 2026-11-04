@@ -70,7 +70,12 @@ class LegacyImportController extends Controller
             'index' => ['required', 'integer', 'min:0'],
             'user_id' => ['required', 'integer', 'exists:users,id'],
             'store_choices' => ['array'],
-            'store_choices.*' => ['nullable'],
+            'store_choices.*' => ['nullable', function ($attr, $v, $fail) {
+                if ($v !== null && $v !== '' && $v !== 'ignore'
+                    && ! Store::whereKey($v)->where('status', '!=', StoreStatus::Archived)->exists()) {
+                    $fail('المتجر المختار غير موجود أو مؤرشف.');
+                }
+            }],
             'list_stores.customer' => ['nullable', 'integer', 'exists:stores,id'],
             'list_stores.courier' => ['nullable', 'integer', 'exists:stores,id'],
         ]);

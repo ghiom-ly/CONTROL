@@ -3,6 +3,7 @@
                    :subtitle="$report->report_number.' — النسخة '.$report->version">
         <x-slot:actions>
             <x-badge :enum="$report->status"/>
+            @if($report->is_legacy)<span class="badge badge-orange">تقرير قديم مستورد — يُعتمد كسجل تاريخي</span>@endif
             @can('update', $report)
                 <a href="{{ route('reports.edit', $report) }}" class="btn btn-light"><x-icon name="pencil" class="size-4"/> تعديل</a>
             @endcan

@@ -18,6 +18,12 @@ class SpreadsheetReader
         try {
             $reader = IOFactory::createReaderForFile($absolutePath);
             if ($reader instanceof Csv) {
+                // Excel العربي على ويندوز يحفظ CSV بترميز CP1256 وليس UTF-8 — نحوّله قبل القراءة
+                $content = (string) file_get_contents($absolutePath);
+                if (! mb_check_encoding($content, 'UTF-8') && ($utf8 = @iconv('CP1256', 'UTF-8//IGNORE', $content)) !== false) {
+                    $absolutePath = tempnam(sys_get_temp_dir(), 'csv').'.csv';
+                    file_put_contents($absolutePath, $utf8);
+                }
                 $reader->setInputEncoding('UTF-8');
             }
             $reader->setReadDataOnly(true);

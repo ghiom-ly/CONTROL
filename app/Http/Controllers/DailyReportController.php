@@ -133,7 +133,7 @@ class DailyReportController extends Controller
                 }
             }
             if ($submit) {
-                $w = array_merge($w, $submissions->submit($report, (float) $request->validated('end_delivery_rate'), $actor)['warnings']);
+                $w = array_merge($w, $submissions->submit($report, self::rate($request->validated('end_delivery_rate')), $actor)['warnings']);
             }
             if ($approveAfter) {
                 $approvals->approve($report, $actor, $previous, [$adminEdit ? ReportStatus::Approved : ReportStatus::PendingReview]);
@@ -165,11 +165,17 @@ class DailyReportController extends Controller
 
     public function submit(SubmitReportRequest $request, DailyReport $report, ReportSubmissionService $submissions): RedirectResponse
     {
-        $result = $submissions->submit($report, (float) $request->validated('end_delivery_rate'), $request->user());
+        $result = $submissions->submit($report, self::rate($request->validated('end_delivery_rate')), $request->user());
 
         $redirect = redirect()->route('reports.show', $report)->with('success', 'تم إرسال التقرير للمراجعة. انتهى الشفت.');
 
         return $result['warnings'] ? $redirect->with('warning', implode("\n", $result['warnings'])) : $redirect;
+    }
+
+    /** نسبة مُدخلة أو null (التقارير القديمة بلا نسب) */
+    private static function rate(mixed $v): ?float
+    {
+        return $v === null || $v === '' ? null : (float) $v;
     }
 
     /** حالة النموذج الأولية: المدخلات السابقة عند خطأ التحقق، وإلا بيانات التقرير المحفوظة */

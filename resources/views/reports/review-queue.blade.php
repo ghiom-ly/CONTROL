@@ -12,7 +12,7 @@
                     @foreach($reports as $r)
                         <tr>
                             <td class="ltr text-right">{{ $r->report_number }}</td>
-                            <td class="font-bold">{{ $r->user->name }}</td>
+                            <td class="font-bold">{{ $r->user->name }} @if($r->is_legacy)<span class="badge badge-orange">تقرير قديم مستورد</span>@endif</td>
                             <td>{{ $r->work_date->format('Y/m/d') }}</td>
                             <td class="text-xs text-slate-500">{{ $r->submitted_at?->diffForHumans() }}</td>
                             <td class="tabular-nums">{{ $r->stores_count }}</td>

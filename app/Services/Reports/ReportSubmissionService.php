@@ -13,7 +13,7 @@ class ReportSubmissionService
     public function __construct(private readonly ReportRevisionService $revisions) {}
 
     /** إرسال التقرير للمراجعة = نهاية الشفت */
-    public function submit(DailyReport $report, float $endRate, User $actor): array
+    public function submit(DailyReport $report, ?float $endRate, User $actor): array
     {
         return DB::transaction(function () use ($report, $endRate, $actor) {
             $report = DailyReport::whereKey($report->id)->lockForUpdate()->firstOrFail();
@@ -34,7 +34,7 @@ class ReportSubmissionService
 
             $fileEnd = $report->file_values['end_rate'] ?? null;
             $sources = $report->value_sources ?? [];
-            $sources['end_delivery_rate'] = ($fileEnd !== null && round((float) $fileEnd, 2) === round($endRate, 2)) ? 'file' : 'manual';
+            $sources['end_delivery_rate'] = ($fileEnd !== null && $endRate !== null && round((float) $fileEnd, 2) === round($endRate, 2)) ? 'file' : 'manual';
 
             $report->fill([
                 'value_sources' => $sources,
@@ -45,6 +45,10 @@ class ReportSubmissionService
                 'contact_attempts_count' => count($report->attempt_times ?? []),
                 'updated_by' => $actor->id,
             ])->save();
+
+            // ملفات رُفعت ولم تُطبَّق لا تبقى معلّقة على تقرير أُرسل
+            \App\Models\ImportBatch::where('daily_report_id', $report->id)
+                ->where('status', \App\Enums\ImportStatus::Uploaded)->update(['status' => \App\Enums\ImportStatus::Cancelled]);
 
             $warnings = [];
             if (in_array('courier_without_screens', $report->warningFlags(), true)) {

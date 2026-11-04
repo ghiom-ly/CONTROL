@@ -56,7 +56,8 @@ class ShiftFileCalculator
                 }
                 $statusValues[$this->norm($status)] ??= $status;
                 $total = 1;
-                $done = in_array($this->norm($status), $delivered, true) ? 1 : 0;
+                // بلا حالات «تم التسليم» محددة: المسلَّم غير معروف (لا صفر)
+                $done = $delivered === [] ? null : (in_array($this->norm($status), $delivered, true) ? 1 : 0);
             } else {
                 $total = $this->int($cells[$cols['total']] ?? null);
                 if ($total === null) {
@@ -144,7 +145,9 @@ class ShiftFileCalculator
         if ($v === null) {
             return null;
         }
-        $v = str_replace(['٫', ',', ' ', '%'], ['.', '.', '', ''], ArabicNormalizer::digits(trim($v)));
+        $v = str_replace(['٬', ' ', '%', '٪'], '', ArabicNormalizer::digits(trim($v)));
+        // 1,200 = فاصل آلاف، 0,5 = فاصلة عشرية
+        $v = preg_match('/^\d{1,3}(,\d{3})+(\.\d+)?$/', $v) ? str_replace(',', '', $v) : str_replace([',', '٫'], '.', $v);
 
         return is_numeric($v) ? (float) $v : null;
     }
@@ -163,7 +166,7 @@ class ShiftFileCalculator
         if ($n === null || $n < 0) {
             return null;
         }
-        if (! str_contains($raw, '%') && $n <= 1) {
+        if (! str_contains($raw, '%') && ! str_contains($raw, '٪') && $n <= 1) {
             $n *= 100;
         }
 

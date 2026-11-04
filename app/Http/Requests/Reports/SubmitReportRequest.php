@@ -21,7 +21,7 @@ class SubmitReportRequest extends FormRequest
 
     public function rules(): array
     {
-        return ['end_delivery_rate' => ['required', 'numeric', 'min:0', 'max:100']];
+        return ['end_delivery_rate' => [\Illuminate\Validation\Rule::requiredIf(fn () => ! $this->route('report')->is_legacy), 'nullable', 'numeric', 'min:0', 'max:100']];
     }
 
     public function attributes(): array

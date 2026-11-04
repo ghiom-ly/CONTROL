@@ -196,7 +196,7 @@
         </div>
     </form>
 
-    @can('imports.create')
+    @if(! $report->is_legacy && auth()->user()->can('imports.create'))
         @php $batches = \App\Models\ImportBatch::where('daily_report_id', $report->id)->whereIn('report_type', ['shift_start', 'shift_end'])->latest('id')->get(); @endphp
         <section class="card p-5 mt-5 space-y-3">
             <h2 class="card-title">ملفات منظومة الشحن</h2>
@@ -215,7 +215,7 @@
                 <p class="text-sm"><a class="text-sky-700 underline" href="{{ route('imports.show', $b) }}">{{ \App\Models\ImportBatch::TYPES[$b->report_type] }} — {{ $b->original_name }}</a> <x-badge :enum="$b->status"/></p>
             @endforeach
         </section>
-    @endcan
+    @endif
 
     @include('reports._screens', ['editable' => true])
 </x-layouts.app>
