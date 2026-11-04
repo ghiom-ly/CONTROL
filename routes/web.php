@@ -11,6 +11,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\LegacyImportController;
 use App\Http\Controllers\StoreAliasController;
+use App\Http\Controllers\StoreAssignmentController;
 use App\Http\Controllers\StoreImportController;
 use App\Http\Controllers\OpenCodesController;
 use App\Http\Controllers\ReportReviewController;
@@ -51,6 +52,8 @@ Route::middleware(['auth', 'active'])->group(function () {
         // ---- المتاجر (المرحلة 2)
         Route::get('/stores', [StoreController::class, 'index'])->name('stores.index');
         Route::post('/stores', [StoreController::class, 'store'])->name('stores.store');
+        Route::get('/stores/assignment', [StoreAssignmentController::class, 'index'])->name('stores.assignment');
+        Route::post('/stores/assignment', [StoreAssignmentController::class, 'update'])->name('stores.assignment.update');
         Route::get('/stores/import', [StoreImportController::class, 'create'])->name('stores.import');
         Route::post('/stores/import', [StoreImportController::class, 'upload'])->name('stores.import.upload');
         Route::get('/stores/import/{batch}', [StoreImportController::class, 'show'])->name('stores.import.show');
