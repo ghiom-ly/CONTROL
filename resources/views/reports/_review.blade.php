@@ -1,5 +1,5 @@
 {{-- قرار المراجعة: اعتماد / تصحيح ثم اعتماد / إرجاع للموظف --}}
-@if($report->status === \App\Enums\ReportStatus::PendingReview)
+@if($report->status === \App\Enums\ReportStatus::PendingReview && $report->user_id !== auth()->id())
     @can('review', $report)
         <section class="card p-5 border-brand-200">
             <h2 class="card-title mb-3">قرار المراجعة</h2>
