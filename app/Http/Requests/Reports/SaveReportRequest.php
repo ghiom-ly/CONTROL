@@ -43,6 +43,7 @@ class SaveReportRequest extends FormRequest
     {
         return [
             'action' => ['nullable', 'in:save,submit'],
+            'approve_after' => ['nullable', 'boolean'],
             'end_delivery_rate' => ['required_if:action,submit', 'nullable', 'numeric', 'min:0', 'max:100'],
             'stores' => ['array', 'max:200'],
             'stores.*.store_id' => ['required', 'integer', 'distinct',

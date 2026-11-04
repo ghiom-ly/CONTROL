@@ -10,7 +10,10 @@ use App\Http\Requests\Reports\StartShiftRequest;
 use App\Http\Requests\Reports\SubmitReportRequest;
 use App\Models\DailyReport;
 use App\Models\Store;
+use App\Enums\ReportStatus;
+use App\Services\Reports\ReportApprovalService;
 use App\Services\Reports\ReportDraftService;
+use App\Services\Reports\ReportRevisionService;
 use App\Services\Reports\ReportSubmissionService;
 use App\Services\Reports\ShiftService;
 use App\Support\ReportWhatsappFormatter;
@@ -61,25 +64,46 @@ class DailyReportController extends Controller
         ]);
     }
 
-    public function update(SaveReportRequest $request, DailyReport $report, ReportDraftService $drafts, ReportSubmissionService $submissions): RedirectResponse
-    {
+    public function update(
+        SaveReportRequest $request, DailyReport $report, ReportDraftService $drafts,
+        ReportSubmissionService $submissions, ReportRevisionService $revisions, ReportApprovalService $approvals,
+    ): RedirectResponse {
+        $actor = $request->user();
         $submit = $request->validated('action') === 'submit';
+        $adminEdit = $report->status === ReportStatus::Approved;
+        $correcting = $report->status === ReportStatus::PendingReview;   // policy: مراجِع وليس صاحب التقرير
+        $approveAfter = $adminEdit || ($correcting && $request->boolean('approve_after'));
         if ($submit) {
             $this->authorize('submit', $report);
         }
+        if ($approveAfter && ! $adminEdit) {
+            $this->authorize('review', $report);
+            abort_if($report->user_id === $actor->id, 403, 'لا يمكنك مراجعة تقريرك.');
+        }
 
-        $warnings = DB::transaction(function () use ($request, $report, $drafts, $submissions, $submit) {
-            $w = $drafts->save($report, $request->validated(), $request->user())['warnings'];
+        $warnings = DB::transaction(function () use ($request, $report, $drafts, $submissions, $revisions, $approvals, $actor, $submit, $adminEdit, $correcting, $approveAfter) {
+            $previous = $adminEdit ? $approvals->affectedKeys($report) : null;
+            if ($adminEdit || $correcting) {
+                $revisions->snapshot($report, $adminEdit ? 'تعديل إداري بعد الاعتماد' : 'تصحيح المسؤول', $actor);
+                $report->increment('version');
+            }
+
+            $w = $drafts->save($report, $request->validated(), $actor)['warnings'];
             if ($submit) {
-                $w = array_merge($w, $submissions->submit($report, (float) $request->validated('end_delivery_rate'), $request->user())['warnings']);
+                $w = array_merge($w, $submissions->submit($report, (float) $request->validated('end_delivery_rate'), $actor)['warnings']);
+            }
+            if ($approveAfter) {
+                $approvals->approve($report, $actor, $previous);
             }
 
             return $w;
         });
 
-        $redirect = $submit
-            ? redirect()->route('reports.show', $report)->with('success', 'تم حفظ التقرير وإرساله للمراجعة. انتهى الشفت.')
-            : redirect()->route('reports.edit', $report)->with('success', 'تم حفظ التقرير.');
+        $redirect = match (true) {
+            $approveAfter => redirect()->route('reports.show', $report)->with('success', 'تم حفظ التعديلات واعتماد التقرير.'),
+            $submit => redirect()->route('reports.show', $report)->with('success', 'تم حفظ التقرير وإرساله للمراجعة. انتهى الشفت.'),
+            default => redirect()->route('reports.edit', $report)->with('success', 'تم حفظ التقرير.'),
+        };
 
         return $warnings ? $redirect->with('warning', implode("\n", $warnings)) : $redirect;
     }

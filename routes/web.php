@@ -8,6 +8,7 @@ use App\Http\Controllers\DailyReportController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ModulePlaceholderController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ReportReviewController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Settings\RoleController;
 use App\Http\Controllers\Settings\SettingController;
@@ -55,6 +56,9 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::put('/reports/{report}', [DailyReportController::class, 'update'])->name('reports.update');
         Route::get('/reports/{report}', [DailyReportController::class, 'show'])->name('reports.show');
         Route::post('/reports/{report}/submit', [DailyReportController::class, 'submit'])->name('reports.submit');
+        Route::get('/review', [ReportReviewController::class, 'queue'])->name('reports.review.queue');
+        Route::post('/reports/{report}/approve', [ReportReviewController::class, 'approve'])->name('reports.approve');
+        Route::post('/reports/{report}/reject', [ReportReviewController::class, 'reject'])->name('reports.reject');
         Route::post('/reports/{report}/attachments', [AttachmentController::class, 'store'])->name('reports.attachments.store');
         Route::get('/attachments/{attachment}', [AttachmentController::class, 'show'])->name('attachments.show');
         Route::delete('/attachments/{attachment}', [AttachmentController::class, 'destroy'])->name('attachments.destroy');
