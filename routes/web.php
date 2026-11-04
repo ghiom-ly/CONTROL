@@ -8,6 +8,7 @@ use App\Http\Controllers\DailyReportController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ModulePlaceholderController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\OpenCodesController;
 use App\Http\Controllers\ReportReviewController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Settings\RoleController;
@@ -62,6 +63,10 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('/reports/{report}/attachments', [AttachmentController::class, 'store'])->name('reports.attachments.store');
         Route::get('/attachments/{attachment}', [AttachmentController::class, 'show'])->name('attachments.show');
         Route::delete('/attachments/{attachment}', [AttachmentController::class, 'destroy'])->name('attachments.destroy');
+
+        // ---- الأكواد المفتوحة (المرحلة 2)
+        Route::get('/open-codes', [OpenCodesController::class, 'index'])->name('open-codes.index');
+        Route::post('/open-codes/mark', [OpenCodesController::class, 'mark'])->name('open-codes.mark');
 
         // ---- الإعدادات والصلاحيات
         Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');

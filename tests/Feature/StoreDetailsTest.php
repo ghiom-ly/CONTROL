@@ -56,12 +56,12 @@ class StoreDetailsTest extends TestCase
     {
         $store = Store::factory()->create();
         $other = Store::factory()->create();
-        Shipment::create(['code' => 'OPEN1', 'store_id' => $store->id, 'registered_at' => today(), 'last_result' => 'customer_no_answer', 'processing_status' => 'open']);
-        Shipment::create(['code' => 'DONE1', 'store_id' => $store->id, 'registered_at' => today(), 'last_result' => 'customer_no_answer', 'processing_status' => 'resolved']);
-        Shipment::create(['code' => 'OTHER1', 'store_id' => $other->id, 'registered_at' => today(), 'last_result' => 'courier_no_answer', 'processing_status' => 'open']);
-        Shipment::create(['code' => 'PROM1', 'store_id' => $store->id, 'registered_at' => today(), 'last_result' => 'courier_promised_delivery', 'processing_status' => 'open']);
+        Shipment::create(['code' => 'SD-OPEN1-X', 'store_id' => $store->id, 'registered_at' => today(), 'last_result' => 'customer_no_answer', 'processing_status' => 'open']);
+        Shipment::create(['code' => 'SD-DONE1-X', 'store_id' => $store->id, 'registered_at' => today(), 'last_result' => 'customer_no_answer', 'processing_status' => 'resolved']);
+        Shipment::create(['code' => 'SD-OTHER1-X', 'store_id' => $other->id, 'registered_at' => today(), 'last_result' => 'courier_no_answer', 'processing_status' => 'open']);
+        Shipment::create(['code' => 'SD-PROM1-X', 'store_id' => $store->id, 'registered_at' => today(), 'last_result' => 'courier_promised_delivery', 'processing_status' => 'open']);
 
         $this->actingAs($this->makeUser(Role::ADMIN))->get("/stores/{$store->id}")
-            ->assertOk()->assertSee('OPEN1')->assertDontSee('DONE1')->assertDontSee('OTHER1')->assertDontSee('PROM1');
+            ->assertOk()->assertSee('SD-OPEN1-X')->assertDontSee('SD-DONE1-X')->assertDontSee('SD-OTHER1-X')->assertDontSee('SD-PROM1-X');
     }
 }
