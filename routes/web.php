@@ -9,6 +9,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ModulePlaceholderController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ImportController;
+use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\LegacyImportController;
 use App\Http\Controllers\StoreAliasController;
 use App\Http\Controllers\StoreAssignmentController;
@@ -91,6 +92,10 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('/imports/{batch}/mapping', [ShiftImportController::class, 'mapping'])->name('imports.mapping');
         Route::post('/imports/{batch}/apply', [ShiftImportController::class, 'apply'])->name('imports.apply');
         Route::post('/imports/{batch}/cancel', [ShiftImportController::class, 'cancel'])->name('imports.cancel');
+
+        // ---- الحضور والانصراف (المرحلة 4)
+        Route::post('/attendance/leaves', [LeaveController::class, 'store'])->name('attendance.leaves.store');
+        Route::delete('/attendance/leaves/{leave}', [LeaveController::class, 'destroy'])->name('attendance.leaves.destroy');
 
         // ---- الأكواد المفتوحة (المرحلة 2)
         Route::get('/open-codes', [OpenCodesController::class, 'index'])->name('open-codes.index');
