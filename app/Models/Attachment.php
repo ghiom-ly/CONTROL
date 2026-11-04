@@ -11,7 +11,12 @@ class Attachment extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = ['attachable_type', 'attachable_id', 'disk', 'path', 'original_name', 'mime_type', 'size', 'sha256', 'uploaded_by'];
+    public const REPORT_CATEGORIES = [
+        'courier_screens' => 'سكرينات المندوب',
+        'customer_calls' => 'سكرينات مكالمات الزبائن',
+    ];
+
+    protected $fillable = ['attachable_type', 'attachable_id', 'category', 'disk', 'path', 'original_name', 'mime_type', 'size', 'sha256', 'uploaded_by'];
 
     protected $hidden = ['path', 'disk'];
 

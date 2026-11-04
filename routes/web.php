@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordController;
@@ -52,6 +53,9 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('/reports/start', [DailyReportController::class, 'start'])->name('reports.start');
         Route::get('/reports/{report}/edit', [DailyReportController::class, 'edit'])->name('reports.edit');
         Route::put('/reports/{report}', [DailyReportController::class, 'update'])->name('reports.update');
+        Route::post('/reports/{report}/attachments', [AttachmentController::class, 'store'])->name('reports.attachments.store');
+        Route::get('/attachments/{attachment}', [AttachmentController::class, 'show'])->name('attachments.show');
+        Route::delete('/attachments/{attachment}', [AttachmentController::class, 'destroy'])->name('attachments.destroy');
 
         // ---- الإعدادات والصلاحيات
         Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');

@@ -130,7 +130,7 @@
                     @error("unanswered.{$bucket}_store_id")<p class="field-error">{{ $message }}</p>@enderror
                 </div>
             @endforeach
-            @includeWhen(View::exists('reports._screens'), 'reports._screens')
+            <p class="hint">السكرينات تُرفع من قسم «السكرينات» أسفل الصفحة.</p>
         </section>
 
         {{-- ④ ملاحظات واستفسارات --}}
@@ -172,5 +172,6 @@
         </div>
     </form>
 
+    @include('reports._screens', ['editable' => true])
     @includeWhen(View::exists('reports._submit'), 'reports._submit')
 </x-layouts.app>

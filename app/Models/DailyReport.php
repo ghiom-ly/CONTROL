@@ -115,4 +115,9 @@ class DailyReport extends Model
     {
         return $this->morphMany(Attachment::class, 'attachable');
     }
+
+    public function screens(string $category): MorphMany
+    {
+        return $this->attachments()->where('category', $category);
+    }
 }
