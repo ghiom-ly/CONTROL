@@ -5,6 +5,7 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordController;
+use App\Http\Controllers\BulkMessageController;
 use App\Http\Controllers\DailyReportController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ModulePlaceholderController;
@@ -108,6 +109,8 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::post("/messages/templates/{template}/{$action}", [MessageTemplateController::class, $action])->name("messages.templates.{$action}");
         }
 
+        Route::get('/messages/bulk', [BulkMessageController::class, 'create'])->name('messages.bulk');
+        Route::post('/messages/bulk/preview', [BulkMessageController::class, 'preview'])->name('messages.bulk.preview');
         Route::get('/stores/{store}/message', [StoreMessageController::class, 'create'])->whereNumber('store')->name('stores.message');
         Route::post('/stores/{store}/message', [StoreMessageController::class, 'store'])->whereNumber('store')->name('stores.message.send');
 
