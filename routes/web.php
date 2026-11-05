@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AttachmentController;
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordController;
@@ -94,6 +95,10 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('/imports/{batch}/cancel', [ShiftImportController::class, 'cancel'])->name('imports.cancel');
 
         // ---- الحضور والانصراف (المرحلة 4)
+        Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
+        Route::get('/attendance/export', [AttendanceController::class, 'export'])->name('attendance.export');
+        Route::get('/attendance/{user}', [AttendanceController::class, 'show'])->whereNumber('user')->name('attendance.show');
+        Route::get('/attendance/{user}/print', [AttendanceController::class, 'print'])->whereNumber('user')->name('attendance.print');
         Route::post('/attendance/leaves', [LeaveController::class, 'store'])->name('attendance.leaves.store');
         Route::delete('/attendance/leaves/{leave}', [LeaveController::class, 'destroy'])->name('attendance.leaves.destroy');
 

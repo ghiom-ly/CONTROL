@@ -3,6 +3,18 @@
         <x-slot:actions><x-period-filter :period="$period"/></x-slot:actions>
     </x-page-header>
 
+    @if($myAttendance)
+        <section class="mb-8">
+            <h2 class="mb-3 text-sm font-bold text-slate-500">حضوري هذا الشهر</h2>
+            <div class="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+                <x-stat-card label="أيام الحضور" :value="$myAttendance['present']" icon="check-circle" tone="green"/>
+                <x-stat-card label="الغياب" :value="$myAttendance['absent']" icon="user-x" tone="red"/>
+                <x-stat-card label="مرات التأخير" :value="$myAttendance['late']" icon="clock" tone="yellow"/>
+                <x-stat-card label="الإجازات" :value="$myAttendance['leave']" icon="calendar" tone="blue"/>
+            </div>
+        </section>
+    @endif
+
     {{-- الموظف يرى إحصائيات تقاريره فقط --}}
     @if($stats['scope_all'])
     <section class="mb-8">
