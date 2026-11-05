@@ -38,7 +38,16 @@
         </div>
     @endif
     @if($report->rejection_reason)
-        <div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"><b>سبب الإرجاع:</b> {{ $report->rejection_reason }}</div>
+        <div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            <b>سبب الإرجاع:</b> {{ $report->rejection_reason }}
+            @if($report->status === \App\Enums\ReportStatus::Rejected && $report->user_id === auth()->id())
+                @can('update', $report)
+                    <a href="{{ route('reports.edit', $report) }}" class="btn btn-accent btn-sm ms-2"><x-icon name="pencil" class="size-4"/> عدّل التقرير وأعد إرساله</a>
+                @else
+                    <p class="mt-1 text-red-700">تعديل التقارير المرجعة موقوف من الإعدادات — تواصل مع المشرف ليصحّحه.</p>
+                @endcan
+            @endif
+        </div>
     @endif
 
     <div class="grid gap-5 lg:grid-cols-3">

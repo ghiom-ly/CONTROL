@@ -26,7 +26,8 @@ class ReportReviewedNotification extends Notification
             'reason' => $this->report->rejection_reason,
             'title' => $approved ? 'تم اعتماد تقريرك' : 'أُرجع تقريرك للتعديل',
             'message' => $this->report->report_number.($approved ? '' : ' — '.$this->report->rejection_reason),
-            'url' => route($approved ? 'reports.show' : 'reports.edit', $this->report),
+            // صفحة العرض دائماً: فيها سبب الإرجاع، وزر التعديل يظهر فقط إن كان مسموحاً
+            'url' => route('reports.show', $this->report),
         ];
     }
 }
