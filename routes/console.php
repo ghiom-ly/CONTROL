@@ -9,3 +9,6 @@ Artisan::command('inspire', function () {
 
 // نسخة احتياطية يومية الساعة 2 فجراً (يتطلب تشغيل: php artisan schedule:work أو cron)
 \Illuminate\Support\Facades\Schedule::command('nours:backup')->dailyAt('02:00');
+
+// تنبيهات الحضور للمسؤولين كل 15 دقيقة (المرحلة 4)
+\Illuminate\Support\Facades\Schedule::command('nours:attendance-alerts')->everyFifteenMinutes();
