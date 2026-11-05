@@ -45,6 +45,9 @@ class Permissions
             'analytics.view' => ['عرض التحليلات الإدارية', 'التحليلات'],
             'exports.generate' => ['استخراج التقارير الإدارية PDF/Excel', 'التحليلات'],
 
+            'messages.send' => ['كتابة القوالب وإرسال الرسائل للمتاجر', 'رسائل المتاجر'],
+            'messages.approve' => ['اعتماد قوالب الرسائل', 'رسائل المتاجر'],
+
             'audit.view' => ['عرض سجل العمليات', 'النظام'],
             'settings.manage' => ['إدارة الإعدادات والصلاحيات', 'النظام'],
         ];
@@ -63,7 +66,7 @@ class Permissions
                 'imports.create', 'imports.view_all', 'imports.approve',
                 'shipments.view', 'shipments.followup', 'contacts.view', 'contacts.create',
                 'issues.view', 'issues.create', 'issues.manage',
-                'analytics.view', 'exports.generate', 'audit.view',
+                'analytics.view', 'exports.generate', 'audit.view', 'messages.send',
             ],
             // الموظف يدخل تقريره ويرسله فقط، ويرى إحصائيات تقاريره (قرار صاحب المشروع 2026-11-04)
             Role::EMPLOYEE => [
