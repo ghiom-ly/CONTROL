@@ -15,11 +15,13 @@ class WhatsAppNumber
         $international = str_starts_with($s, '+') || str_starts_with(preg_replace('/\D+/', '', $s), '00');
         $d = preg_replace('/\D+/', '', $s);
 
-        if ($international) {
-            $d = str_starts_with($d, '00') ? substr($d, 2) : $d;
-            if (str_starts_with($d, '2180')) {                 // +218 0 91…
-                $d = '218'.substr($d, 4);
-            }
+        if ($international && str_starts_with($d, '00')) {
+            $d = substr($d, 2);
+        }
+        if (str_starts_with($d, '2180')) {                     // (+)218 0 91…
+            $d = '218'.substr($d, 4);
+        } elseif ($international) {
+            // مفتاح دولة صريح — يبقى كما هو
         } elseif (str_starts_with($d, '0')) {                 // 091… محلي ليبي
             $d = '218'.substr($d, 1);
         } elseif (strlen($d) === 9 && $d[0] === '9') {         // 91… بلا صفر
