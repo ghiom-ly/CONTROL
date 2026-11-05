@@ -24,7 +24,7 @@ class StoreListImporter
 {
     public const DISK = 'private';
 
-    private const PHONE = '/^[0-9+\-\s]{6,30}$/';
+    private const PHONE = '/^[0-9+\-\s().\/]{6,30}$/';
 
     public function __construct(
         private readonly SpreadsheetReader $reader,

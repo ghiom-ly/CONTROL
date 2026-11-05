@@ -41,7 +41,7 @@ class StoreRequest extends FormRequest
                 }
             }],
             'owner_name' => ['nullable', 'string', 'max:150'],
-            'phone' => ['nullable', 'string', 'max:30', 'regex:/^[0-9+\-\s]{6,30}$/'],
+            'phone' => ['nullable', 'string', 'max:30', 'regex:/^[0-9+\-\s().\/]{6,30}$/'],
             'email' => ['nullable', 'email:rfc', 'max:150'],
             'started_at' => ['nullable', 'date', 'before_or_equal:today'],
             'status' => ['required', Rule::enum(StoreStatus::class)],
