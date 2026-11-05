@@ -34,4 +34,10 @@ class StorePolicy
     {
         return $actor->hasPermission('stores.manage');
     }
+
+    /** الحذف النهائي للمدير العام فقط (عبر Gate::before) */
+    public function bulkDelete(User $actor): bool
+    {
+        return false;
+    }
 }

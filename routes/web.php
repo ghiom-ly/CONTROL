@@ -58,7 +58,8 @@ Route::middleware(['auth', 'active'])->group(function () {
         // ---- المتاجر (المرحلة 2)
         Route::get('/stores', [StoreController::class, 'index'])->name('stores.index');
         Route::post('/stores', [StoreController::class, 'store'])->name('stores.store');
-        Route::get('/stores/assignment', [StoreAssignmentController::class, 'index'])->name('stores.assignment');
+        Route::delete('/stores/bulk', [StoreController::class, 'bulkDestroy'])->name('stores.bulk-destroy');
+        Route::get('/stores/assignment',[StoreAssignmentController::class, 'index'])->name('stores.assignment');
         Route::post('/stores/assignment', [StoreAssignmentController::class, 'update'])->name('stores.assignment.update');
         Route::get('/stores/import', [StoreImportController::class, 'create'])->name('stores.import');
         Route::post('/stores/import', [StoreImportController::class, 'upload'])->name('stores.import.upload');

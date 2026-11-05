@@ -23,25 +23,14 @@ class StoreController extends Controller
     {
         $this->authorize('viewAny', Store::class);
 
-        $filters = $request->validate([
-            'q' => ['nullable', 'string', 'max:100'],
-            'status' => ['nullable', Rule::enum(StoreStatus::class)],
-            'assigned_user_id' => ['nullable', 'integer'],
+        $filters = $request->validate($this->filterRules() + [
+            'per_page' => ['nullable', 'integer', Rule::in(self::PER_PAGE)],
         ]);
 
-        $stores = Store::query()
+        $stores = $this->filtered($filters)
             ->with('assignedUser:id,name')
-            ->when($filters['q'] ?? null, function ($q, $term) {
-                $normalized = ArabicNormalizer::normalize($term);
-                $q->where(fn ($w) => $w->where('name', 'like', "%{$term}%")
-                    ->orWhere('normalized_name', 'like', "%{$normalized}%")
-                    ->orWhere('code', 'like', "%{$term}%")
-                    ->orWhere('phone', 'like', '%'.ArabicNormalizer::digits($term).'%'));
-            })
-            ->when($filters['status'] ?? null, fn ($q, $s) => $q->where('status', $s))
-            ->when($filters['assigned_user_id'] ?? null, fn ($q, $u) => $q->where('assigned_user_id', $u))
             ->orderBy('name')
-            ->paginate(config('nours.per_page'))
+            ->paginate($filters['per_page'] ?? config('nours.per_page'))
             ->withQueryString();
 
         $counts = Store::query()->selectRaw('status, COUNT(*) c')->groupBy('status')->pluck('c', 'status');
@@ -93,6 +82,57 @@ class StoreController extends Controller
         $this->stores->archive($store, $request->user());
 
         return back()->with('success', 'تمت أرشفة المتجر مع الاحتفاظ بتقاريره.');
+    }
+
+    /** حذف جماعي للمتاجر المحددة، أو لكل المتاجر المطابقة للتصفية الحالية */
+    public function bulkDestroy(Request $request): RedirectResponse
+    {
+        $this->authorize('bulkDelete', Store::class);
+
+        $data = $request->validate($this->filterRules() + [
+            'all_matching' => ['nullable', 'boolean'],
+            'store_ids' => ['required_without:all_matching', 'array', 'max:2000'],
+            'store_ids.*' => ['integer'],
+        ], ['store_ids.required_without' => 'حدّد متجراً واحداً على الأقل.']);
+
+        $ids = ($data['all_matching'] ?? false)
+            ? $this->filtered($data)->pluck('id')
+            : collect($data['store_ids']);
+
+        $r = $this->stores->bulkDelete($ids, $request->user());
+
+        $msg = "تم حذف {$r['deleted']} متجر.";
+        if ($r['archived'] > 0) {
+            $msg .= " وتمت أرشفة {$r['archived']} متجر لأن لها تقارير أو سجلات سابقة.";
+        }
+
+        return redirect()->route('stores.index', array_filter($request->only('q', 'status', 'assigned_user_id', 'per_page')))
+            ->with('success', $msg);
+    }
+
+    private const PER_PAGE = [20, 50, 100, 200, 500];
+
+    private function filterRules(): array
+    {
+        return [
+            'q' => ['nullable', 'string', 'max:100'],
+            'status' => ['nullable', Rule::enum(StoreStatus::class)],
+            'assigned_user_id' => ['nullable', 'integer'],
+        ];
+    }
+
+    private function filtered(array $filters)
+    {
+        return Store::query()
+            ->when($filters['q'] ?? null, function ($q, $term) {
+                $normalized = ArabicNormalizer::normalize($term);
+                $q->where(fn ($w) => $w->where('name', 'like', "%{$term}%")
+                    ->orWhere('normalized_name', 'like', "%{$normalized}%")
+                    ->orWhere('code', 'like', "%{$term}%")
+                    ->orWhere('phone', 'like', '%'.ArabicNormalizer::digits($term).'%'));
+            })
+            ->when($filters['status'] ?? null, fn ($q, $s) => $q->where('status', $s))
+            ->when($filters['assigned_user_id'] ?? null, fn ($q, $u) => $q->where('assigned_user_id', $u));
     }
 
     /** الموظفون النشطون الذين يمكنهم إدخال التقارير */
