@@ -15,6 +15,7 @@ use App\Http\Controllers\LegacyImportController;
 use App\Http\Controllers\StoreAliasController;
 use App\Http\Controllers\StoreAssignmentController;
 use App\Http\Controllers\StoreImportController;
+use App\Http\Controllers\MessageTemplateController;
 use App\Http\Controllers\OpenCodesController;
 use App\Http\Controllers\ReportReviewController;
 use App\Http\Controllers\SearchController;
@@ -93,6 +94,18 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('/imports/{batch}/mapping', [ShiftImportController::class, 'mapping'])->name('imports.mapping');
         Route::post('/imports/{batch}/apply', [ShiftImportController::class, 'apply'])->name('imports.apply');
         Route::post('/imports/{batch}/cancel', [ShiftImportController::class, 'cancel'])->name('imports.cancel');
+
+        // ---- رسائل المتاجر (المرحلة 5)
+        Route::get('/messages/templates', [MessageTemplateController::class, 'index'])->name('messages.templates.index');
+        Route::get('/messages/templates/create', [MessageTemplateController::class, 'create'])->name('messages.templates.create');
+        Route::post('/messages/templates', [MessageTemplateController::class, 'store'])->name('messages.templates.store');
+        Route::post('/messages/templates/preview', [MessageTemplateController::class, 'preview'])->name('messages.templates.preview');
+        Route::get('/messages/templates/{template}/edit', [MessageTemplateController::class, 'edit'])->name('messages.templates.edit');
+        Route::put('/messages/templates/{template}', [MessageTemplateController::class, 'update'])->name('messages.templates.update');
+        Route::delete('/messages/templates/{template}', [MessageTemplateController::class, 'destroy'])->name('messages.templates.destroy');
+        foreach (['submit', 'approve', 'reject', 'disable', 'enable'] as $action) {
+            Route::post("/messages/templates/{template}/{$action}", [MessageTemplateController::class, $action])->name("messages.templates.{$action}");
+        }
 
         // ---- الحضور والانصراف (المرحلة 4)
         Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
