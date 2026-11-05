@@ -8,6 +8,7 @@
         ['التقارير اليومية', 'report', 'reports.index', [], 'reports.create|reports.view_all', 'reports.index|reports.show|reports.edit', null],
         ['مراجعة التقارير', 'check-circle', 'reports.review.queue', [], 'reports.review', 'reports.review.*', null],
         ['الأكواد المفتوحة', 'alert', 'open-codes.index', [], 'shipments.view', 'open-codes.*', null],
+        ['رسائل المتاجر', 'phone', 'messages.templates.index', [], 'messages.send', 'messages.*|stores.message*', null],
         ['إدخال تقرير جديد', 'plus-doc', 'reports.create', [], 'reports.create', 'reports.create', null],
         ['استيراد الملفات', 'upload', 'imports.index', [], 'imports.view_all', 'imports.*', null],
         ['متابعة الشحنات', 'truck', null, ['shipments'], 'shipments.view', null, 4],

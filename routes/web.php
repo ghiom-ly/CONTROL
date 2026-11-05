@@ -17,6 +17,7 @@ use App\Http\Controllers\StoreAliasController;
 use App\Http\Controllers\StoreAssignmentController;
 use App\Http\Controllers\StoreImportController;
 use App\Http\Controllers\StoreMessageController;
+use App\Http\Controllers\MessageLogController;
 use App\Http\Controllers\MessageTemplateController;
 use App\Http\Controllers\OpenCodesController;
 use App\Http\Controllers\ReportReviewController;
@@ -109,6 +110,7 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::post("/messages/templates/{template}/{$action}", [MessageTemplateController::class, $action])->name("messages.templates.{$action}");
         }
 
+        Route::get('/messages/log', MessageLogController::class)->name('messages.log');
         Route::get('/messages/bulk', [BulkMessageController::class, 'create'])->name('messages.bulk');
         Route::post('/messages/bulk/preview', [BulkMessageController::class, 'preview'])->name('messages.bulk.preview');
         Route::get('/stores/{store}/message', [StoreMessageController::class, 'create'])->whereNumber('store')->name('stores.message');
