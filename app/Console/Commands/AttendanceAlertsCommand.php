@@ -39,6 +39,10 @@ class AttendanceAlertsCommand extends Command
         }
 
         foreach ($attendance->employees()->get() as $emp) {
+            // موظف لم يبدأ عمله بعد (تاريخ التعيين في المستقبل)
+            if (($emp->hired_at ?? $emp->created_at)?->toDateString() > $today) {
+                continue;
+            }
             $state = $attendance->today($emp);
             if ($state['on_leave']) {
                 continue;

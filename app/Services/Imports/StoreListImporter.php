@@ -94,6 +94,7 @@ class StoreListImporter
         }
         $rows = [];
         $seen = [];
+        $seenStores = [];
         $counts = ['new' => 0, 'update' => 0, 'same' => 0, 'rejected' => 0];
         $existing = [];
 
@@ -111,11 +112,20 @@ class StoreListImporter
                 $row['reason'] = 'اسم المتجر فارغ';
             } elseif (isset($seen[$key])) {
                 $row['reason'] = 'مكرر في الملف';
+            } elseif (mb_strlen($name) < 2 || mb_strlen($name) > 200) {
+                $row['reason'] = 'اسم المتجر يجب أن يكون بين 2 و200 حرف';
+            } elseif ($owner !== null && mb_strlen($owner) > 150) {
+                $row['reason'] = 'اسم صاحب المتجر أطول من 150 حرفاً';
             } elseif ($phone !== null && ! preg_match(self::PHONE, $phone)) {
                 $row['reason'] = 'رقم الهاتف غير صالح';
+            } elseif (($id = $this->matcher->matchAny($name)) !== null && isset($seenStores[$id])) {
+                // اسم واسم بديل لنفس المتجر في الملف نفسه
+                $row['reason'] = 'مكرر في الملف';
             } else {
                 $seen[$key] = true;
-                $id = $this->matcher->matchAny($name);
+                if ($id !== null) {
+                    $seenStores[$id] = true;
+                }
                 if ($id === null) {
                     $row['action'] = 'new';
                 } else {

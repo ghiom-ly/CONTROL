@@ -24,11 +24,11 @@
         </div>
 
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            @foreach($employees->prepend((object) ['id' => 0, 'name' => 'غير مُسندة']) as $e)
+            @foreach($employees->prepend((object) ['id' => 0, 'name' => 'غير مُسندة'])->when(isset($byUser[-1]), fn ($c) => $c->prepend((object) ['id' => -1, 'name' => 'مُسندة لغير موظف نشط'])) as $e)
                 @php $list = $byUser[$e->id] ?? collect(); @endphp
                 <div class="card" x-data="{ all: false }">
                     <div class="card-header">
-                        <h3 class="card-title {{ $e->id === 0 ? 'text-amber-700' : '' }}">{{ $e->name }} <span class="text-sm text-slate-400">({{ $list->count() }})</span></h3>
+                        <h3 class="card-title {{ $e->id <= 0 ? 'text-amber-700' : '' }}">{{ $e->name }} <span class="text-sm text-slate-400">({{ $list->count() }})</span></h3>
                         @if($list->isNotEmpty())
                             <label class="text-xs flex items-center gap-1"><input type="checkbox" x-model="all" x-on:change="$el.closest('.card').querySelectorAll('input[name=\'store_ids[]\']').forEach(c => c.checked = all)"> الكل</label>
                         @endif

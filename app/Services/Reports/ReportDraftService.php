@@ -119,7 +119,7 @@ class ReportDraftService
                 'issue_requests' => array_values($data['issue_requests'] ?? []),
                 'updated_by' => $actor->id,
             ])->save();
-            \App\Support\StartTotals::refresh($report);
+            \App\Support\StartTotals::refresh($report, $oldStores->contains(fn ($s) => $s->start_orders !== null || $s->start_rate !== null));
 
             return ['warnings' => $warnings];
         });

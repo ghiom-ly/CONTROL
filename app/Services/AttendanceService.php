@@ -86,7 +86,8 @@ class AttendanceService
         $shifts = $reports->filter(fn ($r) => ! $r->is_legacy && $r->shift_started_at !== null);
         if ($shifts->isNotEmpty()) {
             $in = $shifts->min('shift_started_at');
-            $submitted = $shifts->filter(fn ($r) => $r->first_submitted_at !== null);
+            // الانصراف يُحسب فقط إذا أُرسل التقرير في نفس يوم الشفت
+            $submitted = $shifts->filter(fn ($r) => $r->first_submitted_at !== null && $r->first_submitted_at->toDateString() === $date);
             $out['in'] = $in->format('H:i');
             $out['out'] = $submitted->max('first_submitted_at')?->format('H:i');
             $out['minutes'] = $submitted->isEmpty() ? null

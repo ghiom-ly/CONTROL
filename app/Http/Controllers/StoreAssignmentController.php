@@ -29,7 +29,8 @@ class StoreAssignmentController extends Controller
 
         return view('stores.assignment', [
             'employees' => $employees,
-            'byUser' => $stores->groupBy(fn ($s) => $s->assigned_user_id ?? 0),
+            // متاجر مُسندة لموظف موقوف أو لغير موظف تظهر في عمود خاص (-1) ليُعاد إسنادها
+            'byUser' => $stores->groupBy(fn ($s) => $s->assigned_user_id === null ? 0 : ($employees->contains('id', $s->assigned_user_id) ? $s->assigned_user_id : -1)),
             'q' => $q,
         ]);
     }

@@ -48,6 +48,8 @@ return new class extends Migration
         DB::statement("ALTER TABLE import_mappings MODIFY layout ENUM('orders','stores','store_list') NOT NULL");
         DB::statement("ALTER TABLE system_settings MODIFY type ENUM('string','integer','decimal','boolean','json','time','date') NOT NULL DEFAULT 'string'");
 
+        $this->ensureSettings();
+
         $perm = DB::table('permissions')->where('name', 'attendance.manage')->value('id')
             ?? DB::table('permissions')->insertGetId(['name' => 'attendance.manage', 'display_name' => 'إدارة الحضور والإجازات',
                 'group' => 'الموظفون', 'created_at' => now(), 'updated_at' => now()]);
@@ -55,6 +57,26 @@ return new class extends Migration
         if ($admin) {
             DB::table('permission_role')->insertOrIgnore(['role_id' => $admin, 'permission_id' => $perm]);
         }
+    }
+
+    /**
+     * إعدادات الحضور تُضاف هنا (لا تعتمد على البذر) حتى تعمل على نسخة مثبّتة تُحدَّث بـ migrate فقط.
+     * بداية احتساب الحضور = يوم التحديث.
+     */
+    public function ensureSettings(): void
+    {
+        $now = now();
+        foreach ([
+            ['attendance_late_after', '10:00', 'time', 'بعد هذه الساعة يُعتبر الموظف متأخراً', 'وقت بدء الشفت المرجعي للتأخير'],
+            ['attendance_grace_minutes', '0', 'integer', 'دقائق السماح قبل احتساب التأخير', null],
+            ['attendance_start_date', $now->toDateString(), 'date', 'بداية احتساب الحضور والغياب', 'لا يُحسب غياب قبل هذا التاريخ'],
+        ] as [$key, $value, $type, $label, $desc]) {
+            DB::table('system_settings')->insertOrIgnore([
+                'key' => $key, 'value' => $value, 'type' => $type, 'group' => 'attendance', 'label' => $label,
+                'description' => $desc, 'created_at' => $now, 'updated_at' => $now,
+            ]);
+        }
+        \Illuminate\Support\Facades\Cache::forget('system_settings.all');
     }
 
     public function down(): void
