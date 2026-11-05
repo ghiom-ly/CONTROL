@@ -71,6 +71,17 @@ export default function reportForm(state, storeOptions, results, maxAttempts) {
             const nums = this.stores.map((s) => parseInt(String(s.shipments_count).replace(/[٠-٩۰-۹]/g, (d) => AR_DIGITS[d]), 10)).filter((n) => !Number.isNaN(n));
             return nums.length ? nums.reduce((a, b) => a + b, 0) : 'غير متوفر';
         },
+        // القسم ③: أكواد كل متجر حسب النتيجة، تُكتب في خانة المتجر وتُحفظ ضمن أكواده
+        bucketText(s, result) {
+            return s.codes.filter((c) => c.result === result && c.code).map((c) => c.code).join('\n');
+        },
+        setBucket(s, result, raw) {
+            const typed = splitCodes(raw);
+            const set = new Set(typed);
+            s.codes = s.codes
+                .filter((c) => c.result !== result && !set.has(String(c.code).toUpperCase()))
+                .concat(typed.map((code) => ({ code, result })));
+        },
         codesWithResult(result) {
             return this.stores.flatMap((s) => s.codes.filter((c) => c.result === result && c.code)
                 .map((c) => ({ code: c.code, store: this.storeName(s.store_id) })));

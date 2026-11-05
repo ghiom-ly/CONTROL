@@ -130,24 +130,23 @@
         {{-- ③ الأكواد غير المُجاب عليها --}}
         <section class="card p-5 space-y-4">
             <h2 class="card-title">③ الأكواد غير المُجاب عليها</h2>
-            @foreach(['customer' => ['أكواد لم يرد عليها الزبون (لتحويلها للمتاجر)', 'customer_no_answer'], 'courier' => ['أكواد لم يرد عليها المندوب أو لا تستجيب ولا تُحل', 'courier_no_answer']] as $bucket => [$title, $result])
-                <div>
-                    <p class="label">{{ $title }}</p>
-                    <div class="flex flex-wrap gap-1 mb-2">
-                        <template x-for="code in codesWithResult('{{ $result }}')" :key="code.code">
-                            <span class="badge badge-navy ltr"><span x-text="code.code"></span> <span class="text-xs opacity-70" x-text="'(' + code.store + ')'"></span></span>
-                        </template>
+            <p class="hint">اكتب أو الصق أكواد كل متجر في خانته — كود في كل سطر أو مفصولة بمسافة.</p>
+            <p x-show="stores.length === 0" class="text-sm text-slate-500">أضف المتاجر في القسم ① أولاً.</p>
+            <template x-for="s in stores" :key="'na' + s.store_id">
+                <div class="rounded-xl border border-slate-200 p-3">
+                    <p class="font-bold text-navy-900 mb-2" x-text="storeName(s.store_id)"></p>
+                    <div class="grid gap-3 md:grid-cols-2">
+                        @foreach(['customer_no_answer' => 'أكواد لم يرد عليها الزبون (لتحويلها للمتجر)', 'courier_no_answer' => 'أكواد لم يرد عليها المندوب أو لا تستجيب ولا تُحل'] as $result => $title)
+                            <div>
+                                <label class="label">{{ $title }} — <span x-text="s.codes.filter(c => c.result === '{{ $result }}' && c.code).length"></span></label>
+                                <textarea class="input ltr" rows="3" placeholder="مثال: A123 B456"
+                                          :value="bucketText(s, '{{ $result }}')"
+                                          x-on:change="setBucket(s, '{{ $result }}', $event.target.value)"></textarea>
+                            </div>
+                        @endforeach
                     </div>
-                    <div class="flex flex-wrap gap-2">
-                        <textarea class="input !w-80" rows="2" name="unanswered[{{ $bucket }}]" x-model="unanswered.{{ $bucket }}" placeholder="لصق أكواد إضافية هنا"></textarea>
-                        <select class="input !w-56" name="unanswered[{{ $bucket }}_store_id]" x-model="unanswered.{{ $bucket }}_store_id">
-                            <option value="">لأي متجر؟</option>
-                            <template x-for="s in stores" :key="s.store_id"><option :value="s.store_id" x-text="storeName(s.store_id)"></option></template>
-                        </select>
-                    </div>
-                    @error("unanswered.{$bucket}_store_id")<p class="field-error">{{ $message }}</p>@enderror
                 </div>
-            @endforeach
+            </template>
             <div class="grid gap-3 sm:grid-cols-2">
                 @foreach(\App\Models\Attachment::REPORT_CATEGORIES as $cat => $catLabel)
                     <div>

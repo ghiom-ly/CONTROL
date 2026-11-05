@@ -240,4 +240,20 @@ class ReportDraftTest extends TestCase
         $this->save($r, ['stores' => [['store_id' => $s->id, 'shipments_count' => 5]]]);
         $this->actingAs($this->emp)->get("/reports/{$r->id}/edit")->assertOk()->assertSee($s->code)->assertSee('بداية الشفت');
     }
+
+    public function test_unanswered_codes_are_entered_per_store(): void
+    {
+        $s = Store::factory()->assignedTo($this->emp->id)->create();
+        $r = $this->draft();
+        $this->save($r, ['stores' => [['store_id' => $s->id, 'shipments_count' => 5, 'codes' => [
+            ['code' => 'NA-1', 'result' => 'customer_no_answer'], ['code' => 'NA-2', 'result' => 'courier_no_answer'],
+        ]]]])->assertSessionHasNoErrors();
+
+        $this->actingAs($this->emp)->get("/reports/{$r->id}/edit")->assertOk()
+            ->assertSee("setBucket(s, 'customer_no_answer'", false)
+            ->assertSee("setBucket(s, 'courier_no_answer'", false)
+            ->assertDontSee('لأي متجر؟');
+        $this->assertSame(['NA-1' => 'customer_no_answer', 'NA-2' => 'courier_no_answer'],
+            $r->followups()->orderBy('shipment_code')->get()->mapWithKeys(fn ($f) => [$f->shipment_code => $f->result->value])->all());
+    }
 }
