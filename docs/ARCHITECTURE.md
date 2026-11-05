@@ -24,6 +24,9 @@ app/
 │   └── Reports/     ShiftService, ReportDraftService, ReportSubmissionService, ReportRevisionService,
 │                    ReportApprovalService, StoreMetricsBuilder, ShipmentSummaryRefresher, ShipmentCodeGuard
 ├── Queries/         OpenCodesQuery
+├── Services/        (المرحلة 4) AttendanceService, Exports/AttendanceExport, Imports/StoreListImporter, Support/StartTotals
+│   جداول: leaves, attendance_alerts؛ أعمدة: report_stores.start_orders/start_rate/start_source، daily_reports.first_submitted_at
+│   أمر مجدول: nours:attendance-alerts كل 15 دقيقة
 ├── Services/Imports/ SpreadsheetReader, HeaderSignature, ShiftFileCalculator, ShiftFileImporter,
 │                    StoreMatcher, LegacyReportParser, LegacyReportImporter   (المرحلة 3)
 │   جداول جديدة: store_aliases, import_mappings؛ أعمدة: daily_reports.is_legacy/file_values/value_sources،
@@ -96,8 +99,9 @@ audit_logs, notifications, alert_rules, system_settings
 | 1 | التأسيس، قاعدة البيانات الكاملة، الدخول، الصلاحيات، التصميم العام، الموظفون، الإعدادات، سجل العمليات، النسخ الاحتياطي | ✅ مكتملة — 39 اختبار ناجح |
 | 2 | CRUD المتاجر + صفحة التفاصيل والمقارنات، نموذج التقرير اليومي (متاجر غير محدودة + أكواد لكل متجر + أوقات الاتصال + مرفقات)، المراجعة والاعتماد/الرفض، إعادة التقديم وسجل النسخ، بناء store_daily_metrics عند الاعتماد داخل Transaction، شاشة الأكواد المفتوحة، نسخ التقرير كنص واتساب | ✅ مكتملة — 131 اختبار ناجح (التصميم: `docs/superpowers/specs/2026-11-04-phase2-stores-daily-report-design.md`) |
 | 3 | مركز الاستيراد: ملف منظومة الشحن (XLSX/XLS/CSV) عند بداية الشفت ونهايته يملأ التقرير، مطابقة أعمدة محفوظة بتوقيع العناوين، مطابقة المتاجر وأسماؤها البديلة، تتبّع مصدر كل قيمة (ملف/يدوي)، الفروق مع الملف للمسؤول، استيراد تقارير واتساب القديمة كسجل تاريخي. (PDF/OCR مؤجَّل — لم يُطلب) | ✅ مكتملة — 206 اختبار ناجح (التصميم: `docs/superpowers/specs/2026-11-04-phase3-imports-design.md`) |
-| 4 | البحث بالكود وسجل المتابعات المتعددة، سجل الاتصالات وإحصائياته، إدارة المشكلات مع سجل التحديثات والإسناد | |
-| 5 | Analytics Center، الرسوم البيانية الستة في لوحة التحكم، مقارنة فترتين (سابق/حالي/فرق/نسبة)، تشغيل قواعد التنبيه المجدولة | |
-| 6 | مركز التقارير الإدارية (9 تقارير) PDF عربي عبر mPDF + Excel + طباعة بهوية الشركة، تحسين الأداء والكاش، اختبارات القبول النهائية الـ18 | |
+| 4 | استيراد المتاجر من Excel، شاشة تعيين المتاجر للموظفين، طلبيات ونسبة تسليم كل متجر عند بداية الشفت (النسبة العامة مرجّحة)، الحضور والانصراف من الشفتات (تأخير، غياب، إجازات، تنبيهات مجدولة، تقرير شهري مع طباعة وExcel) | ✅ مكتملة — 280 اختبار ناجح (التصميم: `docs/superpowers/specs/2026-11-05-phase4-stores-assignment-attendance-design.md`) |
+| 5 | البحث بالكود وسجل المتابعات المتعددة، سجل الاتصالات وإحصائياته، إدارة المشكلات مع سجل التحديثات والإسناد | |
+| 6 | Analytics Center، الرسوم البيانية الستة في لوحة التحكم، مقارنة فترتين (سابق/حالي/فرق/نسبة)، تشغيل قواعد التنبيه المجدولة | |
+| 7 | مركز التقارير الإدارية (9 تقارير) PDF عربي عبر mPDF + Excel + طباعة بهوية الشركة، تحسين الأداء والكاش، اختبارات القبول النهائية الـ18 | |
 
 بعد كل مرحلة: اختبارات Feature للوظائف الجديدة + تشغيل كامل المجموعة قبل الانتقال.

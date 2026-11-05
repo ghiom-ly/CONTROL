@@ -3,7 +3,8 @@
     // [label, icon, route|null, params, permission, active pattern, phase(null = متاح)]
     $nav = [
         ['لوحة التحكم', 'dashboard', 'dashboard', [], 'dashboard.view', 'dashboard', null],
-        ['إدارة المتاجر', 'store', 'stores.index', [], 'stores.view', 'stores.*', null],
+        ['إدارة المتاجر', 'store', 'stores.index', [], 'stores.view', 'stores.index|stores.show|stores.import*', null],
+        ['تعيين المتاجر', 'users', 'stores.assignment', [], 'stores.manage', 'stores.assignment*', null],
         ['التقارير اليومية', 'report', 'reports.index', [], 'reports.create|reports.view_all', 'reports.index|reports.show|reports.edit', null],
         ['مراجعة التقارير', 'check-circle', 'reports.review.queue', [], 'reports.review', 'reports.review.*', null],
         ['الأكواد المفتوحة', 'alert', 'open-codes.index', [], 'shipments.view', 'open-codes.*', null],
@@ -13,6 +14,7 @@
         ['سجل الاتصالات', 'phone', null, ['contacts'], 'contacts.view', null, 4],
         ['إدارة المشكلات', 'alert', null, ['issues'], 'issues.view', null, 4],
         ['الموظفون', 'users', 'users.index', [], 'users.view', 'users.*', null],
+        ['الحضور والانصراف', 'clock', 'attendance.index', [], 'users.view', 'attendance.*', null],
         ['التحليلات', 'chart', null, ['analytics'], 'analytics.view', null, 5],
         ['التقارير الإدارية', 'document-chart', null, ['exports'], 'exports.generate', null, 6],
         ['سجل العمليات', 'history', 'audit.index', [], 'audit.view', 'audit.*', null],
