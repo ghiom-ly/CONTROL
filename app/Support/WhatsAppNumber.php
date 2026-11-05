@@ -11,8 +11,12 @@ class WhatsAppNumber
         if (str_starts_with($d, '00')) {
             $d = substr($d, 2);
         }
-        if (str_starts_with($d, '0')) {
+        if (str_starts_with($d, '2180')) {           // +218 (0)91…
+            $d = '218'.substr($d, 4);
+        } elseif (str_starts_with($d, '0')) {        // 091…
             $d = '218'.substr($d, 1);
+        } elseif (strlen($d) === 9 && $d[0] === '9') { // 91… بلا صفر
+            $d = '218'.$d;
         }
 
         return preg_match('/^218\d{9}$/', $d) ? $d : null;

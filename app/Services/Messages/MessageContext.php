@@ -20,10 +20,14 @@ class MessageContext
 
     private const NA = 'غير متوفر';
 
-    /** @param array{codes?: list<string>, issue?: Issue, period?: string} $opts */
+    /**
+     * @param  array{codes?: list<string>, open?: list<string>, issue?: Issue, period?: string, performance?: bool}  $opts
+     *                                                                                                                  open = أكواد المتجر المفتوحة محسوبة مسبقاً (للإرسال الجماعي)، performance=false لتخطي حساب الأداء
+     */
     public function forStore(Store $store, User $sender, array $opts = []): array
     {
-        $codes = $opts['codes'] ?? self::openCodes($store);
+        $open = $opts['open'] ?? self::openCodes($store);
+        $codes = $opts['codes'] ?? $open;
         $values = [
             'اسم_المتجر' => $store->name,
             'صاحب_المتجر' => $store->owner_name ?? $store->name,
@@ -33,7 +37,7 @@ class MessageContext
             'اسم_الشركة' => (string) SystemSetting::get('company_name', 'شركة النورس'),
             'الأكواد' => $codes ? implode("\n", $codes) : self::NA,
             'عدد_الأكواد' => (string) count($codes),
-            'الأكواد_المفتوحة' => (string) count(self::openCodes($store)),
+            'الأكواد_المفتوحة' => (string) count($open),
         ];
 
         if ($issue = $opts['issue'] ?? null) {
@@ -45,7 +49,7 @@ class MessageContext
             ];
         }
 
-        return $values + $this->performance($store, $opts['period'] ?? '7d');
+        return ($opts['performance'] ?? true) ? $values + $this->performance($store, $opts['period'] ?? '7d') : $values;
     }
 
     /** @return list<string> أكواد «الزبون لم يرد» المفتوحة للمتجر */

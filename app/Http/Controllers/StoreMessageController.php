@@ -31,7 +31,7 @@ class StoreMessageController extends Controller
         $template = $templates->firstWhere('id', (int) $request->query('template_id')) ?? $templates->first();
         $issues = Issue::where('store_id', $store->id)->whereIn('status', [IssueStatus::New, IssueStatus::InProgress])->latest('reported_at')->get();
         $issue = $issues->firstWhere('id', (int) $request->query('issue_id')) ?? $issues->first();
-        $codes = array_values(array_filter((array) $request->query('codes', [])));
+        $codes = array_values(array_filter((array) $request->query('codes', []), fn ($c) => is_string($c) && $c !== '' && mb_strlen($c) <= 80));
         $period = array_key_exists((string) $request->query('period'), MessageContext::PERIODS) ? (string) $request->query('period') : '7d';
 
         $values = $context->forStore($store, $request->user(), array_filter(['codes' => $codes ?: null, 'issue' => $issue, 'period' => $period]));
@@ -39,7 +39,7 @@ class StoreMessageController extends Controller
 
         return view('messages.send', [
             'store' => $store, 'templates' => $templates, 'template' => $template, 'issues' => $issues, 'issue' => $issue,
-            'period' => $period, 'codes' => $codes ?: MessageContext::openCodes($store), 'rendered' => $rendered,
+            'period' => $period, 'codes' => $codes ?: MessageContext::openCodes($store), 'selectedCodes' => $codes, 'rendered' => $rendered,
             'phone' => WhatsAppNumber::normalize($store->phone),
             'history' => StoreMessage::where('store_id', $store->id)->with('sender:id,name')->latest()->limit(5)->get(),
         ]);
@@ -67,10 +67,16 @@ class StoreMessageController extends Controller
         }
         $issueId = null;
         if ($template->type === 'issue') {
-            $issueId = Issue::where('store_id', $store->id)->whereKey($data['issue_id'] ?? 0)->value('id');
+            $issueId = Issue::where('store_id', $store->id)->whereIn('status', [IssueStatus::New, IssueStatus::InProgress])
+                ->whereKey($data['issue_id'] ?? 0)->value('id');
             if (! $issueId) {
                 throw ValidationException::withMessages(['issue_id' => 'اختر مشكلة مسجّلة على هذا المتجر.']);
             }
+        }
+
+        // الأكواد المرسلة تُقصر على أكواد المتجر المفتوحة فعلاً (لا تُعاد فتح أكواد محلولة)
+        if (! empty($data['codes'])) {
+            $data['codes'] = array_values(array_intersect($data['codes'], MessageContext::openCodes($store)));
         }
 
         DB::transaction(function () use ($request, $store, $template, $data, $phone, $issueId, $openCodes) {

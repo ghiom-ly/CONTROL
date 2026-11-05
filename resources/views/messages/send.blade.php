@@ -29,7 +29,7 @@
                     </select>
                 </div>
             @endif
-            @foreach(request('codes', []) as $c)<input type="hidden" name="codes[]" value="{{ $c }}">@endforeach
+            @foreach($selectedCodes as $c)<input type="hidden" name="codes[]" value="{{ $c }}">@endforeach
         </form>
 
         <form method="POST" action="{{ route('stores.message.send', $store) }}" target="_blank" class="card p-5 space-y-3"

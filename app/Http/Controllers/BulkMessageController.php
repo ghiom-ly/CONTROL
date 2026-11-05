@@ -64,7 +64,7 @@ class BulkMessageController extends Controller
 
             return [
                 'store' => $s, 'phone' => WhatsAppNumber::normalize($s->phone), 'codes' => $codes, 'skipped' => $skip,
-                'text' => $skip ? '' : MessageRenderer::render($template->body, $context->forStore($s, $request->user(), ['period' => $period]))['text'],
+                'text' => $skip ? '' : MessageRenderer::render($template->body, $context->forStore($s, $request->user(), ['period' => $period, 'open' => $codes, 'performance' => $template->type === 'performance']))['text'],
             ];
         });
 

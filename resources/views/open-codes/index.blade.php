@@ -31,16 +31,16 @@
         <div class="card"><x-empty-state title="لا توجد أكواد مفتوحة" icon="check-circle"/></div>
     @endif
 
+    @php $openCodesTemplate = auth()->user()->can('messages.send') ? \App\Models\MessageTemplate::where('status', 'approved')->where('type', 'open_codes')->value('id') : null; @endphp
     @foreach($groups as $storeId => $items)
         @php $store = $items->first()->store; @endphp
         <form method="POST" action="{{ route('open-codes.mark') }}" class="card mb-4" x-data="{ all: false }">
             @csrf
             <div class="card-header">
                 <h3 class="card-title">{{ $store->name }} <span class="text-sm text-slate-400">({{ $items->count() }})</span></h3>
-                @if($tab === 'customer' && Route::has('stores.message'))
+                @if($tab === 'customer' && $openCodesTemplate)
                     @can('messages.send')
-                        @php $ot = \App\Models\MessageTemplate::where('status', 'approved')->where('type', 'open_codes')->value('id'); @endphp
-                        <a href="{{ route('stores.message', ['store' => $store, 'template_id' => $ot, 'codes' => $items->pluck('code')->all()]) }}" class="btn btn-accent btn-sm ms-auto"><x-icon name="phone" class="size-4"/> إرسال للمتجر</a>
+                        <a href="{{ route('stores.message', ['store' => $store, 'template_id' => $openCodesTemplate, 'codes' => $items->pluck('code')->all()]) }}" class="btn btn-accent btn-sm ms-auto"><x-icon name="phone" class="size-4"/> إرسال للمتجر</a>
                     @endcan
                 @endif
                 <button type="button" class="btn btn-light btn-sm" x-data="{ done: false }"
