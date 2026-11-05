@@ -15,6 +15,7 @@ use App\Http\Controllers\LegacyImportController;
 use App\Http\Controllers\StoreAliasController;
 use App\Http\Controllers\StoreAssignmentController;
 use App\Http\Controllers\StoreImportController;
+use App\Http\Controllers\StoreMessageController;
 use App\Http\Controllers\MessageTemplateController;
 use App\Http\Controllers\OpenCodesController;
 use App\Http\Controllers\ReportReviewController;
@@ -106,6 +107,9 @@ Route::middleware(['auth', 'active'])->group(function () {
         foreach (['submit', 'approve', 'reject', 'disable', 'enable'] as $action) {
             Route::post("/messages/templates/{template}/{$action}", [MessageTemplateController::class, $action])->name("messages.templates.{$action}");
         }
+
+        Route::get('/stores/{store}/message', [StoreMessageController::class, 'create'])->whereNumber('store')->name('stores.message');
+        Route::post('/stores/{store}/message', [StoreMessageController::class, 'store'])->whereNumber('store')->name('stores.message.send');
 
         // ---- الحضور والانصراف (المرحلة 4)
         Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');

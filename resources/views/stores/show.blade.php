@@ -1,6 +1,9 @@
 <x-layouts.app :title="$store->name">
     <x-page-header :title="$store->name" :subtitle="$store->code.' — '.($store->assignedUser?->name ?? 'غير مسند لموظف')">
         <x-slot:actions>
+            @can('messages.send')
+                <a href="{{ route('stores.message', $store) }}" class="btn btn-accent"><x-icon name="phone" class="size-4"/> إرسال رسالة</a>
+            @endcan
             @can('update', $store)
                 <button type="button" class="btn btn-light" x-on:click="$dispatch('open-modal', 'edit-store')"><x-icon name="pencil" class="size-4"/> تعديل</button>
                 @if($store->status !== \App\Enums\StoreStatus::Archived)
@@ -38,6 +41,21 @@
             @endforeach
         </div>
     @endif
+
+    @can('messages.send')
+        @php $messages = \App\Models\StoreMessage::where('store_id', $store->id)->with(['sender:id,name', 'template:id,name'])->latest()->limit(20)->get(); @endphp
+        @if($messages->isNotEmpty())
+            <div class="card p-5 mt-5 text-sm">
+                <h3 class="font-bold text-navy-900 mb-2">الرسائل المرسلة ({{ $messages->count() }})</h3>
+                @foreach($messages as $m)
+                    <div class="border-b border-slate-100 py-2">
+                        <p class="text-xs text-slate-400">{{ $m->created_at->format('Y/m/d H:i') }} — {{ $m->sender->name }} — {{ $m->template?->name ?? '—' }}</p>
+                        <p class="whitespace-pre-wrap">{{ \Illuminate\Support\Str::limit($m->body, 300) }}</p>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    @endcan
 
     @isset($insights)
         @include('stores._insights')
