@@ -34,6 +34,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [LoginController::class, 'store'])->middleware('throttle:login')->name('login.store');
 });
 
+// تقرير المتجر لصاحبه — رابط موقّع بلا دخول (المرحلة 8)
+Route::get('/r/store/{store}', [\App\Http\Controllers\StoreReportShareController::class, 'public'])
+    ->whereNumber('store')->middleware('throttle:30,1')->name('store-report.public');
+
 Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
     Route::get('/password', [PasswordController::class, 'edit'])->name('password.edit');
@@ -47,7 +51,8 @@ Route::middleware(['auth', 'active'])->group(function () {
         // ---- البحث بالكود (المرحلة 6)
         Route::get('/shipments', [\App\Http\Controllers\ShipmentController::class, 'index'])->name('shipments.index');
         Route::get('/shipments/{code}', [\App\Http\Controllers\ShipmentController::class, 'show'])->where('code', '[^/]+')->name('shipments.show');
-        Route::get('/reports-center', [\App\Http\Controllers\ReportCenterController::class, 'index'])->name('reports-center.index');
+        Route::post('/stores/{store}/report-share', [\App\Http\Controllers\StoreReportShareController::class, 'share'])->whereNumber('store')->name('stores.report.share');
+        Route::get('/reports-center',[\App\Http\Controllers\ReportCenterController::class, 'index'])->name('reports-center.index');
         Route::get('/reports-center/{key}/{format}', [\App\Http\Controllers\ReportCenterController::class, 'export'])->name('reports-center.export');
         Route::get('/analytics',[\App\Http\Controllers\AnalyticsController::class, 'index'])->name('analytics.index');
         Route::get('/alerts', [\App\Http\Controllers\AlertController::class, 'index'])->name('alerts.index');

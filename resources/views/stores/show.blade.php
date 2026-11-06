@@ -60,6 +60,26 @@
         @endif
     @endcan
 
+    @if(auth()->user()->hasPermission('exports.generate') || auth()->user()->hasPermission('messages.send'))
+        <div class="card mt-5 p-5 text-sm" x-data="{ preset: 'month' }">
+            <h3 class="card-title mb-3">تقرير المتجر لصاحبه</h3>
+            <form method="POST" action="{{ route('stores.report.share', $store) }}" target="_blank" class="flex flex-wrap items-end gap-2">
+                @csrf
+                <div><label class="label">الفترة</label>
+                    <select name="period" x-model="preset" class="input !w-32"><option value="week">أسبوع</option><option value="month">شهر</option><option value="custom">مخصصة</option></select></div>
+                <template x-if="preset === 'custom'"><span class="flex gap-1"><input type="date" name="from" class="input !w-36" required><input type="date" name="to" class="input !w-36" required></span></template>
+                @if(auth()->user()->hasPermission('messages.send'))
+                    <button class="btn btn-accent"><x-icon name="phone" class="size-4"/> إرسال تقرير المتجر عبر واتساب</button>
+                @endif
+                @if(auth()->user()->hasPermission('exports.generate'))
+                    <button class="btn btn-light" formmethod="GET" formaction="{{ route('reports-center.export', ['store', 'pdf']) }}" name="store_id" value="{{ $store->id }}">تحميل تقرير المتجر PDF</button>
+                @endif
+            </form>
+            @error('phone')<p class="field-error mt-2">{{ $message }}</p>@enderror
+            <p class="hint mt-2">يصل لصاحب المتجر رابط آمن يفتح تقرير PDF بلا دخول، صالح {{ \App\Http\Controllers\StoreReportShareController::LINK_DAYS }} أيام — بلا أسماء الموظفين.</p>
+        </div>
+    @endif
+
     @can('update', $store)
         @php $storeContacts = \App\Models\ContactAttempt::where('store_id', $store->id)->where('party_type', 'store')->with('user:id,name')->latest('contacted_at')->limit(10)->get(); @endphp
         <div class="card mt-5 text-sm" id="store-contacts">
