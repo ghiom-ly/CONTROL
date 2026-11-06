@@ -172,6 +172,11 @@ class DailyReportController extends Controller
     public function show(DailyReport $report): View
     {
         $this->authorize('view', $report);
+        if ($report->isConfirmation()) {
+            $report->load(['user:id,name', 'confirmationOrders.store:id,name']);
+
+            return view('reports.show-confirmation', ['report' => $report, 'whatsapp' => \App\Support\ConfirmationWhatsappFormatter::format($report)]);
+        }
         $report->load(['user:id,name', 'stores.store:id,name,code', 'followups.store:id,name', 'revisions.changer:id,name', 'approver:id,name', 'reviewer:id,name']);
 
         return view('reports.show', [

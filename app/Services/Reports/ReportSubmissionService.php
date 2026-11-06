@@ -19,6 +19,10 @@ class ReportSubmissionService
             $report = DailyReport::whereKey($report->id)->lockForUpdate()->firstOrFail();
             $report->load('stores');
 
+            if ($report->isConfirmation()) {
+                return $this->submitConfirmation($report, $actor);
+            }
+
             if ($report->stores->isEmpty()) {
                 throw ValidationException::withMessages(['stores' => 'أضف متجراً واحداً على الأقل قبل الإرسال.']);
             }
@@ -59,5 +63,29 @@ class ReportSubmissionService
 
             return ['warnings' => $warnings];
         });
+    }
+
+    /** تقرير التأكيد: طلب واحد على الأقل، بلا نسبة تسليم نهائية */
+    private function submitConfirmation(DailyReport $report, User $actor): array
+    {
+        $total = $report->confirmationOrders()->count();
+        if ($total === 0) {
+            throw ValidationException::withMessages(['orders' => 'أضف طلباً واحداً على الأقل قبل الإرسال.']);
+        }
+        if ($report->status === ReportStatus::Rejected) {
+            $this->revisions->snapshotOnce($report, 'إعادة تقديم بعد الإرجاع', $actor);
+            $report->version++;
+            $report->rejection_reason = null;
+        }
+        $report->fill([
+            'submitted_at' => now(),
+            'first_submitted_at' => $report->first_submitted_at ?? now(),
+            'status' => ReportStatus::PendingReview,
+            'total_shipments' => $total,
+            'contact_attempts_count' => count($report->attempt_times ?? []),
+            'updated_by' => $actor->id,
+        ])->save();
+
+        return ['warnings' => []];
     }
 }

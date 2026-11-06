@@ -51,6 +51,17 @@ class ReportApprovalService
             if (! in_array($report->status, $allowed, true)) {
                 throw ValidationException::withMessages(['status' => 'تغيّرت حالة التقرير — لم يعد قيد المراجعة.']);
             }
+
+            // تقرير التأكيد: حالة + إشعار فقط — لا شحنات ولا مقاييس طلبيات
+            if ($report->isConfirmation()) {
+                $report->fill(['status' => ReportStatus::Approved, 'approved_by' => $actor->id, 'approved_at' => now(),
+                    'reviewed_by' => $actor->id, 'reviewed_at' => now(), 'rejection_reason' => null])->save();
+                $report->loadMissing('user')->user?->notify(new ReportReviewedNotification($report));
+                DB::afterCommit(fn () => \App\Services\Analytics\AnalyticsService::flush());
+
+                return [];
+            }
+
             $previous ??= $this->affectedKeys($report);
             $followups = $report->followups()->get();
 

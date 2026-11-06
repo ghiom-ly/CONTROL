@@ -109,7 +109,7 @@ class DailyReport extends Model
     /** طلبات تقرير التأكيد */
     public function confirmationOrders(): HasMany
     {
-        return $this->hasMany(ConfirmationOrder::class);
+        return $this->hasMany(ConfirmationOrder::class)->orderBy('id');   // بترتيب الإدخال
     }
 
     public function isConfirmation(): bool
