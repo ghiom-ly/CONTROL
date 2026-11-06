@@ -68,7 +68,7 @@
         @isset($contacts)
             <section class="card mb-5" id="contacts">
                 <div class="card-header"><h2 class="card-title">{{ $full ? 'الاتصالات المسجلة' : 'اتصالاتي على هذا الكود' }}</h2><span class="badge badge-gray">{{ $contacts->count() }}</span></div>
-                @if(auth()->user()->hasPermission('contacts.create'))
+                @if(auth()->user()->hasPermission('contacts.create') && ! $shipment->trashed())
                     <form method="POST" action="{{ route('shipments.contacts.store', $shipment->code) }}" class="flex flex-wrap items-end gap-2 border-b border-slate-100 p-4">
                         @csrf
                         <div><label class="label">تسجيل اتصال مع</label>

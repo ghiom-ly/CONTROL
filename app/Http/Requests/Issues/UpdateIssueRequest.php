@@ -17,16 +17,35 @@ class UpdateIssueRequest extends FormRequest
 
     public function rules(): array
     {
-        $closing = in_array($this->input('status'), [IssueStatus::Resolved->value, IssueStatus::Closed->value], true);
-        $hasAction = filled($this->route('issue')->action_taken);
+        // الحالة الناتجة محلولة/مغلقة ⇒ «الإجراء المتخذ» مطلوب دائماً (لا يُمسح بعد الحل)
+        $issue = $this->route('issue');
+        $resulting = $this->input('status', $issue->status->value);
+        $closing = in_array($resulting, [IssueStatus::Resolved->value, IssueStatus::Closed->value], true);
+        $sendsAction = $this->has('action_taken');
 
         return [
             'comment' => ['nullable', 'string', 'max:5000'],
-            'status' => ['nullable', Rule::enum(IssueStatus::class)],
-            'priority' => ['nullable', Rule::enum(IssuePriority::class)],
+            'status' => ['sometimes', 'required', Rule::enum(IssueStatus::class)],
+            'priority' => ['sometimes', 'required', Rule::enum(IssuePriority::class)],
             'assigned_to' => ['nullable', 'integer', Rule::in(IssueService::managers()->pluck('id')->all())],
-            'action_taken' => [$closing && ! $hasAction ? 'required' : 'nullable', 'string', 'max:5000'],
+            'action_taken' => [$closing && ($sendsAction || ! filled($issue->action_taken)) ? 'required' : 'nullable', 'string', 'max:5000'],
         ];
+    }
+
+    /** تحديث بلا أي تغيير وبلا تعليق لا يُسجَّل */
+    public function withValidator($v): void
+    {
+        $v->after(function ($v) {
+            $i = $this->route('issue');
+            $changed = ($this->filled('status') && $this->input('status') !== $i->status->value)
+                || ($this->filled('priority') && $this->input('priority') !== $i->priority->value)
+                || ($this->has('assigned_to') && (int) $this->input('assigned_to') !== (int) $i->assigned_to)
+                || ($this->filled('action_taken') && $this->input('action_taken') !== $i->action_taken)
+                || $this->filled('comment');
+            if (! $changed) {
+                $v->errors()->add('comment', 'لا يوجد تغيير — اكتب تعليقاً أو غيّر الحالة أو الأولوية أو المسؤول.');
+            }
+        });
     }
 
     public function messages(): array

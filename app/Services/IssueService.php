@@ -83,6 +83,8 @@ class IssueService
     /** المستخدمون النشطون الذين يديرون المشكلات */
     public static function managers()
     {
-        return User::with('role')->where('status', 'active')->get()->filter(fn (User $u) => $u->hasPermission('issues.manage'))->values();
+        // استعلام واحد: من دوره يملك issues.manage، أو المدير العام
+        return User::where('status', 'active')->whereHas('role', fn ($r) => $r->where('name', \App\Models\Role::SUPER_ADMIN)
+            ->orWhereHas('permissions', fn ($p) => $p->where('name', 'issues.manage')))->orderBy('name')->get(['id', 'name', 'role_id']);
     }
 }

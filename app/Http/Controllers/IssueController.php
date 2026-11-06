@@ -61,6 +61,9 @@ class IssueController extends Controller
         $shipmentId = filled($data['shipment_code'] ?? null)
             ? Shipment::where('store_id', $store->id)->where('code', Shipment::normalizeCode($data['shipment_code']))->value('id')
             : null;
+        if (filled($data['shipment_code'] ?? null) && ! $shipmentId) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['shipment_code' => 'الكود غير موجود لهذا المتجر — اتركه فارغاً أو صحّحه.']);
+        }
         unset($data['shipment_code']);
 
         $issue = $this->issues->create($data + ['store_id' => $store->id, 'shipment_id' => $shipmentId], $request->user());
