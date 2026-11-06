@@ -34,6 +34,7 @@ class Permissions
 
             'shipments.view' => ['عرض الشحنات والبحث بالكود', 'الشحنات'],
             'shipments.followup' => ['تسجيل متابعات الشحنات', 'الشحنات'],
+            'shipments.lookup' => ['عرض ملخص الكود', 'الشحنات'],
 
             'contacts.view' => ['عرض سجل الاتصالات', 'الاتصالات'],
             'contacts.create' => ['تسجيل محاولات الاتصال', 'الاتصالات'],
@@ -71,6 +72,7 @@ class Permissions
             // الموظف يدخل تقريره ويرسله فقط، ويرى إحصائيات تقاريره (قرار صاحب المشروع 2026-11-04)
             Role::EMPLOYEE => [
                 'dashboard.view', 'reports.create', 'imports.create', 'issues.create',
+                'shipments.lookup', 'contacts.create',   // المرحلة 6: ملخص الكود واتصالات الزبون/المندوب
             ],
             Role::VIEWER => [
                 'dashboard.view', 'stores.view', 'reports.view_all', 'shipments.view',

@@ -58,7 +58,7 @@
                     @foreach($items as $s)
                         <tr>
                             @if($canMark)<td><input type="checkbox" name="shipment_ids[]" value="{{ $s->id }}" :checked="all" class="size-4"></td>@endif
-                            <td class="ltr text-right font-bold">{{ $s->code }}</td>
+                            <td class="text-right font-bold"><x-code :code="$s->code"/></td>
                             <td><x-badge :enum="$s->processing_status"/></td>
                             <td class="text-xs">{{ $s->last_followup_at?->format('Y/m/d H:i') ?? '—' }}</td>
                             <td>{{ $s->lastFollowupUser?->name ?? '—' }}</td>

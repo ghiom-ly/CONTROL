@@ -73,7 +73,7 @@
                                 <td class="tabular-nums">{{ $rs->shipments_count ?? 'غير متوفر' }}</td>
                                 <td class="text-xs">
                                     @foreach($report->followups->where('store_id', $rs->store_id) as $f)
-                                        <span class="ltr inline-block">{{ $f->shipment_code }}</span> <x-badge :enum="$f->result"/><br>
+                                        <x-code :code="$f->shipment_code"/> <x-badge :enum="$f->result"/><br>
                                     @endforeach
                                 </td>
                                 <td class="text-sm">{{ $rs->notes ?? '—' }}</td>
@@ -92,8 +92,8 @@
 
             <section class="card p-5 text-sm space-y-2">
                 <h2 class="card-title">③ الأكواد غير المُجاب عليها</h2>
-                <p><b>الزبون لم يرد:</b> <span class="ltr">{{ $report->followups->where('result', \App\Enums\FollowupResult::CustomerNoAnswer)->pluck('shipment_code')->implode(' ') ?: 'لا يوجد' }}</span></p>
-                <p><b>المندوب لم يرد:</b> <span class="ltr">{{ $report->followups->where('result', \App\Enums\FollowupResult::CourierNoAnswer)->pluck('shipment_code')->implode(' ') ?: 'لا يوجد' }}</span></p>
+                <p><b>الزبون لم يرد:</b> @forelse($report->followups->where('result', \App\Enums\FollowupResult::CustomerNoAnswer) as $f)<x-code :code="$f->shipment_code"/> @empty لا يوجد @endforelse</p>
+                <p><b>المندوب لم يرد:</b> @forelse($report->followups->where('result', \App\Enums\FollowupResult::CourierNoAnswer) as $f)<x-code :code="$f->shipment_code"/> @empty لا يوجد @endforelse</p>
             </section>
 
             <section class="card p-5 text-sm space-y-2">

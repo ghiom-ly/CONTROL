@@ -37,7 +37,7 @@
                         <tbody>
                         @foreach($insights['openCodes'] as $s)
                             <tr>
-                                <td class="ltr text-right font-bold">{{ $s->code }}</td>
+                                <td class="text-right font-bold"><x-code :code="$s->code"/></td>
                                 <td><x-badge :enum="$s->last_result"/></td>
                                 <td><x-badge :enum="$s->processing_status"/></td>
                                 <td class="text-xs text-slate-500">{{ $s->last_followup_at?->format('Y/m/d') ?? '—' }} {{ $s->lastFollowupUser?->name }}</td>

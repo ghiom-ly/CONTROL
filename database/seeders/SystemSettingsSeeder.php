@@ -24,6 +24,7 @@ class SystemSettingsSeeder extends Seeder
             ['store_inactive_days', '3', 'integer', 'stores', 'عدد الأيام المتتالية دون شحنات لاعتبار المتجر متوقفاً', 'لا يُصنف المتجر متوقفاً بناءً على يوم واحد'],
             ['store_decline_percent', '30', 'integer', 'stores', 'نسبة انخفاض الشحنات عن المتوسط لإطلاق تنبيه (%)', null],
             ['issue_resolution_sla_hours', '48', 'integer', 'issues', 'المهلة الافتراضية لحل المشكلة (ساعات)', null],
+            ['shipment_url_template', 'https://backoffice.nawris.algoriza.com/orders/{code}', 'string', 'reports', 'رابط صفحة الشحنة في منظومة الشحن', '{code} مكان الكود — اتركه فارغاً لإلغاء الروابط'],
             ['import_max_rows', '5000', 'integer', 'imports', 'الحد الأقصى لعدد الصفوف في ملف الاستيراد', null],
         ];
 

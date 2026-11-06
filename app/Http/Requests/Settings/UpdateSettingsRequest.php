@@ -24,11 +24,17 @@ class UpdateSettingsRequest extends FormRequest
             'settings.store_inactive_days' => ['required', 'integer', 'min:2', 'max:90'],
             'settings.store_decline_percent' => ['required', 'integer', 'min:1', 'max:100'],
             'settings.issue_resolution_sla_hours' => ['required', 'integer', 'min:1', 'max:2160'],
+            'settings.shipment_url_template' => ['nullable', 'string', 'max:300', 'regex:/^https?:\/\/[^\s]+$/', 'regex:/\{code\}/'],
             'settings.import_max_rows' => ['required', 'integer', 'min:10', 'max:100000'],
             'settings.attendance_late_after' => ['sometimes', 'required', 'date_format:H:i'],
             'settings.attendance_grace_minutes' => ['sometimes', 'required', 'integer', 'min:0', 'max:240'],
             'settings.attendance_start_date' => ['sometimes', 'required', 'date_format:Y-m-d'],
         ];
+    }
+
+    public function messages(): array
+    {
+        return ['settings.shipment_url_template.regex' => 'رابط الشحنة يجب أن يبدأ بـ https:// ويحتوي {code} مكان الكود.'];
     }
 
     public function attributes(): array
