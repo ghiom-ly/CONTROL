@@ -24,6 +24,7 @@
                   if (o && !this.stores.some(s => s.store_id === o.id)) this.stores.push({ store_id: o.id, confirmed: '', no_answer: '', cancelled: [] }); this.pick = '' },
           }">
         @csrf @method('PUT')
+        @if($approveAfter)<input type="hidden" name="approve_after" value="1">@endif
 
         <section class="card p-5">
             <h2 class="card-title mb-3">ملخص حركة الأوردرات</h2>
@@ -90,7 +91,7 @@
         </section>
 
         <div class="flex flex-wrap gap-2">
-            <button name="action" value="save" class="btn btn-light">حفظ</button>
+            <button name="action" value="save" class="btn {{ $approveAfter ? 'btn-accent' : 'btn-light' }}">{{ $approveAfter ? 'حفظ التصحيح واعتماد التقرير' : 'حفظ' }}</button>
             @can('submit', $report)
                 <button name="action" value="submit" class="btn btn-accent">حفظ وإرسال (نهاية الشفت)</button>
             @endcan

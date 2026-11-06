@@ -32,7 +32,11 @@ class ReportRevisionService
                     'code' => $f->shipment_code, 'store_id' => $f->store_id, 'result' => $f->result->value,
                 ])->values()->all(),
                 'attachment_ids' => $report->attachments->pluck('id')->all(),
-            ],
+            ] + ($report->isConfirmation() ? [
+                'confirmation_orders' => $report->confirmationOrders()->get()
+                    ->map(fn ($o) => ['store_id' => $o->store_id, 'code' => $o->code, 'result' => $o->result->value, 'cancel_reason' => $o->cancel_reason])
+                    ->values()->all(),
+            ] : []),
         ]);
     }
 }

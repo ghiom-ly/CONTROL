@@ -15,6 +15,24 @@ use Illuminate\Validation\ValidationException;
 /** حفظ تقرير التأكيد: يستبدل طلبات التقرير بما في النموذج (الكود فريد داخل التقرير) */
 class ConfirmationDraftService
 {
+    /** تقسيم الخانة بلا حذف للتكرار — التكرار يُكتشف ويُرفض حتى تطابق الأعداد ما تراه الموظفة */
+    private static function tokens(string $raw): array
+    {
+        $out = [];
+        foreach (preg_split('/[\s,،;؛]+/u', $raw, -1, PREG_SPLIT_NO_EMPTY) as $part) {
+            $code = Shipment::normalizeCode($part);
+            if ($code === null) {
+                continue;
+            }
+            if (mb_strlen($code) > CodeParser::MAX_LENGTH) {
+                throw new \InvalidArgumentException('الكود أطول من '.CodeParser::MAX_LENGTH.' حرفاً: '.mb_substr($code, 0, 20).'…');
+            }
+            $out[] = $code;
+        }
+
+        return $out;
+    }
+
     public function save(DailyReport $report, array $data, User $actor): void
     {
         $orders = [];
@@ -35,14 +53,14 @@ class ConfirmationDraftService
         try {
             foreach ($data['stores'] ?? [] as $s) {
                 $sid = (int) $s['store_id'];
-                foreach (CodeParser::split((string) ($s['confirmed'] ?? '')) as $c) {
+                foreach (self::tokens((string) ($s['confirmed'] ?? '')) as $c) {
                     $add($sid, $c, ConfirmationResult::Confirmed);
                 }
                 foreach ($s['cancelled'] ?? [] as $c) {
                     $reason = $c['reason'] === CancelReasons::OTHER ? CancelReasons::OTHER.': '.trim((string) $c['other']) : $c['reason'];
                     $add($sid, (string) $c['code'], ConfirmationResult::Cancelled, mb_substr($reason, 0, 150));
                 }
-                foreach (CodeParser::split((string) ($s['no_answer'] ?? '')) as $c) {
+                foreach (self::tokens((string) ($s['no_answer'] ?? '')) as $c) {
                     $add($sid, $c, ConfirmationResult::NoAnswer);
                 }
             }

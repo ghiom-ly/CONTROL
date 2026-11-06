@@ -95,7 +95,7 @@ class AnalyticsService
             'start_rate' => $rates['start'],
             'end_rate' => $rates['end'],
             'improvement' => $rates['start'] !== null && $rates['end'] !== null ? round($rates['end'] - $rates['start'], 2) : null,
-            'reports_approved' => (float) DB::table('daily_reports')->where('status', 'approved')->whereBetween('work_date', [$d1, $d2])->whereNull('deleted_at')->count(),
+            'reports_approved' => (float) DB::table('daily_reports')->where('kind', 'followup')->where('status', 'approved')->whereBetween('work_date', [$d1, $d2])->whereNull('deleted_at')->count(),
             'followups' => (float) $f->sum(),
             'delivered_after_followup' => (float) ($f['delivered_after_followup'] ?? 0),
             'customer_no_answer' => (float) ($f['customer_no_answer'] ?? 0),
@@ -120,7 +120,7 @@ class AnalyticsService
         $dates = collect(range(0, $days - 1))->map(fn ($i) => $p->from->addDays($i)->toDateString());
         $prevDates = collect(range(0, $days - 1))->map(fn ($i) => $p->prevFrom->addDays($i)->toDateString());
 
-        $rates = DB::table('daily_reports')->where('status', 'approved')->whereNull('deleted_at')
+        $rates = DB::table('daily_reports')->where('kind', 'followup')->where('status', 'approved')->whereNull('deleted_at')
             ->whereBetween('work_date', [$dates->first(), $dates->last()])
             ->selectRaw('work_date d, AVG(start_delivery_rate) s, AVG(end_delivery_rate) e')->groupBy('work_date')->get()
             ->keyBy(fn ($r) => substr((string) $r->d, 0, 10));
@@ -214,9 +214,9 @@ class AnalyticsService
     public function employees(ComparePeriod $p): Collection
     {
         [$d1, $d2] = [$p->from->toDateString(), $p->to->toDateString()];
-        $users = User::whereHas('role', fn ($q) => $q->where('name', Role::EMPLOYEE))->where('status', 'active')->orderBy('name')->get(['id', 'name', 'role_id', 'hired_at', 'created_at']);
+        $users = User::whereHas('role', fn ($q) => $q->where('name', Role::EMPLOYEE))->where('status', 'active')->where('work_type', 'followup')->orderBy('name')->get(['id', 'name', 'role_id', 'hired_at', 'created_at']);
 
-        $reports = DB::table('daily_reports')->where('status', 'approved')->whereNull('deleted_at')->whereBetween('work_date', [$d1, $d2])
+        $reports = DB::table('daily_reports')->where('kind', 'followup')->where('status', 'approved')->whereNull('deleted_at')->whereBetween('work_date', [$d1, $d2])
             ->whereIn('user_id', $users->pluck('id'))
             ->selectRaw('user_id, COUNT(*) n, AVG(end_delivery_rate - start_delivery_rate) imp')->groupBy('user_id')->get()->keyBy('user_id');
         $orders = DB::table('report_stores as rs')->join('daily_reports as r', 'r.id', '=', 'rs.daily_report_id')
@@ -263,7 +263,7 @@ class AnalyticsService
     /** متوسط نسب البداية والنهاية للتقارير المعتمدة: مرجّح بـ start_total_orders حيث يتوفر، وإلا بسيط */
     private function rates(string $d1, string $d2): array
     {
-        $r = DB::table('daily_reports')->where('status', 'approved')->whereNull('deleted_at')->whereBetween('work_date', [$d1, $d2])
+        $r = DB::table('daily_reports')->where('kind', 'followup')->where('status', 'approved')->whereNull('deleted_at')->whereBetween('work_date', [$d1, $d2])
             ->selectRaw('SUM(CASE WHEN start_total_orders > 0 AND start_delivery_rate IS NOT NULL THEN start_total_orders END) ws,
                 SUM(CASE WHEN start_total_orders > 0 AND start_delivery_rate IS NOT NULL THEN start_total_orders * start_delivery_rate END) s_w,
                 SUM(CASE WHEN start_total_orders > 0 AND end_delivery_rate IS NOT NULL THEN start_total_orders END) we,
