@@ -12,3 +12,6 @@ Artisan::command('inspire', function () {
 
 // تنبيهات الحضور للمسؤولين كل 15 دقيقة (المرحلة 4)
 \Illuminate\Support\Facades\Schedule::command('nours:attendance-alerts')->everyFifteenMinutes();
+
+// التنبيهات التلقائية كل ساعة (المرحلة 7)
+\Illuminate\Support\Facades\Schedule::command('nours:alerts')->hourly();

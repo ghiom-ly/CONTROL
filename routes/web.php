@@ -48,6 +48,9 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/shipments', [\App\Http\Controllers\ShipmentController::class, 'index'])->name('shipments.index');
         Route::get('/shipments/{code}', [\App\Http\Controllers\ShipmentController::class, 'show'])->where('code', '[^/]+')->name('shipments.show');
         Route::get('/analytics', [\App\Http\Controllers\AnalyticsController::class, 'index'])->name('analytics.index');
+        Route::get('/alerts', [\App\Http\Controllers\AlertController::class, 'index'])->name('alerts.index');
+        Route::get('/alerts/whatsapp', [\App\Http\Controllers\AlertController::class, 'whatsapp'])->name('alerts.whatsapp');
+        Route::patch('/alerts/{alert}/close', [\App\Http\Controllers\AlertController::class, 'close'])->whereNumber('alert')->name('alerts.close');
         Route::get('/issues', [\App\Http\Controllers\IssueController::class, 'index'])->name('issues.index');
         Route::get('/issues/{issue}', [\App\Http\Controllers\IssueController::class, 'show'])->whereNumber('issue')->name('issues.show');
         Route::post('/issues/{issue}/updates', [\App\Http\Controllers\IssueController::class, 'update'])->whereNumber('issue')->name('issues.updates.store');

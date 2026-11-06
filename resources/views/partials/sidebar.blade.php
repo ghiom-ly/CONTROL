@@ -1,5 +1,6 @@
 @php
     $user = auth()->user();
+    $openAlerts = $user->hasPermission('analytics.view') ? \App\Models\Alert::where('status', 'open')->count() : 0;
     // [label, icon, route|null, params, permission, active pattern, phase(null = متاح)]
     $nav = [
         ['لوحة التحكم', 'dashboard', 'dashboard', [], 'dashboard.view', 'dashboard', null],
@@ -17,6 +18,7 @@
         ['الموظفون', 'users', 'users.index', [], 'users.view', 'users.*', null],
         ['الحضور والانصراف', 'clock', 'attendance.index', [], 'users.view', 'attendance.*', null],
         ['التحليلات', 'chart', 'analytics.index', [], 'analytics.view', 'analytics.*', null],
+        ['التنبيهات'.($openAlerts ? " ({$openAlerts})" : ''), 'alert', 'alerts.index', [], 'analytics.view', 'alerts.*', null],
         ['التقارير الإدارية', 'document-chart', null, ['exports'], 'exports.generate', null, 6],
         ['سجل العمليات', 'history', 'audit.index', [], 'audit.view', 'audit.*', null],
         ['الإعدادات', 'cog', 'settings.index', [], 'settings.manage', 'settings.*', null],
