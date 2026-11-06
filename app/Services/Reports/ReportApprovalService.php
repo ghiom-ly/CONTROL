@@ -102,7 +102,7 @@ class ReportApprovalService
             foreach ($report->issue_requests ?? [] as $req) {
                 app(\App\Services\IssueService::class)->create(
                     ['store_id' => $req['store_id'], 'type' => $req['type'], 'title' => $req['title'], 'description' => $req['description']],
-                    $report->loadMissing('user')->user, $report, $req['key'],
+                    User::withTrashed()->findOrFail($report->user_id), $report, $req['key'],   // الموظف قد يكون محذوفاً
                 );
             }
 
@@ -126,7 +126,7 @@ class ReportApprovalService
                 $this->metrics->rebuild($storeId, $date);
             }
 
-            $report->loadMissing('user')->user->notify(new ReportReviewedNotification($report));
+            $report->loadMissing('user')->user?->notify(new ReportReviewedNotification($report));   // لا إشعار لموظف محذوف
 
             return $warnings;
         });
@@ -141,7 +141,7 @@ class ReportApprovalService
                 'status' => ReportStatus::Rejected, 'rejection_reason' => $reason,
                 'reviewed_by' => $actor->id, 'reviewed_at' => now(),
             ])->save();
-            $report->loadMissing('user')->user->notify(new ReportReviewedNotification($report));
+            $report->loadMissing('user')->user?->notify(new ReportReviewedNotification($report));   // لا إشعار لموظف محذوف
         });
     }
 

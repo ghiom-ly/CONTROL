@@ -44,12 +44,13 @@ class IssueService
         return DB::transaction(function () use ($issue, $data, $actor) {
             $issue = Issue::whereKey($issue->id)->lockForUpdate()->firstOrFail();
             $oldStatus = $issue->status;
-            $oldAssignee = $issue->assigned_to;
+            $oldAssignee = $issue->assigned_to === null ? null : (int) $issue->assigned_to;
 
             $status = isset($data['status']) ? IssueStatus::from($data['status']) : $oldStatus;
             $fill = array_intersect_key($data, array_flip(['priority', 'action_taken']));
             if (array_key_exists('assigned_to', $data)) {
-                $fill['assigned_to'] = $data['assigned_to'] ?: null;
+                // قيم النموذج نصوص — توحيد النوع حتى لا يُعتبر كل تحديث إعادة إسناد
+                $fill['assigned_to'] = $data['assigned_to'] ? (int) $data['assigned_to'] : null;
             }
             $fill['status'] = $status;
             if ($status !== $oldStatus) {

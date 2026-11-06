@@ -34,12 +34,13 @@ class ContactStatsService
         $rows = [];
         $add = function (int $userId, ?string $party, ?bool $answered, int $n) use (&$rows) {
             $r = &$rows[$userId];
-            $r ??= ['total' => 0, 'customer' => 0, 'customer_answered' => 0, 'courier' => 0, 'courier_answered' => 0];
+            $r ??= ['total' => 0, 'customer' => 0, 'customer_rated' => 0, 'customer_answered' => 0, 'courier' => 0, 'courier_rated' => 0, 'courier_answered' => 0];
             $r['total'] += $n;
-            if ($party !== null && $answered !== null) {
-                $r[$party] += $n;
-                if ($answered) {
-                    $r[$party.'_answered'] += $n;
+            if ($party !== null) {
+                $r[$party] += $n;                 // كل اتصالات الطرف
+                if ($answered !== null) {
+                    $r[$party.'_rated'] += $n;    // مقام نسبة الرد
+                    $r[$party.'_answered'] += $answered ? $n : 0;
                 }
             }
         };
@@ -61,11 +62,12 @@ class ContactStatsService
                 $add((int) $r->user_id, $r->party_type->value, $answered, (int) $r->n);
             });
 
-        $users = User::whereIn('id', array_keys($rows))->get(['id', 'name'])->keyBy('id');
+        // الموظف المحذوف يبقى في الإحصائيات بتاريخه
+        $users = User::withTrashed()->whereIn('id', array_keys($rows))->get(['id', 'name'])->keyBy('id');
 
-        return collect($rows)->map(fn ($r, $id) => ['user' => $users[$id]] + $r + [
-            'customer_rate' => self::rate($r['customer_answered'], $r['customer']),
-            'courier_rate' => self::rate($r['courier_answered'], $r['courier']),
+        return collect($rows)->map(fn ($r, $id) => ['user' => $users->get($id)] + $r + [
+            'customer_rate' => self::rate($r['customer_answered'], $r['customer_rated']),
+            'courier_rate' => self::rate($r['courier_answered'], $r['courier_rated']),
         ])->filter(fn ($r) => $r['user'] !== null)->sortByDesc('total')->values();
     }
 

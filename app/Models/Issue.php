@@ -24,6 +24,7 @@ class Issue extends Model
 
     protected $casts = [
         'type' => IssueType::class,
+        'assigned_to' => 'integer',
         'priority' => IssuePriority::class,
         'status' => IssueStatus::class,
         'reported_at' => 'datetime',

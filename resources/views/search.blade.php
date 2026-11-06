@@ -16,7 +16,7 @@
                             @elseif($key === 'stores')
                                 <div class="px-5 py-3"><p class="font-semibold">{{ $item->name }}</p><p class="text-xs text-slate-500">{{ $item->code }}</p></div>
                             @else
-                                <div class="px-5 py-3"><p class="font-semibold ltr text-right"><a class="text-navy-700 underline" href="{{ route('shipments.show', $item->code) }}">{{ $item->code }}</a> @if($ext = AppSupportShipmentUrl::for($item->code))<a href="{{ $ext }}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-500" title="فتح في منظومة الشحن">↗</a>@endif</p><p class="text-xs text-slate-500">{{ $item->store?->name }}</p></div>
+                                <div class="px-5 py-3"><p class="font-semibold ltr text-right"><a class="text-navy-700 underline" href="{{ route('shipments.show', $item->code) }}">{{ $item->code }}</a> @if($ext = \App\Support\ShipmentUrl::for($item->code))<a href="{{ $ext }}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-500" title="فتح في منظومة الشحن">↗</a>@endif</p><p class="text-xs text-slate-500">{{ $item->store?->name }}</p></div>
                             @endif
                         @empty
                             <p class="px-5 py-8 text-center text-sm text-slate-400">لا توجد نتائج</p>
