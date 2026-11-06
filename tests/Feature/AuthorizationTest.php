@@ -57,7 +57,7 @@ class AuthorizationTest extends TestCase
     public function test_super_admin_has_everything(): void
     {
         $this->actingAs($this->makeUser(Role::SUPER_ADMIN));
-        foreach (['/', '/users', '/settings', '/settings/roles', '/audit-logs', '/search?q=ab', '/modules/shipments', '/stores', '/reports', '/review', '/open-codes'] as $url) {
+        foreach (['/', '/users', '/settings', '/settings/roles', '/audit-logs', '/search?q=ab', '/shipments', '/modules/analytics', '/stores', '/reports', '/review', '/open-codes'] as $url) {
             $this->get($url)->assertOk();
         }
     }

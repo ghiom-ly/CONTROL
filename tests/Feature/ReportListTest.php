@@ -53,7 +53,8 @@ class ReportListTest extends TestCase
     {
         $this->actingAs($this->makeUser(Role::SUPER_ADMIN));
         $this->get('/modules/stores')->assertNotFound();
-        $this->get('/modules/shipments')->assertOk();
+        $this->get('/modules/shipments')->assertNotFound();
+        $this->get('/modules/analytics')->assertOk();
     }
 
     public function test_viewer_cannot_open_reports_list_without_permission(): void

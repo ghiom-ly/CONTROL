@@ -11,7 +11,7 @@
         ['رسائل المتاجر', 'phone', 'messages.templates.index', [], 'messages.send', 'messages.*|stores.message*', null],
         ['إدخال تقرير جديد', 'plus-doc', 'reports.create', [], 'reports.create', 'reports.create', null],
         ['استيراد الملفات', 'upload', 'imports.index', [], 'imports.view_all', 'imports.*', null],
-        ['متابعة الشحنات', 'truck', null, ['shipments'], 'shipments.view', null, 4],
+        ['البحث بالكود', 'truck', 'shipments.index', [], 'shipments.view|shipments.lookup', 'shipments.*', null],
         ['سجل الاتصالات', 'phone', null, ['contacts'], 'contacts.view', null, 4],
         ['إدارة المشكلات', 'alert', null, ['issues'], 'issues.view', null, 4],
         ['الموظفون', 'users', 'users.index', [], 'users.view', 'users.*', null],

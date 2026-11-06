@@ -11,10 +11,16 @@ use Illuminate\View\View;
 /** البحث العام — يبحث فقط فيما يملك المستخدم صلاحية عرضه */
 class SearchController extends Controller
 {
-    public function __invoke(Request $request): View
+    public function __invoke(Request $request): View|\Illuminate\Http\RedirectResponse
     {
         $q = trim((string) ($request->validate(['q' => ['nullable', 'string', 'max:100']])['q'] ?? ''));
         $user = $request->user();
+
+        // كود شحنة مطابق تماماً → صفحة الكود مباشرة (المرحلة 6)
+        $exact = Shipment::normalizeCode($q);
+        if ($exact && $user->can('lookup', Shipment::class) && Shipment::where('code', $exact)->exists()) {
+            return redirect()->route('shipments.show', $exact);
+        }
         $results = ['users' => collect(), 'stores' => collect(), 'shipments' => collect()];
 
         if (mb_strlen($q) >= 2) {

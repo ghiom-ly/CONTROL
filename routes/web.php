@@ -43,6 +43,10 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/', DashboardController::class)->middleware('permission:dashboard.view')->name('dashboard');
 
         Route::get('/search', SearchController::class)->name('search');
+
+        // ---- البحث بالكود (المرحلة 6)
+        Route::get('/shipments', [\App\Http\Controllers\ShipmentController::class, 'index'])->name('shipments.index');
+        Route::get('/shipments/{code}', [\App\Http\Controllers\ShipmentController::class, 'show'])->where('code', '[^/]+')->name('shipments.show');
         Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
 
         // ---- الموظفون (المرحلة 1)
