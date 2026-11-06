@@ -18,7 +18,13 @@ class AlertEngine
 {
     /** key ⇒ صنف القاعدة */
     public const RULES = [
+        'shipments_below_average' => Rules\ShipmentsBelowAverage::class,
+        'store_stopped_reporting' => Rules\StoreStoppedReporting::class,
+        'repeated_store_issue' => Rules\RepeatedStoreIssue::class,
+        'report_approval_delay' => Rules\ReportApprovalDelay::class,
+        'employee_missing_report' => Rules\EmployeeMissingReport::class,
         'issue_resolution_delay' => Rules\IssueResolutionDelay::class,
+        'duplicate_or_conflicting_codes' => Rules\DuplicateOrConflictingCodes::class,
     ];
 
     /** @return array{opened: int, closed: int} */

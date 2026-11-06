@@ -38,22 +38,39 @@
     <div class="card mt-8">
         <div class="card-header">
             <h2 class="card-title">قواعد التنبيهات</h2>
-            <span class="badge badge-gray">قابلة للتعديل وتُفعَّل في المرحلة 5</span>
+            <span class="text-xs text-slate-500">تُفحص كل ساعة — النتائج في صفحة «التنبيهات»</span>
         </div>
-        <div class="table-wrap">
-            <table class="table">
-                <thead><tr><th>القاعدة</th><th>المستوى</th><th>المعاملات</th><th>الحالة</th></tr></thead>
-                <tbody>
-                @foreach($alertRules as $rule)
-                    <tr>
-                        <td class="font-semibold">{{ $rule->name }}</td>
-                        <td><x-badge :enum="$rule->level"/></td>
-                        <td class="text-xs text-slate-500 ltr text-right">{{ $rule->parameters ? json_encode($rule->parameters, JSON_UNESCAPED_UNICODE) : '—' }}</td>
-                        <td>{!! $rule->is_enabled ? '<span class="badge badge-green">مفعّلة</span>' : '<span class="badge badge-gray">معطّلة</span>' !!}</td>
-                    </tr>
-                @endforeach
-                </tbody>
-            </table>
-        </div>
+        @php
+            $paramLabels = ['percent' => 'نسبة الانخفاض %', 'compare_days' => 'أيام المقارنة', 'days' => 'عدد الأيام', 'count' => 'عدد المشكلات',
+                'hours' => 'عدد الساعات', 'deadline' => 'الموعد (س:د)'];
+        @endphp
+        <form method="POST" action="{{ route('settings.alert-rules.update') }}">
+            @csrf @method('PUT')
+            <div class="table-wrap">
+                <table class="table">
+                    <thead><tr><th>مفعّلة</th><th>القاعدة</th><th>المستوى</th><th>المعاملات</th></tr></thead>
+                    <tbody>
+                    @foreach($alertRules as $rule)
+                        <tr>
+                            <td><input type="hidden" name="rules[{{ $rule->id }}][is_enabled]" value="0">
+                                <input type="checkbox" name="rules[{{ $rule->id }}][is_enabled]" value="1" @checked($rule->is_enabled) class="size-4"></td>
+                            <td class="font-semibold">{{ $rule->name }}</td>
+                            <td><select name="rules[{{ $rule->id }}][level]" class="input !w-32">
+                                @foreach(\App\Enums\AlertLevel::cases() as $l)<option value="{{ $l->value }}" @selected($rule->level === $l)>{{ $l->label() }}</option>@endforeach
+                            </select></td>
+                            <td class="flex flex-wrap gap-2">
+                                @forelse($rule->parameters ?? [] as $key => $val)
+                                    <label class="text-xs">{{ $paramLabels[$key] ?? $key }}
+                                        <input name="rules[{{ $rule->id }}][parameters][{{ $key }}]" value="{{ $val }}" class="input !w-24 ltr" {{ $key === 'deadline' ? 'pattern=[0-2][0-9]:[0-5][0-9]' : 'type=number min=1 max=720' }}>
+                                    </label>
+                                @empty — @endforelse
+                            </td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
+            <div class="flex justify-end p-4"><button class="btn btn-primary">حفظ قواعد التنبيه</button></div>
+        </form>
     </div>
 </x-layouts.app>

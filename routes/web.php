@@ -147,6 +147,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         // ---- الإعدادات والصلاحيات
         Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
         Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
+        Route::put('/settings/alert-rules', [SettingController::class, 'updateAlertRules'])->name('settings.alert-rules.update');
         Route::get('/settings/roles', [RoleController::class, 'index'])->name('settings.roles');
         Route::put('/settings/roles', [RoleController::class, 'update'])->name('settings.roles.update');
 

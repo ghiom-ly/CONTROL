@@ -47,4 +47,35 @@ class SettingController extends Controller
 
         return back()->with('success', 'تم حفظ الإعدادات.');
     }
+
+    /** تعديل قواعد التنبيه: التفعيل والمستوى والمعاملات الموجودة فقط (لا مفاتيح جديدة) */
+    public function updateAlertRules(\Illuminate\Http\Request $request): RedirectResponse
+    {
+        $this->authorize('settings.manage');
+        $data = $request->validate([
+            'rules' => ['required', 'array'],
+            'rules.*.is_enabled' => ['nullable', 'boolean'],
+            'rules.*.level' => ['required', \Illuminate\Validation\Rule::enum(\App\Enums\AlertLevel::class)],
+            'rules.*.parameters' => ['nullable', 'array'],
+        ]);
+
+        DB::transaction(function () use ($data, $request) {
+            foreach (AlertRule::whereIn('id', array_keys($data['rules']))->get() as $rule) {
+                $in = $data['rules'][$rule->id];
+                $params = [];
+                foreach ($rule->parameters ?? [] as $key => $current) {
+                    $v = $in['parameters'][$key] ?? $current;
+                    $params[$key] = $key === 'deadline'
+                        ? (preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', (string) $v) ? (string) $v : $current)
+                        : max(1, min(720, (int) $v));
+                }
+                $old = $rule->only(['is_enabled', 'level', 'parameters']);
+                $rule->update(['is_enabled' => (bool) ($in['is_enabled'] ?? false), 'level' => $in['level'],
+                    'parameters' => $params ?: $rule->parameters, 'updated_by' => $request->user()->id]);
+                AuditLogger::log('alert_rule_updated', 'تعديل قاعدة تنبيه: '.$rule->name, null, $old, $rule->only(['is_enabled', 'level', 'parameters']));
+            }
+        });
+
+        return back()->with('success', 'تم حفظ قواعد التنبيه.');
+    }
 }
