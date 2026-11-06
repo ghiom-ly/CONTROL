@@ -87,6 +87,54 @@ class AnalyticsService
         ];
     }
 
+    /** بيانات الرسوم الستة — مفاتيح ثابتة، السلسلة الفارغة [] */
+    public function charts(ComparePeriod $p): array
+    {
+        $days = $p->days();
+        $dates = collect(range(0, $days - 1))->map(fn ($i) => $p->from->addDays($i)->toDateString());
+        $prevDates = collect(range(0, $days - 1))->map(fn ($i) => $p->prevFrom->addDays($i)->toDateString());
+
+        $rates = DB::table('daily_reports')->where('status', 'approved')->whereNull('deleted_at')
+            ->whereBetween('work_date', [$dates->first(), $dates->last()])
+            ->selectRaw('work_date d, AVG(start_delivery_rate) s, AVG(end_delivery_rate) e')->groupBy('work_date')->get()
+            ->keyBy(fn ($r) => substr((string) $r->d, 0, 10));
+        $orders = DB::table('store_daily_metrics')->whereBetween('metric_date', [$prevDates->first(), $dates->last()])
+            ->selectRaw('metric_date d, SUM(COALESCE(shipments_count,0)) n')->groupBy('metric_date')->pluck('n', 'd')
+            ->mapWithKeys(fn ($n, $d) => [substr((string) $d, 0, 10) => (int) $n]);
+        $round = fn ($v) => $v === null ? null : round((float) $v, 2);
+
+        $results = DB::table('shipment_followups')->where('is_official', true)
+            ->whereBetween('followup_at', [$p->from->startOfDay(), $p->to->endOfDay()])
+            ->selectRaw('result, COUNT(*) n')->groupBy('result')->orderByDesc('n')->pluck('n', 'result');
+        $declining = $this->decliningStores($p);
+        $employees = $this->employees($p)->filter(fn ($e) => $e['reports'] > 0)->values();
+        $issues = $this->issueStats($p)['by_type'];
+
+        return [
+            'rate_trend' => [
+                'labels' => $dates->map(fn ($d) => substr($d, 5))->all(),
+                'start' => $dates->map(fn ($d) => $round($rates[$d]->s ?? null))->all(),
+                'end' => $dates->map(fn ($d) => $round($rates[$d]->e ?? null))->all(),
+            ],
+            'orders' => [
+                'labels' => $dates->map(fn ($d) => substr($d, 5))->all(),
+                'current' => $dates->map(fn ($d) => $orders[$d] ?? 0)->all(),
+                'previous' => $prevDates->map(fn ($d) => $orders[$d] ?? 0)->all(),
+            ],
+            'results' => [
+                'labels' => $results->keys()->map(fn ($k) => \App\Enums\FollowupResult::from($k)->label())->all(),
+                'values' => $results->values()->map(fn ($n) => (int) $n)->all(),
+            ],
+            'declining' => ['labels' => $declining->map(fn ($r) => $r['store']->name)->all(), 'values' => $declining->pluck('percent')->all()],
+            'employees' => [
+                'labels' => $employees->map(fn ($e) => $e['user']->name)->all(),
+                'orders' => $employees->pluck('orders')->all(),
+                'improvement' => $employees->pluck('improvement')->all(),
+            ],
+            'issues' => ['labels' => array_keys($issues), 'values' => array_values($issues)],
+        ];
+    }
+
     /** طلبيات كل متجر في الفترتين — استعلام واحد */
     private function storeOrders(ComparePeriod $p)
     {

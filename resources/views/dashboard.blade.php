@@ -3,6 +3,11 @@
         <x-slot:actions><x-period-filter :period="$period"/></x-slot:actions>
     </x-page-header>
 
+    @if($charts)
+        @include('analytics._charts')
+        <p class="-mt-3 mb-6 text-left text-sm"><a href="{{ route('analytics.index') }}" class="text-navy-700 underline">مركز التحليلات والمقارنة ←</a></p>
+    @endif
+
     @if($myAttendance)
         <section class="mb-8">
             <h2 class="mb-3 text-sm font-bold text-slate-500">حضوري هذا الشهر</h2>

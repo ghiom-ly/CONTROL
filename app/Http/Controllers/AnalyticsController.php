@@ -22,6 +22,7 @@ class AnalyticsController extends Controller
             'stopped' => $analytics->stoppedStores($p),
             'employees' => $analytics->employees($p),
             'issues' => $analytics->issueStats($p),
+            'charts' => $analytics->charts($p),
         ]);
     }
 }

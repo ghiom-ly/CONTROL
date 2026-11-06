@@ -1,6 +1,9 @@
 import Alpine from 'alpinejs';
 import Chart from 'chart.js/auto';
 import reportForm from './report-form';
+import { renderNoursCharts } from './charts';
+
+document.addEventListener('DOMContentLoaded', () => renderNoursCharts(Chart));
 
 window.Chart = Chart;
 Chart.defaults.font.family = "'Cairo', sans-serif";

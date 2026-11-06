@@ -20,6 +20,10 @@ class DashboardController extends Controller
             'period' => $period,
             'stats' => $dashboard->summary($period, $user),
             'myAttendance' => $isEmployee ? $attendance->month($user, \Carbon\CarbonImmutable::today()->startOfMonth())['summary'] : null,
+            // الرسوم الستة لمن يرى التحليلات — بنفس فترة اللوحة مقابل السابقة لها
+            'charts' => $user->hasPermission('analytics.view')
+                ? app(\App\Services\Analytics\AnalyticsService::class)->charts(\App\Support\ComparePeriod::between($period->from, $period->to, $period->preset))
+                : null,
         ]);
     }
 }

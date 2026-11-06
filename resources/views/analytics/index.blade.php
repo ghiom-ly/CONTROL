@@ -16,7 +16,7 @@
     </x-page-header>
     @error('to')<p class="field-error mb-3">{{ $message }}</p>@enderror
 
-    @includeIf('analytics._charts')
+    @include('analytics._charts')
 
     <section class="card mb-5">
         <div class="card-header"><h2 class="card-title">هل الشغل يتحسن؟</h2></div>
