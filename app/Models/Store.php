@@ -15,8 +15,11 @@ class Store extends Model
 {
     use Auditable, HasFactory, SoftDeletes;
 
+    /** نوع الخدمة: أي تقرير يقبل هذا المتجر */
+    public const SERVICE_TYPES = ['both' => 'تأكيد ومتابعة', 'followup' => 'متابعة فقط', 'confirmation' => 'تأكيد فقط'];
+
     protected $fillable = [
-        'code', 'name', 'owner_name', 'phone', 'email', 'started_at', 'status',
+        'code', 'name', 'owner_name', 'phone', 'email', 'started_at', 'status', 'service_type',
         'assigned_user_id', 'expected_avg_shipments', 'notes', 'created_by', 'updated_by',
     ];
 

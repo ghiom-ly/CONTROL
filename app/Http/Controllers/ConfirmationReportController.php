@@ -30,7 +30,7 @@ class ConfirmationReportController extends Controller
         return view('reports.edit-confirmation', [
             'report' => $report,
             'state' => $this->state($report, $request),
-            'storeOptions' => Store::where('status', '!=', StoreStatus::Archived)->orderBy('name')->get(['id', 'name', 'code'])
+            'storeOptions' => Store::where('status', '!=', StoreStatus::Archived)->whereIn('service_type', ['both', 'confirmation'])->orderBy('name')->get(['id', 'name', 'code'])
                 ->map(fn ($s) => ['id' => $s->id, 'name' => $s->name, 'code' => $s->code])->values(),
             'reasons' => [...CancelReasons::all(), CancelReasons::OTHER],
             'approveAfter' => $request->boolean('approve_after') && $report->status === ReportStatus::PendingReview,

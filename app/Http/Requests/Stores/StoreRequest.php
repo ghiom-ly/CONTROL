@@ -45,6 +45,7 @@ class StoreRequest extends FormRequest
             'email' => ['nullable', 'email:rfc', 'max:150'],
             'started_at' => ['nullable', 'date', 'before_or_equal:today'],
             'status' => ['required', Rule::enum(StoreStatus::class)],
+            'service_type' => ['sometimes', 'required', Rule::in(array_keys(\App\Models\Store::SERVICE_TYPES))],
             'assigned_user_id' => ['nullable', 'integer', function ($attr, $value, $fail) {
                 $user = User::with('role')->find($value);
                 if (! $user || ! $user->isActive() || ! $user->hasPermission('reports.create')) {

@@ -39,6 +39,15 @@
             @error('status')<p class="field-error">{{ $message }}</p>@enderror
         </div>
         <div>
+            <label class="label">نوع الخدمة</label>
+            <select name="service_type" class="input @error('service_type') input-error @enderror">
+                @foreach(\App\Models\Store::SERVICE_TYPES as $val => $label)
+                    <option value="{{ $val }}" @selected(($isEdit ? $store->service_type : old('service_type', 'both')) === $val)>{{ $label }}</option>
+                @endforeach
+            </select>
+            @error('service_type')<p class="field-error">{{ $message }}</p>@enderror
+        </div>
+        <div>
             <label class="label">تاريخ بدء التعامل</label>
             <input name="started_at" type="date" value="{{ old('started_at', $isEdit ? $store->started_at?->toDateString() : null) }}" max="{{ now()->toDateString() }}" class="input @error('started_at') input-error @enderror">
             @error('started_at')<p class="field-error">{{ $message }}</p>@enderror

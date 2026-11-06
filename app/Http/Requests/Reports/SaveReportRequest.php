@@ -59,7 +59,7 @@ class SaveReportRequest extends FormRequest
             'end_delivery_rate' => [Rule::requiredIf(fn () => $this->input('action') === 'submit' && ! $this->route('report')->is_legacy), 'nullable', 'numeric', 'min:0', 'max:100'],
             'stores' => ['array', 'max:200'],
             'stores.*.store_id' => ['required', 'integer', 'distinct',
-                Rule::exists('stores', 'id')->where(fn ($q) => $q->where('status', '!=', StoreStatus::Archived->value)->whereNull('deleted_at'))],
+                Rule::exists('stores', 'id')->where(fn ($q) => $q->where('status', '!=', StoreStatus::Archived->value)->whereNull('deleted_at')->whereIn('service_type', ['both', 'followup']))],
             'stores.*.shipments_count' => ['nullable', 'integer', 'min:0', 'max:100000'],
             'stores.*.start_orders' => ['nullable', 'integer', 'min:0', 'max:100000'],
             'stores.*.start_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],

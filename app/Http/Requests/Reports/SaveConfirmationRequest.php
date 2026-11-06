@@ -33,7 +33,7 @@ class SaveConfirmationRequest extends FormRequest
             'action' => ['nullable', Rule::in(['save', 'submit'])],
             'stores' => ['array', 'max:200'],
             'stores.*.store_id' => ['required', 'integer', 'distinct',
-                Rule::exists('stores', 'id')->where(fn ($q) => $q->where('status', '!=', StoreStatus::Archived->value)->whereNull('deleted_at'))],
+                Rule::exists('stores', 'id')->where(fn ($q) => $q->where('status', '!=', StoreStatus::Archived->value)->whereNull('deleted_at')->whereIn('service_type', ['both', 'confirmation']))],
             'stores.*.confirmed' => ['nullable', 'string', 'max:20000'],
             'stores.*.no_answer' => ['nullable', 'string', 'max:20000'],
             'stores.*.cancelled' => ['array', 'max:500'],

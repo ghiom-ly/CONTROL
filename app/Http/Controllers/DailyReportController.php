@@ -68,7 +68,7 @@ class DailyReportController extends Controller
             return view('reports.start-confirmation');
         }
 
-        $active = fn ($q) => $q->where('status', '!=', StoreStatus::Archived);
+        $active = fn ($q) => $q->where('status', '!=', StoreStatus::Archived)->whereIn('service_type', ['both', 'followup']);
 
         return view('reports.start', [
             'myStores' => Store::where('assigned_user_id', $request->user()->id)->where($active)->orderBy('name')->get(['id', 'name', 'code']),
@@ -96,7 +96,7 @@ class DailyReportController extends Controller
         }
         $report->load(['user:id,name', 'stores.store:id,name,code,assigned_user_id', 'stores.followups']);
 
-        $stores = Store::query()->where('status', '!=', StoreStatus::Archived)
+        $stores = Store::query()->where('status', '!=', StoreStatus::Archived)->whereIn('service_type', ['both', 'followup'])
             ->orderByRaw('assigned_user_id = ? desc', [$report->user_id])->orderBy('name')
             ->get(['id', 'name', 'code', 'assigned_user_id']);
 

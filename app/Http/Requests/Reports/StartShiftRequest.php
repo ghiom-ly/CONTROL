@@ -40,7 +40,7 @@ class StartShiftRequest extends FormRequest
         return [
             'stores' => ['required', 'array', 'min:1', 'max:200'],
             'stores.*.store_id' => ['required', 'integer', 'distinct',
-                Rule::exists('stores', 'id')->where(fn ($q) => $q->where('status', '!=', StoreStatus::Archived->value)->whereNull('deleted_at'))],
+                Rule::exists('stores', 'id')->where(fn ($q) => $q->where('status', '!=', StoreStatus::Archived->value)->whereNull('deleted_at')->whereIn('service_type', ['both', 'followup']))],
             'stores.*.start_orders' => ['nullable', 'integer', 'min:0', 'max:100000'],
             'stores.*.start_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
         ];
