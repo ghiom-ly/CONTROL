@@ -45,7 +45,22 @@
         @isset($contacts)
             <section class="card mb-5" id="contacts">
                 <div class="card-header"><h2 class="card-title">{{ $full ? 'الاتصالات المسجلة' : 'اتصالاتي على هذا الكود' }}</h2><span class="badge badge-gray">{{ $contacts->count() }}</span></div>
-                @stack('contact-form')
+                @if(auth()->user()->hasPermission('contacts.create'))
+                    <form method="POST" action="{{ route('shipments.contacts.store', $shipment->code) }}" class="flex flex-wrap items-end gap-2 border-b border-slate-100 p-4">
+                        @csrf
+                        <div><label class="label">تسجيل اتصال مع</label>
+                            <select name="party_type" class="input !w-36" required>
+                                <option value="customer">الزبون</option><option value="courier">المندوب</option>
+                            </select></div>
+                        <div><label class="label">النتيجة</label>
+                            <select name="result" class="input !w-48" required>
+                                @foreach(\App\Enums\ContactResult::cases() as $r)<option value="{{ $r->value }}">{{ $r->label() }}</option>@endforeach
+                            </select></div>
+                        <div class="flex-1 min-w-48"><label class="label">ملاحظة (اختياري)</label><input name="notes" class="input" maxlength="1000"></div>
+                        <button class="btn btn-accent">تسجيل اتصال</button>
+                        @error('party_type')<p class="field-error w-full">{{ $message }}</p>@enderror
+                    </form>
+                @endif
                 <div class="divide-y divide-slate-100 text-sm">
                     @forelse($contacts as $c)
                         <div class="px-5 py-2 flex flex-wrap gap-2 items-center">

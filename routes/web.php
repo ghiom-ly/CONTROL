@@ -47,6 +47,8 @@ Route::middleware(['auth', 'active'])->group(function () {
         // ---- البحث بالكود (المرحلة 6)
         Route::get('/shipments', [\App\Http\Controllers\ShipmentController::class, 'index'])->name('shipments.index');
         Route::get('/shipments/{code}', [\App\Http\Controllers\ShipmentController::class, 'show'])->where('code', '[^/]+')->name('shipments.show');
+        Route::post('/shipments/{code}/contacts', [\App\Http\Controllers\ContactController::class, 'storeForShipment'])->where('code', '[^/]+')->name('shipments.contacts.store');
+        Route::post('/stores/{store}/contacts', [\App\Http\Controllers\ContactController::class, 'storeForStore'])->whereNumber('store')->name('stores.contacts.store');
         Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
 
         // ---- الموظفون (المرحلة 1)

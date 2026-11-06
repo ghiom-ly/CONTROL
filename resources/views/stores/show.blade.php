@@ -57,6 +57,27 @@
         @endif
     @endcan
 
+    @can('update', $store)
+        @php $storeContacts = \App\Models\ContactAttempt::where('store_id', $store->id)->where('party_type', 'store')->with('user:id,name')->latest('contacted_at')->limit(10)->get(); @endphp
+        <div class="card mt-5 text-sm" id="store-contacts">
+            <div class="card-header"><h3 class="card-title">الاتصال بالمتجر</h3></div>
+            <form method="POST" action="{{ route('stores.contacts.store', $store) }}" class="flex flex-wrap items-end gap-2 border-b border-slate-100 p-4">
+                @csrf
+                <div><label class="label">النتيجة</label>
+                    <select name="result" class="input !w-48" required>
+                        @foreach(\App\Enums\ContactResult::cases() as $r)<option value="{{ $r->value }}">{{ $r->label() }}</option>@endforeach
+                    </select></div>
+                <div class="flex-1 min-w-48"><label class="label">ملاحظة (اختياري)</label><input name="notes" class="input" maxlength="1000"></div>
+                <button class="btn btn-accent">تسجيل اتصال بالمتجر</button>
+            </form>
+            @forelse($storeContacts as $c)
+                <div class="px-5 py-2 border-b border-slate-100"><span class="tabular-nums text-slate-500">{{ $c->contacted_at->format('Y/m/d H:i') }}</span> — {{ $c->user?->name }} — <x-badge :enum="$c->result"/> @if($c->notes)— {{ $c->notes }}@endif</div>
+            @empty
+                <p class="px-5 py-3 text-slate-500">لا توجد اتصالات مسجلة بالمتجر.</p>
+            @endforelse
+        </div>
+    @endcan
+
     @isset($insights)
         @include('stores._insights')
     @endisset
