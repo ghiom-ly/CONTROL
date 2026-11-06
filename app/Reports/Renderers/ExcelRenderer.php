@@ -3,6 +3,8 @@
 namespace App\Reports\Renderers;
 
 use App\Reports\ReportData;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -12,6 +14,7 @@ class ExcelRenderer
 {
     public function download(ReportData $data, string $filename): StreamedResponse
     {
+        @set_time_limit(180);
         $book = new Spreadsheet;
         $book->removeSheetByIndex(0);
         $sections = $data->sections ?: [['title' => 'ملخص', 'headers' => ['البند', 'القيمة'], 'rows' => []]];
@@ -29,7 +32,18 @@ class ExcelRenderer
             $sheet->fromArray([$s['headers']], null, 'A3');
             $sheet->getStyle('3:3')->getFont()->setBold(true);
             if ($s['rows']) {
-                $sheet->fromArray($s['rows'], null, 'A4', true);
+                // النص يُكتب نصاً صريحاً: لا صيغ (=…) من بيانات المستخدمين، ولا أكواد رقمية طويلة تتحول لأُس
+                foreach ($s['rows'] as $ri => $row) {
+                    foreach (array_values($row) as $ci => $v) {
+                        if ($v === null) {
+                            continue;
+                        }
+                        $ref = Coordinate::stringFromColumnIndex($ci + 1).($ri + 4);
+                        is_int($v) || is_float($v)
+                            ? $sheet->setCellValueExplicit($ref, $v, DataType::TYPE_NUMERIC)
+                            : $sheet->setCellValueExplicit($ref, (string) $v, DataType::TYPE_STRING);
+                    }
+                }
             } else {
                 $sheet->setCellValue('A4', 'لا توجد بيانات في هذه الفترة');
             }
@@ -37,6 +51,7 @@ class ExcelRenderer
         $book->setActiveSheetIndex(0);
 
         return new StreamedResponse(function () use ($book) {
+            @set_time_limit(180);
             IOFactory::createWriter($book, 'Xlsx')->save('php://output');
         }, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

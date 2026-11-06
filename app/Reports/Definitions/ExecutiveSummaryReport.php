@@ -22,13 +22,14 @@ class ExecutiveSummaryReport extends BaseReport
         $cmp = $this->analytics->compare($p->period);
         $fmt = fn ($v, $unit) => $v === null ? null : ($unit === 'percent' ? $v.'%' : $v);
         $issues = $this->analytics->issueStats($p->period);
+        $k = collect($cmp)->keyBy('key');   // بالمفتاح لا بالموضع
 
         return new ReportData(
             title: $this->title(),
             subtitle: $this->periodLabel($p).' مقابل '.$p->period->prevFrom->format('Y/m/d').' — '.$p->period->prevTo->format('Y/m/d'),
             summary: [
-                'الطلبيات' => $cmp[0]['current'], 'نسبة التسليم (نهاية)' => $fmt($cmp[2]['current'], 'percent'),
-                'التقارير المعتمدة' => $cmp[4]['current'], 'متوسط مدة حل المشكلات (ساعة)' => $issues['avg_resolution_hours'],
+                'الطلبيات' => $k['orders']['current'], 'نسبة التسليم (نهاية)' => $fmt($k['end_rate']['current'], 'percent'),
+                'التقارير المعتمدة' => $k['reports_approved']['current'], 'متوسط مدة حل المشكلات (ساعة)' => $issues['avg_resolution_hours'],
                 'المشكلات المتأخرة الآن' => $issues['overdue_now'],
             ],
             sections: [

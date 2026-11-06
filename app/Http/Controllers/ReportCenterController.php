@@ -71,7 +71,7 @@ class ReportCenterController extends Controller
             'month' => [in_array('month', $needs, true) ? 'nullable' : 'nullable', 'date_format:Y-m'],
             'store_id' => [in_array('store', $needs, true) ? 'required' : 'nullable', 'integer', Rule::exists('stores', 'id')],
             'user_id' => [in_array('employee', $needs, true) ? 'required' : 'nullable', 'integer',
-                Rule::exists('users', 'id')->where(fn ($q) => $q->whereIn('role_id', Role::where('name', Role::EMPLOYEE)->pluck('id')))],
+                Rule::exists('users', 'id')->withoutTrashed()->where(fn ($q) => $q->whereIn('role_id', Role::where('name', Role::EMPLOYEE)->pluck('id')))],
         ], [
             'store_id.required' => 'اكتب كود المتجر.', 'store_id.exists' => 'كود المتجر غير موجود.', 'user_id.required' => 'اختر الموظف.', 'user_id.exists' => 'اختر موظفاً.',
         ]);

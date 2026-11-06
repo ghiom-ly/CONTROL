@@ -59,8 +59,8 @@ class ReportsFrameworkTest extends TestCase
     public function test_pdf_caps_rows(): void
     {
         $html = view('reports-center.document', ['data' => $this->data(2005), 'brand' => Branding::header(), 'mode' => 'print'])->render();
-        $this->assertStringContainsString('تم عرض أول 2000', $html);
-        $this->assertSame(2000, substr_count($html, '<tr class="r">'));
+        $this->assertStringContainsString('تم عرض أول 500', $html);
+        $this->assertSame(500, substr_count($html, '<tr class="r">'));
     }
 
     public function test_excel_sheet_title_sanitized(): void

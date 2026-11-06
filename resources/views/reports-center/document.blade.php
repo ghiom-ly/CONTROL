@@ -1,6 +1,6 @@
 {{-- قالب واحد للتقارير: PDF (mPDF) والطباعة من المتصفح. $data: ReportData، $brand: Branding::header()، $mode: pdf|print --}}
 @php
-    $cap = 2000;
+    $cap = 500;   // خادم 1GB: 500 صف ≈ 6 ثوانٍ و100MB في mPDF
     $logo = $brand['logo_path'] ? 'data:'.mime_content_type($brand['logo_path']).';base64,'.base64_encode(file_get_contents($brand['logo_path'])) : null;
 @endphp
 <!DOCTYPE html>
