@@ -17,7 +17,7 @@ class DailyReport extends Model
     use Auditable, HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'report_number', 'work_date', 'user_id', 'status', 'source', 'import_batch_id',
+        'report_number', 'work_date', 'user_id', 'kind', 'status', 'source', 'import_batch_id',
         'total_shipments', 'contact_attempts_count', 'notes', 'inquiries', 'version',
         'submitted_at', 'reviewed_by', 'reviewed_at', 'review_notes', 'approved_by',
         'approved_at', 'rejection_reason', 'created_by', 'updated_by',
@@ -104,6 +104,17 @@ class DailyReport extends Model
     public function followups(): HasMany
     {
         return $this->hasMany(ShipmentFollowup::class);
+    }
+
+    /** طلبات تقرير التأكيد */
+    public function confirmationOrders(): HasMany
+    {
+        return $this->hasMany(ConfirmationOrder::class);
+    }
+
+    public function isConfirmation(): bool
+    {
+        return $this->kind === 'confirmation';
     }
 
     public function contactAttempts(): HasMany

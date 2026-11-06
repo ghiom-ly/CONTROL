@@ -32,6 +32,11 @@ class StartShiftRequest extends FormRequest
 
     public function rules(): array
     {
+        // موظفة التأكيد تبدأ الشفت بلا طلبيات ونسب بداية
+        if ($this->user()->isConfirmation()) {
+            return ['stores' => ['array', 'max:0']];
+        }
+
         return [
             'stores' => ['required', 'array', 'min:1', 'max:200'],
             'stores.*.store_id' => ['required', 'integer', 'distinct',

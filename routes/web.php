@@ -98,6 +98,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('/reports/start', [DailyReportController::class, 'start'])->name('reports.start');
         Route::get('/reports/{report}/edit', [DailyReportController::class, 'edit'])->name('reports.edit');
         Route::put('/reports/{report}', [DailyReportController::class, 'update'])->name('reports.update');
+        Route::put('/reports/{report}/confirmation', [\App\Http\Controllers\ConfirmationReportController::class, 'update'])->name('reports.confirmation.update');
         Route::get('/reports/{report}', [DailyReportController::class, 'show'])->name('reports.show');
         Route::post('/reports/{report}/submit', [DailyReportController::class, 'submit'])->name('reports.submit');
         Route::get('/review', [ReportReviewController::class, 'queue'])->name('reports.review.queue');

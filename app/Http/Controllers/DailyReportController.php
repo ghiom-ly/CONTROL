@@ -64,6 +64,10 @@ class DailyReportController extends Controller
             return redirect()->route('reports.edit', $open);
         }
 
+        if ($request->user()->isConfirmation()) {
+            return view('reports.start-confirmation');
+        }
+
         $active = fn ($q) => $q->where('status', '!=', StoreStatus::Archived);
 
         return view('reports.start', [
@@ -79,7 +83,7 @@ class DailyReportController extends Controller
             'store_id' => (int) $r['store_id'],
             'start_orders' => $r['start_orders'] === null ? null : (int) $r['start_orders'],
             'start_rate' => $r['start_rate'] === null ? null : (float) $r['start_rate'],
-        ], $request->validated('stores')));
+        ], $request->validated('stores') ?? []));
 
         return redirect()->route('reports.edit', $report)->with('success', 'بدأ الشفت. أضف المتاجر وأكمل التقرير ثم أرسله في نهاية الشفت.');
     }
@@ -87,6 +91,9 @@ class DailyReportController extends Controller
     public function edit(Request $request, DailyReport $report): View
     {
         $this->authorize('update', $report);
+        if ($report->isConfirmation()) {
+            return app(ConfirmationReportController::class)->edit($request, $report);
+        }
         $report->load(['user:id,name', 'stores.store:id,name,code,assigned_user_id', 'stores.followups']);
 
         $stores = Store::query()->where('status', '!=', StoreStatus::Archived)
@@ -110,6 +117,7 @@ class DailyReportController extends Controller
         ReportSubmissionService $submissions, ReportRevisionService $revisions, ReportApprovalService $approvals,
         \App\Services\AttachmentService $attachments,
     ): RedirectResponse {
+        abort_if($report->isConfirmation(), 404);   // تقرير التأكيد يُحفظ من مساره الخاص
         $actor = $request->user();
         $submit = $request->validated('action') === 'submit';
         $adminEdit = $report->status === ReportStatus::Approved;
