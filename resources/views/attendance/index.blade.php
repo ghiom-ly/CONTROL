@@ -56,4 +56,26 @@
             <button class="btn btn-primary">حفظ الإجازة</button>
         </form>
     @endcan
+
+    @if(auth()->user()->isSuperAdmin())
+        @php $holidayList = \App\Models\Holiday::orderByDesc('date')->limit(50)->get(); @endphp
+        <div class="card mt-5 p-5 text-sm">
+            <h2 class="card-title mb-3">العطل الرسمية (لا تُحسب غياباً لأحد)</h2>
+            <form method="POST" action="{{ route('attendance.holidays.store') }}" class="mb-3 flex flex-wrap items-end gap-2">
+                @csrf
+                <div><label class="label">التاريخ</label><input type="date" name="date" required class="input"></div>
+                <div><label class="label">الاسم</label><input name="name" required maxlength="120" class="input" placeholder="مثال: عيد الفطر"></div>
+                <button class="btn btn-primary">إضافة عطلة</button>
+                @error('date')<p class="field-error w-full">{{ $message }}</p>@enderror
+            </form>
+            @forelse($holidayList as $hd)
+                <form method="POST" action="{{ route('attendance.holidays.destroy', $hd) }}" class="flex items-center justify-between border-b border-slate-100 py-1">
+                    @csrf @method('DELETE')
+                    <span><span class="tabular-nums">{{ $hd->date->format('Y/m/d') }}</span> — {{ $hd->name }}</span>
+                    <button class="text-red-600 underline">حذف</button>
+                </form>
+            @empty <p class="text-slate-500">لا توجد عطل مسجلة.</p> @endforelse
+            <p class="hint mt-2">لإلغاء غياب أو تأخير موظف معيّن: افتح صفحة حضوره واستخدم عمود «تحكم المدير».</p>
+        </div>
+    @endif
 </x-layouts.app>

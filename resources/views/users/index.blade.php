@@ -79,6 +79,7 @@
                                             <x-icon name="restore" class="size-4"/> استعادة
                                         </x-confirm-form>
                                     @endcan
+                                    @include('users._purge', ['u' => $u])
                                 @else
                                     <a href="{{ route('users.show', $u) }}" class="btn btn-light btn-sm"><x-icon name="eye" class="size-4"/> الملف والأداء</a>
                                 @endif

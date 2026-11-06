@@ -85,7 +85,8 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::patch('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
         Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset-password');
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
-        Route::patch('/users/{id}/restore', [UserController::class, 'restore'])->whereNumber('id')->name('users.restore');
+        Route::delete('/users/{id}/purge', [UserController::class, 'purge'])->whereNumber('id')->name('users.purge');
+        Route::patch('/users/{id}/restore',[UserController::class, 'restore'])->whereNumber('id')->name('users.restore');
 
         // ---- المتاجر (المرحلة 2)
         Route::get('/stores', [StoreController::class, 'index'])->name('stores.index');
@@ -108,7 +109,10 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('/reports/start', [DailyReportController::class, 'start'])->name('reports.start');
         Route::get('/reports/{report}/edit', [DailyReportController::class, 'edit'])->name('reports.edit');
         Route::put('/reports/{report}', [DailyReportController::class, 'update'])->name('reports.update');
-        Route::put('/reports/{report}/confirmation', [\App\Http\Controllers\ConfirmationReportController::class, 'update'])->name('reports.confirmation.update');
+        Route::put('/reports/{report}/shift-time', [\App\Http\Controllers\ReportAdminController::class, 'shiftTime'])->name('reports.shift-time');
+        Route::delete('/reports/{report}', [\App\Http\Controllers\ReportAdminController::class, 'destroy'])->name('reports.destroy');
+        Route::patch('/reports/{id}/restore', [\App\Http\Controllers\ReportAdminController::class, 'restore'])->whereNumber('id')->name('reports.restore');
+        Route::put('/reports/{report}/confirmation',[\App\Http\Controllers\ConfirmationReportController::class, 'update'])->name('reports.confirmation.update');
         Route::get('/reports/{report}', [DailyReportController::class, 'show'])->name('reports.show');
         Route::post('/reports/{report}/submit', [DailyReportController::class, 'submit'])->name('reports.submit');
         Route::get('/review', [ReportReviewController::class, 'queue'])->name('reports.review.queue');
@@ -155,7 +159,11 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/attendance/export', [AttendanceController::class, 'export'])->name('attendance.export');
         Route::get('/attendance/{user}', [AttendanceController::class, 'show'])->whereNumber('user')->name('attendance.show');
         Route::get('/attendance/{user}/print', [AttendanceController::class, 'print'])->whereNumber('user')->name('attendance.print');
-        Route::post('/attendance/leaves', [LeaveController::class, 'store'])->name('attendance.leaves.store');
+        Route::post('/attendance/{user}/overrides', [AttendanceController::class, 'storeOverride'])->whereNumber('user')->name('attendance.overrides.store');
+        Route::delete('/attendance/overrides/{override}', [AttendanceController::class, 'destroyOverride'])->name('attendance.overrides.destroy');
+        Route::post('/attendance/holidays', [AttendanceController::class, 'storeHoliday'])->name('attendance.holidays.store');
+        Route::delete('/attendance/holidays/{holiday}', [AttendanceController::class, 'destroyHoliday'])->name('attendance.holidays.destroy');
+        Route::post('/attendance/leaves',[LeaveController::class, 'store'])->name('attendance.leaves.store');
         Route::delete('/attendance/leaves/{leave}', [LeaveController::class, 'destroy'])->name('attendance.leaves.destroy');
 
         // ---- الأكواد المفتوحة (المرحلة 2)

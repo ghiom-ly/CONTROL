@@ -26,8 +26,12 @@ class EmployeeMissingReport implements AlertRule
             return [];
         }
         $date = $now->toDateString();
+        if (\App\Models\Holiday::whereDate('date', $date)->exists()) {
+            return [];   // عطلة رسمية
+        }
         $sent = DailyReport::whereDate('first_submitted_at', $date)->pluck('user_id')->flip();
-        $onLeave = Leave::where('from_date', '<=', $date)->where('to_date', '>=', $date)->pluck('user_id')->flip();
+        $onLeave = Leave::where('from_date', '<=', $date)->where('to_date', '>=', $date)->pluck('user_id')
+            ->merge(\App\Models\AttendanceOverride::whereDate('date', $date)->whereIn('type', ['excused', 'present'])->pluck('user_id'))->flip();
 
         return $this->attendance->employees()->get(['id', 'name'])
             ->reject(fn ($u) => $sent->has($u->id) || $onLeave->has($u->id))

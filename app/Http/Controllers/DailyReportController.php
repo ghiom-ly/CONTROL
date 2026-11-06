@@ -35,9 +35,12 @@ class DailyReportController extends Controller
             'user_id' => ['nullable', 'integer'],
             'from' => ['nullable', 'date'],
             'to' => ['nullable', 'date'],
+            'trashed' => ['nullable', 'boolean'],
         ]);
+        $trashed = ($filters['trashed'] ?? false) && $user->isSuperAdmin();   // «المحذوفة» للمدير العام فقط
 
         $reports = DailyReport::query()->with('user:id,name')->withCount('stores')
+            ->when($trashed, fn ($q) => $q->onlyTrashed())
             ->when(! $all, fn ($q) => $q->where('user_id', $user->id))
             ->when($all && ($filters['user_id'] ?? null), fn ($q) => $q->where('user_id', $filters['user_id']))
             ->when($filters['status'] ?? null, fn ($q, $s) => $q->where('status', $s))
@@ -49,7 +52,7 @@ class DailyReportController extends Controller
         return view('reports.index', [
             'reports' => $reports,
             'filters' => $filters,
-            'all' => $all,
+            'all' => $all, 'trashed' => $trashed,
             'users' => $all ? \App\Models\User::orderBy('name')->get(['id', 'name']) : collect(),
             'openDraft' => DailyReport::where('user_id', $user->id)->openDraft()->latest('id')->first(),
         ]);

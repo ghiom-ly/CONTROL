@@ -56,6 +56,7 @@
                             <x-icon name="trash" class="size-4"/> حذف
                         </x-confirm-form>
                     @endcan
+                    @include('users._purge', ['u' => $user])
                 </div>
             @endcan
         </div>

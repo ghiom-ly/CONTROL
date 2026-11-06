@@ -33,10 +33,15 @@ class AttendanceAlertsCommand extends Command
             ->addMinutes((int) SystemSetting::get('attendance_grace_minutes', 0));
         $deadline = CarbonImmutable::parse($today.' '.SystemSetting::get('report_submission_deadline', '18:00'));
 
+        // العطلة الرسمية: لا تنبيهات حضور لأحد
+        if (\App\Models\Holiday::whereDate('date', $today)->exists()) {
+            return self::SUCCESS;
+        }
         $managers = User::where('status', 'active')->with('role')->get()->filter(fn (User $u) => $u->hasPermission('reports.review'));
         if ($managers->isEmpty()) {
             return self::SUCCESS;
         }
+        $excused = \App\Models\AttendanceOverride::whereDate('date', $today)->whereIn('type', ['excused', 'present'])->pluck('user_id')->flip();
 
         foreach ($attendance->employees()->get() as $emp) {
             // موظف لم يبدأ عمله بعد (تاريخ التعيين في المستقبل)
@@ -44,7 +49,7 @@ class AttendanceAlertsCommand extends Command
                 continue;
             }
             $state = $attendance->today($emp);
-            if ($state['on_leave']) {
+            if ($state['on_leave'] || $excused->has($emp->id)) {
                 continue;
             }
             $kind = match (true) {

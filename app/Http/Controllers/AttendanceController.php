@@ -37,7 +37,51 @@ class AttendanceController extends Controller
         return view('attendance.show', [
             'user' => $user, 'month' => $month, 'data' => $this->attendance->month($user, $month),
             'leaves' => Leave::where('user_id', $user->id)->latest('from_date')->limit(30)->get(),
+            'overrides' => \App\Models\AttendanceOverride::where('user_id', $user->id)
+                ->whereBetween('date', [$month->startOfMonth()->toDateString(), $month->endOfMonth()->toDateString()])
+                ->get()->groupBy(fn ($o) => $o->date->toDateString()),
         ]);
+    }
+
+    /** المدير العام: غياب بعذر / حاضر / إلغاء تأخير ليوم */
+    public function storeOverride(Request $request, User $user): \Illuminate\Http\RedirectResponse
+    {
+        abort_unless($request->user()->isSuperAdmin(), 403);
+        $data = $request->validate([
+            'date' => ['required', 'date_format:Y-m-d'],
+            'type' => ['required', \Illuminate\Validation\Rule::in(array_keys(\App\Models\AttendanceOverride::TYPES))],
+            'reason' => ['nullable', 'string', 'max:255'],
+        ]);
+        \App\Models\AttendanceOverride::updateOrCreate(['user_id' => $user->id, 'date' => $data['date'], 'type' => $data['type']],
+            ['reason' => $data['reason'] ?? null, 'created_by' => $request->user()->id]);
+
+        return back()->with('success', 'تم تعديل حضور يوم '.$data['date'].'.');
+    }
+
+    public function destroyOverride(Request $request, \App\Models\AttendanceOverride $override): \Illuminate\Http\RedirectResponse
+    {
+        abort_unless($request->user()->isSuperAdmin(), 403);
+        $override->delete();
+
+        return back()->with('success', 'تم التراجع عن تعديل الحضور.');
+    }
+
+    public function storeHoliday(Request $request): \Illuminate\Http\RedirectResponse
+    {
+        abort_unless($request->user()->isSuperAdmin(), 403);
+        $data = $request->validate(['date' => ['required', 'date_format:Y-m-d', 'unique:holidays,date'], 'name' => ['required', 'string', 'max:120']],
+            ['date.unique' => 'هذا اليوم مسجل عطلة بالفعل.']);
+        \App\Models\Holiday::create($data + ['created_by' => $request->user()->id]);
+
+        return back()->with('success', 'تمت إضافة العطلة الرسمية.');
+    }
+
+    public function destroyHoliday(Request $request, \App\Models\Holiday $holiday): \Illuminate\Http\RedirectResponse
+    {
+        abort_unless($request->user()->isSuperAdmin(), 403);
+        $holiday->delete();
+
+        return back()->with('success', 'تم حذف العطلة.');
     }
 
     public function print(Request $request, User $user): View

@@ -110,6 +110,19 @@ class UserController extends Controller
         return redirect()->route('users.index')->with('success', 'تم حذف الحساب (مع الاحتفاظ بسجلاته وتقاريره).');
     }
 
+    /** حذف نهائي (المدير العام فقط، دور موظف أو مشاهد، بتأكيد كتابة اسم المستخدم) */
+    public function purge(Request $request, int $id, \App\Services\UserPurgeService $purger): RedirectResponse
+    {
+        $user = User::withTrashed()->with('role')->findOrFail($id);
+        abort_unless($request->user()->isSuperAdmin() && ! $request->user()->is($user)
+            && $user->hasRole(Role::EMPLOYEE, Role::VIEWER), 403);
+        $request->validate(['confirm' => ['required', 'string', \Illuminate\Validation\Rule::in([$user->username])]],
+            ['confirm.in' => 'اكتب اسم المستخدم كما هو للتأكيد.', 'confirm.required' => 'اكتب اسم المستخدم للتأكيد.']);
+        $purger->purge($user, $request->user());
+
+        return redirect()->route('users.index')->with('success', "تم حذف {$user->name} نهائياً مع كل بياناته.");
+    }
+
     public function restore(int $id): RedirectResponse
     {
         $user = User::onlyTrashed()->findOrFail($id);

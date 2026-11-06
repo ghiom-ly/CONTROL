@@ -114,6 +114,7 @@
 
             @include('reports._screens', ['editable' => false])
             @includeWhen(View::exists('reports._review'), 'reports._review')
+            @include('reports._admin')
         </div>
 
         <aside class="space-y-5">

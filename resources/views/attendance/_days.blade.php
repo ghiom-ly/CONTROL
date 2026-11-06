@@ -1,6 +1,8 @@
 @php
     $h = fn ($m) => $m === null ? '—' : sprintf('%d:%02d', intdiv($m, 60), $m % 60);
-    $colors = ['present' => 'green', 'late' => 'yellow', 'incomplete' => 'orange', 'absent' => 'red', 'leave' => 'blue', 'future' => 'gray', 'not_counted' => 'gray'];
+    $colors = ['present' => 'green', 'late' => 'yellow', 'incomplete' => 'orange', 'absent' => 'red', 'leave' => 'blue', 'future' => 'gray', 'not_counted' => 'gray', 'excused' => 'blue', 'holiday' => 'gray'];
+    $canControl = auth()->user()->isSuperAdmin() && isset($user);
+    $overrides = $overrides ?? collect();
     $s = $data['summary'];
 @endphp
 <div class="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-5">
@@ -16,7 +18,7 @@
 <div class="card">
     <div class="table-wrap">
         <table class="table">
-            <thead><tr><th>التاريخ</th><th>الحالة</th><th>الحضور</th><th>الانصراف</th><th>المدة</th><th>التأخير</th></tr></thead>
+            <thead><tr><th>التاريخ</th><th>الحالة</th><th>الحضور</th><th>الانصراف</th><th>المدة</th><th>التأخير</th>@if($canControl)<th>تحكم المدير</th>@endif</tr></thead>
             <tbody>
             @foreach($data['days'] as $d)
                 <tr>
@@ -31,6 +33,30 @@
                     <td class="tabular-nums">{{ $d['out'] ?? '—' }}</td>
                     <td class="tabular-nums">{{ $h($d['minutes']) }}</td>
                     <td class="tabular-nums">{{ $d['late_minutes'] ? $d['late_minutes'].' د' : '—' }}</td>
+                    @if($canControl)
+                        <td class="whitespace-nowrap text-xs">
+                            @foreach($overrides[$d['date']] ?? [] as $o)
+                                <form method="POST" action="{{ route('attendance.overrides.destroy', $o) }}" class="inline">@csrf @method('DELETE')
+                                    <span class="badge badge-blue">{{ \App\Models\AttendanceOverride::TYPES[$o->type] }}@if($o->reason) — {{ $o->reason }}@endif</span>
+                                    <button class="text-red-600 underline">تراجع</button>
+                                </form>
+                            @endforeach
+                            @if($d['status'] === 'absent')
+                                <form method="POST" action="{{ route('attendance.overrides.store', $user) }}" class="mt-1 flex gap-1" x-data>
+                                    @csrf <input type="hidden" name="date" value="{{ $d['date'] }}">
+                                    <input name="reason" class="input !w-28 !py-1 text-xs" placeholder="السبب">
+                                    <button name="type" value="excused" class="btn btn-light btn-sm">بعذر</button>
+                                    <button name="type" value="present" class="btn btn-light btn-sm">حاضر</button>
+                                </form>
+                            @elseif($d['late_minutes'])
+                                <form method="POST" action="{{ route('attendance.overrides.store', $user) }}" class="mt-1 flex gap-1">
+                                    @csrf <input type="hidden" name="date" value="{{ $d['date'] }}">
+                                    <input name="reason" class="input !w-28 !py-1 text-xs" placeholder="السبب">
+                                    <button name="type" value="late_excused" class="btn btn-light btn-sm">إلغاء التأخير</button>
+                                </form>
+                            @endif
+                        </td>
+                    @endif
                 </tr>
             @endforeach
             </tbody>

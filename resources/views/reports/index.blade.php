@@ -29,6 +29,9 @@
             </div>
             <div><label class="label">من</label><input type="date" name="from" value="{{ $filters['from'] ?? '' }}" class="input"></div>
             <div><label class="label">إلى</label><input type="date" name="to" value="{{ $filters['to'] ?? '' }}" class="input"></div>
+            @if(auth()->user()->isSuperAdmin())
+                <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="trashed" value="1" @checked($trashed) class="size-4"> المحذوفة</label>
+            @endif
             <div class="flex gap-2"><button class="btn btn-primary">تصفية</button><a href="{{ route('reports.index') }}" class="btn btn-light">مسح</a></div>
         </form>
 
@@ -49,7 +52,11 @@
                             <td class="tabular-nums">{{ $r->total_shipments ?? 'غير متوفر' }}</td>
                             <td class="text-xs tabular-nums">{{ $r->start_delivery_rate ?? '—' }}% ← {{ $r->end_delivery_rate ?? '—' }}%</td>
                             <td class="text-left whitespace-nowrap">
+                                @if($r->trashed())
+                                    <x-confirm-form :action="route('reports.restore', $r->id)" method="PATCH" class="btn btn-light btn-sm" message="استعادة التقرير {{ $r->report_number }}؟">استعادة</x-confirm-form>
+                                @else
                                 <a href="{{ route('reports.show', $r) }}" class="btn btn-light btn-sm"><x-icon name="eye" class="size-4"/> عرض</a>
+                                @endif
                                 @can('update', $r)
                                     <a href="{{ route('reports.edit', $r) }}" class="btn btn-light btn-sm"><x-icon name="pencil" class="size-4"/></a>
                                 @endcan
