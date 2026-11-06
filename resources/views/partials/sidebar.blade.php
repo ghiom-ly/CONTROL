@@ -12,7 +12,7 @@
         ['إدخال تقرير جديد', 'plus-doc', 'reports.create', [], 'reports.create', 'reports.create', null],
         ['استيراد الملفات', 'upload', 'imports.index', [], 'imports.view_all', 'imports.*', null],
         ['البحث بالكود', 'truck', 'shipments.index', [], 'shipments.view|shipments.lookup', 'shipments.*', null],
-        ['سجل الاتصالات', 'phone', null, ['contacts'], 'contacts.view', null, 4],
+        ['سجل الاتصالات', 'phone', 'contacts.index', [], 'contacts.view', 'contacts.*', null],
         ['إدارة المشكلات', 'alert', null, ['issues'], 'issues.view', null, 4],
         ['الموظفون', 'users', 'users.index', [], 'users.view', 'users.*', null],
         ['الحضور والانصراف', 'clock', 'attendance.index', [], 'users.view', 'attendance.*', null],
