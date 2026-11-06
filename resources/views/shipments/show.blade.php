@@ -8,9 +8,32 @@
         </x-slot:actions>
     </x-page-header>
 
-    @if(! $shipment)
+    @if($confirmations->isNotEmpty())
+        <section class="card mb-5">
+            <div class="card-header"><h2 class="card-title">سجل التأكيد</h2><span class="badge badge-gray">{{ $confirmations->count() }}</span></div>
+            <div class="table-wrap"><table class="table">
+                <thead><tr><th>التاريخ</th><th>المتجر</th><th>النتيجة</th><th>سبب الإلغاء</th>@if($full)<th>الموظفة</th><th>التقرير</th>@endif</tr></thead>
+                <tbody>
+                @foreach($confirmations as $c)
+                    <tr>
+                        <td class="tabular-nums">{{ $c->report?->work_date?->format('Y/m/d') }}</td>
+                        <td>{{ $c->store?->name }}</td>
+                        <td><x-badge :enum="$c->result"/></td>
+                        <td>{{ $c->cancel_reason ?? '—' }}</td>
+                        @if($full)
+                            <td>{{ $c->user?->name }}</td>
+                            <td>@if($c->report)<a class="text-navy-700 underline" href="{{ route('reports.show', $c->report) }}">{{ $c->report->report_number }}</a> <x-badge :enum="$c->report->status"/>@endif</td>
+                        @endif
+                    </tr>
+                @endforeach
+                </tbody>
+            </table></div>
+        </section>
+    @endif
+
+    @if(! $shipment && $confirmations->isEmpty())
         <x-empty-state title="لا يوجد كود بهذا الرقم" icon="search">لم يُسجَّل هذا الكود في أي تقرير بعد. يمكنك فتحه في منظومة الشحن من الزر أعلاه.</x-empty-state>
-    @else
+    @elseif($shipment)
         <section class="card mb-5 grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3 text-sm">
             <div><p class="text-slate-500">الكود</p><p class="font-bold text-lg"><x-code :code="$shipment->code"/></p></div>
             <div><p class="text-slate-500">المتجر</p><p class="font-bold">{{ $shipment->store?->name ?? '—' }}</p></div>

@@ -16,6 +16,7 @@ class ReportRegistry
             'open_codes' => Definitions\OpenCodesReport::class,
             'issues' => Definitions\IssuesReport::class,
             'contacts' => Definitions\ContactsReport::class,
+            'confirmation' => Definitions\ConfirmationReport::class,
             'employee_monthly' => Definitions\EmployeeMonthlyReport::class,
             'attendance_monthly' => Definitions\AttendanceMonthlyReport::class,
             'store' => Definitions\StoreReport::class,

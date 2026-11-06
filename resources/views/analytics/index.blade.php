@@ -108,4 +108,37 @@
             </div>
         </div>
     </section>
+
+    <section class="card mb-5">
+        <div class="card-header"><h2 class="card-title">تأكيد الطلبيات</h2><span class="text-xs text-slate-500">نسبة التأكيد = المؤكد ÷ الإجمالي — من التقارير المعتمدة</span></div>
+        @if($confirmation['employees']->isEmpty())
+            <p class="p-5 text-slate-500">لا توجد بيانات</p>
+        @else
+            <div class="grid gap-5 p-5 lg:grid-cols-3 text-sm">
+                <div class="lg:col-span-2 table-wrap"><table class="table">
+                    <thead><tr><th>الموظفة</th><th>الإجمالي</th><th>المؤكدة</th><th>الملغاة</th><th>لا يرد</th><th>نسبة التأكيد</th></tr></thead>
+                    <tbody>
+                    @foreach($confirmation['employees'] as $e)
+                        <tr><td class="font-bold">{{ $e['user']->name }}</td><td class="tabular-nums">{{ $e['total'] }}</td><td class="tabular-nums text-green-700">{{ $e['confirmed'] }}</td>
+                            <td class="tabular-nums text-red-700">{{ $e['cancelled'] }}</td><td class="tabular-nums">{{ $e['no_answer'] }}</td><td class="tabular-nums font-bold">{{ $e['rate'] !== null ? $e['rate'].'%' : '—' }}</td></tr>
+                    @endforeach
+                    </tbody>
+                </table></div>
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="font-bold mb-2">أكثر أسباب الإلغاء</h3>
+                        @forelse($confirmation['reasons'] as $reason => $n)
+                            <p class="flex justify-between border-b border-slate-100 py-1"><span>{{ $reason }}</span><span class="tabular-nums">{{ $n }}</span></p>
+                        @empty <p class="text-slate-500">لا توجد بيانات</p> @endforelse
+                    </div>
+                    <div>
+                        <h3 class="font-bold mb-2">المتاجر (الأكثر طلبيات)</h3>
+                        @foreach($confirmation['stores'] as $s)
+                            <p class="flex justify-between border-b border-slate-100 py-1"><span>{{ $s['store']->name }}</span><span class="tabular-nums">{{ $s['total'] }} — {{ $s['rate'] !== null ? $s['rate'].'%' : '—' }}</span></p>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        @endif
+    </section>
 </x-layouts.app>

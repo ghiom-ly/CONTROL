@@ -42,6 +42,10 @@ class ShipmentController extends Controller
             $data['contacts'] = collect();
         }
 
+        // سجل تأكيد الطلبيات لنفس الكود (تقرير التأكيد)
+        $data['confirmations'] = \App\Models\ConfirmationOrder::with(['store:id,name', 'user:id,name', 'report:id,report_number,status,work_date'])
+            ->where('code', $code)->latest('id')->limit(50)->get();
+
         return view('shipments.show', $data);
     }
 }

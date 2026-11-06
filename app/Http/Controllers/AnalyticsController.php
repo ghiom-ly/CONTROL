@@ -26,6 +26,11 @@ class AnalyticsController extends Controller
             'stopped' => $analytics->stoppedStores($p),
             'employees' => $employees,
             'issues' => $issues,
+            'confirmation' => [
+                'employees' => app(\App\Services\Analytics\ConfirmationStatsService::class)->perEmployee($p),
+                'stores' => app(\App\Services\Analytics\ConfirmationStatsService::class)->perStore($p, 10),
+                'reasons' => app(\App\Services\Analytics\ConfirmationStatsService::class)->reasons($p),
+            ],
             'charts' => $analytics->charts($p, $declining, $employees, $issues),
         ]);
     }
