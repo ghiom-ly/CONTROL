@@ -33,7 +33,7 @@ class ShipmentController extends Controller
             $contacts = $shipment->contactAttempts()->with('user:id,name')->latest('contacted_at');
             $data['contacts'] = ($full ? $contacts : $contacts->where('user_id', $user->id))->get();
             if ($full) {
-                $data['followups'] = $shipment->followups()->with(['user:id,name', 'report:id,report_number,status'])->orderByDesc('followup_at')->get();
+                $data['followups'] = $shipment->followups()->whereHas('report')->with(['user:id,name', 'report:id,report_number,status'])->orderByDesc('followup_at')->get();
                 $data['issues'] = Issue::where('shipment_id', $shipment->id)->latest('reported_at')->get();
                 $data['messages'] = StoreMessage::with('sender:id,name')->where('store_id', $shipment->store_id)
                     ->whereJsonContains('meta->codes', $code)->latest()->get();
@@ -44,7 +44,7 @@ class ShipmentController extends Controller
 
         // سجل تأكيد الطلبيات لنفس الكود (تقرير التأكيد)
         $data['confirmations'] = \App\Models\ConfirmationOrder::with(['store:id,name', 'user:id,name', 'report:id,report_number,status,work_date'])
-            ->where('code', $code)->latest('id')->limit(50)->get();
+            ->where('code', $code)->whereHas('report')->latest('id')->limit(50)->get();
 
         return view('shipments.show', $data);
     }

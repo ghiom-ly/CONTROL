@@ -23,17 +23,32 @@ class ReportAdminController extends Controller
     {
         abort_unless($request->user()->isSuperAdmin(), 403);
         $data = $request->validate([
-            'shift_started_at' => ['required', 'date'],
-            'first_submitted_at' => ['nullable', 'date', 'after_or_equal:shift_started_at'],
-        ], ['first_submitted_at.after_or_equal' => 'وقت الانصراف لا يسبق وقت بدء الشفت.'], [
+            'shift_started_at' => ['required', 'date', 'before_or_equal:'.now()->addMinutes(5)->toDateTimeString()],
+            // الانصراف = أول إرسال: لا يوضع لمسودة لم تُرسل
+            'first_submitted_at' => [$report->status === ReportStatus::Draft ? 'prohibited' : 'nullable', 'date', 'after_or_equal:shift_started_at',
+                'before_or_equal:'.now()->addMinutes(5)->toDateTimeString()],
+        ], [
+            'first_submitted_at.after_or_equal' => 'وقت الانصراف لا يسبق وقت بدء الشفت.',
+            'first_submitted_at.prohibited' => 'التقرير لم يُرسل بعد — لا يوجد انصراف لتعديله.',
+            'shift_started_at.before_or_equal' => 'وقت بدء الشفت لا يكون في المستقبل.',
+            'first_submitted_at.before_or_equal' => 'وقت الانصراف لا يكون في المستقبل.',
+        ], [
             'shift_started_at' => 'وقت بدء الشفت', 'first_submitted_at' => 'وقت الانصراف',
         ]);
 
         DB::transaction(function () use ($report, $data, $approvals, $metrics, $revisions, $request) {
+            $report = DailyReport::whereKey($report->id)->lockForUpdate()->firstOrFail();
             $before = $approvals->affectedKeys($report)['metric_keys'];
             $revisions->snapshot($report, 'تعديل وقت الشفت', $request->user());
             $report->increment('version');   // كل نسخة برقم جديد (فريد لكل تقرير)
             $start = CarbonImmutable::parse($data['shift_started_at']);
+            // المتابعات تنتقل بنفس الفارق حتى تبقى إحصائيات الاتصالات على يوم الشفت
+            if ($report->shift_started_at) {
+                $delta = (int) $report->shift_started_at->diffInSeconds($start, false);
+                if ($delta !== 0) {
+                    $report->followups()->update(['followup_at' => DB::raw("DATE_ADD(followup_at, INTERVAL {$delta} SECOND)")]);
+                }
+            }
             $report->fill([
                 'shift_started_at' => $start,
                 'first_submitted_at' => isset($data['first_submitted_at']) ? CarbonImmutable::parse($data['first_submitted_at']) : $report->first_submitted_at,

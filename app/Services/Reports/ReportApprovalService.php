@@ -43,9 +43,9 @@ class ReportApprovalService
      * @param  list<ReportStatus>  $allowed  الحالات المسموح اعتمادها (تُفحص بعد القفل)
      * @return list<string> تحذيرات (تعارضات التقارير القديمة)
      */
-    public function approve(DailyReport $report, User $actor, ?array $previous = null, array $allowed = [ReportStatus::PendingReview]): array
+    public function approve(DailyReport $report, User $actor, ?array $previous = null, array $allowed = [ReportStatus::PendingReview], bool $notify = true): array
     {
-        return DB::transaction(function () use ($report, $actor, $previous, $allowed) {
+        return DB::transaction(function () use ($report, $actor, $previous, $allowed, $notify) {
             $warnings = [];
             $report = DailyReport::whereKey($report->id)->lockForUpdate()->firstOrFail();
             if (! in_array($report->status, $allowed, true)) {
@@ -137,7 +137,9 @@ class ReportApprovalService
                 $this->metrics->rebuild($storeId, $date);
             }
 
-            $report->loadMissing('user')->user?->notify(new ReportReviewedNotification($report));   // لا إشعار لموظف محذوف
+            if ($notify) {
+                $report->loadMissing('user')->user?->notify(new ReportReviewedNotification($report));   // لا إشعار لموظف محذوف
+            }
 
             // أرقام التحليلات تتغير بالاعتماد — امسح الكاش بعد نجاح المعاملة
             \Illuminate\Support\Facades\DB::afterCommit(fn () => \App\Services\Analytics\AnalyticsService::flush());

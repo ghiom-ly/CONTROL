@@ -19,7 +19,7 @@ class AttendanceExport
         $book = new Spreadsheet;
         $summary = $book->getActiveSheet()->setTitle('ملخص')->setRightToLeft(true);
         $summary->fromArray([[
-            'الموظف', 'أيام الحضور', 'الغياب', 'الإجازات', 'مرات التأخير', 'دقائق التأخير',
+            'الموظف', 'أيام الحضور', 'الغياب', 'غياب بعذر', 'عطل رسمية', 'الإجازات', 'مرات التأخير', 'دقائق التأخير',
             'شفتات غير مكتملة', 'متوسط ساعات العمل', 'التقارير', 'المعتمدة', 'المرفوضة', 'قيد المراجعة',
         ]]);
 
@@ -28,7 +28,7 @@ class AttendanceExport
             $data = $this->attendance->month($u, $month);
             $s = $data['summary'];
             $summary->fromArray([[
-                $u->name, $s['present'], $s['absent'], $s['leave'], $s['late'], $s['late_minutes'], $s['incomplete'],
+                $u->name, $s['present'], $s['absent'], $s['excused'], $s['holiday'], $s['leave'], $s['late'], $s['late_minutes'], $s['incomplete'],
                 $s['avg_minutes'] === null ? null : round($s['avg_minutes'] / 60, 2),
                 $s['reports_total'], $s['reports_approved'], $s['reports_rejected'], $s['reports_pending'],
             ]], null, 'A'.$r++);

@@ -81,7 +81,7 @@
                             <td class="ltr text-right text-slate-600">{{ $s->code }}</td>
                             <td class="ltr text-right text-slate-600">{{ $s->phone ?? '—' }}</td>
                             <td>{{ $s->assignedUser?->name ?? 'غير مسند' }}</td>
-                            <td><x-badge :enum="$s->status"/></td>
+                            <td><x-badge :enum="$s->status"/> @if($s->service_type !== 'both')<span class="badge badge-blue">{{ \App\Models\Store::SERVICE_TYPES[$s->service_type] }}</span>@endif</td>
                             <td class="text-left whitespace-nowrap">
                                 <a href="{{ route('stores.show', $s) }}" class="btn btn-light btn-sm"><x-icon name="eye" class="size-4"/> التفاصيل</a>
                             </td>

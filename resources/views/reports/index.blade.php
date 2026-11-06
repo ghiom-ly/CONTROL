@@ -57,9 +57,9 @@
                                 @else
                                 <a href="{{ route('reports.show', $r) }}" class="btn btn-light btn-sm"><x-icon name="eye" class="size-4"/> عرض</a>
                                 @endif
-                                @can('update', $r)
+                                @if(! $r->trashed() && auth()->user()->can('update', $r))
                                     <a href="{{ route('reports.edit', $r) }}" class="btn btn-light btn-sm"><x-icon name="pencil" class="size-4"/></a>
-                                @endcan
+                                @endif
                             </td>
                         </tr>
                     @endforeach

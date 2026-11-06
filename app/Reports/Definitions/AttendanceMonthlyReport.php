@@ -30,14 +30,15 @@ class AttendanceMonthlyReport extends BaseReport
     public function build(ReportParams $p): ReportData
     {
         $rows = $this->attendance->summaryForAll($p->month->startOfMonth())->map(fn ($r) => [
-            $r['user']->name, $r['summary']['present'], $r['summary']['absent'], $r['summary']['leave'], $r['summary']['late'],
+            $r['user']->name, $r['summary']['present'], $r['summary']['absent'], $r['summary']['excused'], $r['summary']['holiday'],
+            $r['summary']['leave'], $r['summary']['late'],
             $r['summary']['late_minutes'], $r['summary']['reports_approved'], $r['summary']['reports_rejected'],
         ])->all();
 
         return new ReportData($this->title(), 'الشهر: '.$p->month->format('Y/m'), ['عدد الموظفين' => count($rows)], [[
             'title' => 'الحضور',
             'landscape' => true,
-            'headers' => ['الموظف', 'أيام الحضور', 'الغياب', 'الإجازات', 'مرات التأخير', 'دقائق التأخير', 'التقارير المعتمدة', 'المرفوضة'],
+            'headers' => ['الموظف', 'أيام الحضور', 'الغياب', 'غياب بعذر', 'عطل رسمية', 'الإجازات', 'مرات التأخير', 'دقائق التأخير', 'التقارير المعتمدة', 'المرفوضة'],
             'rows' => $rows,
         ]]);
     }

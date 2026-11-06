@@ -54,9 +54,11 @@ class ReportDeletionService
         }
         DB::transaction(function () use ($report, $actor) {
             $report->restore();
-            Shipment::onlyTrashed()->where('first_report_id', $report->id)->restore();
             if ($report->status === ReportStatus::Approved && ! $report->isConfirmation()) {
-                $this->approvals->approve($report, $actor, null, [ReportStatus::Approved]);
+                // إعادة الاعتماد تعيد الشحنات (بالكود، شاملة المحذوفة) والمقاييس — مع الإبقاء على المعتمد الأصلي وبلا إشعار جديد
+                $original = $report->only(['approved_by', 'approved_at', 'reviewed_by', 'reviewed_at']);
+                $this->approvals->approve($report, $actor, null, [ReportStatus::Approved], notify: false);
+                DailyReport::whereKey($report->id)->update($original);
             }
             AuditLogger::log('report_restored', 'استعادة التقرير '.$report->report_number, $report, [], [], $actor->id);
             DB::afterCommit(fn () => AnalyticsService::flush());

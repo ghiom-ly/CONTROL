@@ -42,7 +42,7 @@
             <label class="label">نوع الخدمة</label>
             <select name="service_type" class="input @error('service_type') input-error @enderror">
                 @foreach(\App\Models\Store::SERVICE_TYPES as $val => $label)
-                    <option value="{{ $val }}" @selected(($isEdit ? $store->service_type : old('service_type', 'both')) === $val)>{{ $label }}</option>
+                    <option value="{{ $val }}" @selected(old('service_type', $isEdit ? $store->service_type : 'both') === $val)>{{ $label }}</option>
                 @endforeach
             </select>
             @error('service_type')<p class="field-error">{{ $message }}</p>@enderror

@@ -52,8 +52,14 @@ class AttendanceController extends Controller
             'type' => ['required', \Illuminate\Validation\Rule::in(array_keys(\App\Models\AttendanceOverride::TYPES))],
             'reason' => ['nullable', 'string', 'max:255'],
         ]);
+        // «بعذر» و«حاضر» لنفس اليوم لا يجتمعان — الأحدث يحل محل الآخر
+        if (in_array($data['type'], ['excused', 'present'], true)) {
+            \App\Models\AttendanceOverride::where('user_id', $user->id)->whereDate('date', $data['date'])
+                ->where('type', $data['type'] === 'excused' ? 'present' : 'excused')->delete();
+        }
         \App\Models\AttendanceOverride::updateOrCreate(['user_id' => $user->id, 'date' => $data['date'], 'type' => $data['type']],
             ['reason' => $data['reason'] ?? null, 'created_by' => $request->user()->id]);
+        \App\Services\Analytics\AnalyticsService::flush();
 
         return back()->with('success', 'تم تعديل حضور يوم '.$data['date'].'.');
     }
@@ -62,6 +68,7 @@ class AttendanceController extends Controller
     {
         abort_unless($request->user()->isSuperAdmin(), 403);
         $override->delete();
+        \App\Services\Analytics\AnalyticsService::flush();
 
         return back()->with('success', 'تم التراجع عن تعديل الحضور.');
     }
@@ -72,6 +79,7 @@ class AttendanceController extends Controller
         $data = $request->validate(['date' => ['required', 'date_format:Y-m-d', 'unique:holidays,date'], 'name' => ['required', 'string', 'max:120']],
             ['date.unique' => 'هذا اليوم مسجل عطلة بالفعل.']);
         \App\Models\Holiday::create($data + ['created_by' => $request->user()->id]);
+        \App\Services\Analytics\AnalyticsService::flush();
 
         return back()->with('success', 'تمت إضافة العطلة الرسمية.');
     }
@@ -80,6 +88,7 @@ class AttendanceController extends Controller
     {
         abort_unless($request->user()->isSuperAdmin(), 403);
         $holiday->delete();
+        \App\Services\Analytics\AnalyticsService::flush();
 
         return back()->with('success', 'تم حذف العطلة.');
     }

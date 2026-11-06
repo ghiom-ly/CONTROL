@@ -33,6 +33,7 @@ class AdminControlReviewFixesTest extends TestCase
 
     public function test_shift_time_can_be_edited_twice_then_admin_edit(): void
     {
+        $this->travelTo(now()->setTime(15, 0));
         $r = DailyReport::factory()->approved()->for($this->emp)->create(['work_date' => today(), 'shift_started_at' => today()->setTime(9, 0)]);
         $this->actingAs($this->boss)->put("/reports/{$r->id}/shift-time", ['shift_started_at' => today()->format('Y-m-d').'T09:30'])->assertSessionHasNoErrors();
         $this->actingAs($this->boss)->put("/reports/{$r->id}/shift-time", ['shift_started_at' => today()->format('Y-m-d').'T09:45'])->assertSessionHasNoErrors();
