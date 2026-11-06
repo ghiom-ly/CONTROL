@@ -47,6 +47,16 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/', DashboardController::class)->middleware('permission:dashboard.view')->name('dashboard');
 
         Route::get('/search', SearchController::class)->name('search');
+        // دليل الاستخدام: الموظف يرى دليل نوع عمله، والإدارة ترى الدليلين
+        Route::get('/help', function (\Illuminate\Http\Request $request) {
+            $u = $request->user();
+            $isEmployee = $u->hasRole(\App\Models\Role::EMPLOYEE);
+
+            return view('help.index', [
+                'showFollowup' => ! $isEmployee || ! $u->isConfirmation(),
+                'showConfirmation' => ! $isEmployee || $u->isConfirmation(),
+            ]);
+        })->name('help');
 
         // ---- البحث بالكود (المرحلة 6)
         Route::get('/shipments', [\App\Http\Controllers\ShipmentController::class, 'index'])->name('shipments.index');

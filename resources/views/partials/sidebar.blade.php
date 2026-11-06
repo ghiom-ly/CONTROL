@@ -22,6 +22,7 @@
         ['التقارير الإدارية', 'document-chart', 'reports-center.index', [], 'exports.generate', 'reports-center.*', null],
         ['سجل العمليات', 'history', 'audit.index', [], 'audit.view', 'audit.*', null],
         ['الإعدادات', 'cog', 'settings.index', [], 'settings.manage', 'settings.*', null],
+        ['دليل الاستخدام', 'document-chart', 'help', [], 'dashboard.view', 'help', null],
     ];
     $allowed = fn ($perm) => collect(explode('|', $perm))->contains(fn ($p) => $user->hasPermission($p));
 @endphp
