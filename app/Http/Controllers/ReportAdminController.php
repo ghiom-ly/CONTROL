@@ -32,6 +32,7 @@ class ReportAdminController extends Controller
         DB::transaction(function () use ($report, $data, $approvals, $metrics, $revisions, $request) {
             $before = $approvals->affectedKeys($report)['metric_keys'];
             $revisions->snapshot($report, 'تعديل وقت الشفت', $request->user());
+            $report->increment('version');   // كل نسخة برقم جديد (فريد لكل تقرير)
             $start = CarbonImmutable::parse($data['shift_started_at']);
             $report->fill([
                 'shift_started_at' => $start,

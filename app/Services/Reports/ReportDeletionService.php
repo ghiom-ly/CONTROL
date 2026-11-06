@@ -48,6 +48,10 @@ class ReportDeletionService
 
     public function restore(DailyReport $report, User $actor): void
     {
+        // شفت مفتوح واحد فقط: لا تُستعاد مسودة إذا بدأ الموظف شفتاً جديداً
+        if ($report->status === ReportStatus::Draft && DailyReport::where('user_id', $report->user_id)->openDraft()->exists()) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['report' => 'لا يمكن استعادة هذه المسودة: الموظف عنده شفت مفتوح الآن.']);
+        }
         DB::transaction(function () use ($report, $actor) {
             $report->restore();
             Shipment::onlyTrashed()->where('first_report_id', $report->id)->restore();

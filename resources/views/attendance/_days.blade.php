@@ -41,7 +41,7 @@
                                     <button class="text-red-600 underline">تراجع</button>
                                 </form>
                             @endforeach
-                            @if($d['status'] === 'absent')
+                            @if($d['status'] === 'absent' || ($d['status'] === 'future' && $d['date'] === today()->toDateString()))
                                 <form method="POST" action="{{ route('attendance.overrides.store', $user) }}" class="mt-1 flex gap-1" x-data>
                                     @csrf <input type="hidden" name="date" value="{{ $d['date'] }}">
                                     <input name="reason" class="input !w-28 !py-1 text-xs" placeholder="السبب">

@@ -122,12 +122,17 @@ class ShiftFileImporter
         $rows = $batch->rows()->orderBy('row_number')->get(['row_number', 'raw_data'])
             ->map(fn ($r) => ['row' => $r->row_number, 'cells' => $r->raw_data])->all();
 
-        return $this->calculator->compute($rows, $mapping, function (string $name) use ($choices) {
+        // متاجر «تأكيد فقط» لا تدخل تقرير المتابعة — تُتجاهل من الملف
+        $confirmationOnly = \App\Models\Store::where('service_type', 'confirmation')->pluck('id')->flip();
+
+        return $this->calculator->compute($rows, $mapping, function (string $name) use ($choices, $confirmationOnly) {
             if (isset($choices[$name]) && $choices[$name] !== '') {
-                return $choices[$name] === 'ignore' ? 'ignore' : (int) $choices[$name];
+                $id = $choices[$name] === 'ignore' ? 'ignore' : (int) $choices[$name];
+            } else {
+                $id = $this->matcher->match($name);
             }
 
-            return $this->matcher->match($name);
+            return is_int($id) && $confirmationOnly->has($id) ? 'ignore' : $id;
         });
     }
 

@@ -59,7 +59,10 @@ class SaveReportRequest extends FormRequest
             'end_delivery_rate' => [Rule::requiredIf(fn () => $this->input('action') === 'submit' && ! $this->route('report')->is_legacy), 'nullable', 'numeric', 'min:0', 'max:100'],
             'stores' => ['array', 'max:200'],
             'stores.*.store_id' => ['required', 'integer', 'distinct',
-                Rule::exists('stores', 'id')->where(fn ($q) => $q->where('status', '!=', StoreStatus::Archived->value)->whereNull('deleted_at')->whereIn('service_type', ['both', 'followup']))],
+                // متاجر المتابعة، أو متجر موجود أصلاً في التقرير (حتى لو تغيّر نوعه لاحقاً — لا يُقفل التقرير)
+                Rule::exists('stores', 'id')->where(fn ($q) => $q->where('status', '!=', StoreStatus::Archived->value)->whereNull('deleted_at')
+                    ->where(fn ($t) => $t->whereIn('service_type', ['both', 'followup'])
+                        ->orWhereIn('id', \App\Models\ReportStore::where('daily_report_id', $this->route('report')->id)->select('store_id'))))],
             'stores.*.shipments_count' => ['nullable', 'integer', 'min:0', 'max:100000'],
             'stores.*.start_orders' => ['nullable', 'integer', 'min:0', 'max:100000'],
             'stores.*.start_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],

@@ -167,7 +167,7 @@ class AttendanceService
                 $day['status'] = 'present';
             }
         }
-        if ($day['status'] === 'absent') {
+        if (in_array($day['status'], ['absent', 'future'], true)) {   // اليوم الحالي (future) يُعذر أيضاً
             if ($holiday !== null) {
                 $day['status'] = 'holiday';
                 $day['leave_type'] = $holiday;
