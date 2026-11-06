@@ -1,5 +1,5 @@
 <x-layouts.app :title="$user->name">
-    <x-page-header :title="$user->name" :subtitle="$user->role->display_name.' — '.$user->username">
+    <x-page-header :title="$user->name" :subtitle="$user->role->display_name.' — '.$user->username.($user->hasRole(\App\Models\Role::EMPLOYEE) ? ' — '.($user->isConfirmation() ? 'تأكيد طلبيات' : 'متابعة شحنات') : '')">
         <x-slot:actions>
             <x-period-filter :period="$period"/>
         </x-slot:actions>

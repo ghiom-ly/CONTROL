@@ -37,6 +37,11 @@
                                     <span><span class="block text-sm font-semibold text-slate-700">{{ $s->label }}</span>
                                         @if($s->description)<span class="hint block">{{ $s->description }}</span>@endif</span>
                                 </label>
+                            @elseif($s->type === 'text')
+                                <label class="label">{{ $s->label }}</label>
+                                <textarea name="{{ $name }}" rows="5" class="input @error("settings.{$s->key}") input-error @enderror">{{ $val }}</textarea>
+                                @if($s->description)<p class="hint">{{ $s->description }}</p>@endif
+                                @error("settings.{$s->key}")<p class="field-error">{{ $message }}</p>@enderror
                             @else
                                 <label class="label">{{ $s->label }}</label>
                                 <input name="{{ $name }}" value="{{ $val }}"

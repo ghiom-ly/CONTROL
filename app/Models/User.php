@@ -16,7 +16,7 @@ class User extends Authenticatable
     use Auditable, HasFactory, Notifiable, SoftDeletes;
 
     protected $fillable = [
-        'name', 'username', 'email', 'phone', 'password', 'role_id', 'status',
+        'name', 'username', 'email', 'phone', 'password', 'role_id', 'work_type', 'status',
         'hired_at', 'must_change_password', 'created_by', 'updated_by',
     ];
 
@@ -79,6 +79,12 @@ class User extends Authenticatable
     }
 
     // ---------------------------------------------------------------- صلاحيات
+
+    /** موظفة تأكيد طلبيات (قالب تقرير التأكيد) */
+    public function isConfirmation(): bool
+    {
+        return $this->work_type === 'confirmation';
+    }
 
     public function isSuperAdmin(): bool
     {

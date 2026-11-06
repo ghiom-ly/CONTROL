@@ -36,6 +36,7 @@ class UserRequest extends FormRequest
             'email' => ['nullable', 'email:rfc', 'max:150', Rule::unique('users', 'email')->ignore($id)],
             'phone' => ['nullable', 'string', 'max:30', 'regex:/^[0-9+\-\s().\/]{6,30}$/'],
             'role_id' => ['required', 'integer', Rule::exists('roles', 'id')],
+            'work_type' => ['nullable', Rule::in(['followup', 'confirmation'])],
             'status' => ['required', Rule::enum(UserStatus::class)],
             'hired_at' => ['nullable', 'date', 'before_or_equal:today'],
             'password' => [$creating ? 'required' : 'nullable', 'confirmed', Password::min(8)->letters()->numbers()],

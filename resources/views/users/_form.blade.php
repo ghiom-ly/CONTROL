@@ -40,6 +40,14 @@
             @error('role_id')<p class="field-error">{{ $message }}</p>@enderror
         </div>
         <div>
+            <label class="label">نوع العمل (قالب التقرير)</label>
+            <select name="work_type" class="input @error('work_type') input-error @enderror">
+                <option value="followup" @selected($v('work_type', 'followup') === 'followup')>متابعة شحنات</option>
+                <option value="confirmation" @selected($v('work_type', 'followup') === 'confirmation')>تأكيد طلبيات</option>
+            </select>
+            @error('work_type')<p class="field-error">{{ $message }}</p>@enderror
+        </div>
+        <div>
             <label class="label">الحالة <span class="text-red-500">*</span></label>
             <select name="status" required class="input">
                 @foreach(\App\Enums\UserStatus::options() as $val => $label)
