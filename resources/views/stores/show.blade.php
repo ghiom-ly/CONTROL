@@ -4,6 +4,9 @@
             @can('messages.send')
                 <a href="{{ route('stores.message', $store) }}" class="btn btn-accent"><x-icon name="phone" class="size-4"/> إرسال رسالة</a>
             @endcan
+            @can('create', \App\Models\Issue::class)
+                <button type="button" class="btn btn-light" x-on:click="$dispatch('open-modal', 'new-issue')"><x-icon name="alert" class="size-4"/> فتح مشكلة</button>
+            @endcan
             @can('update', $store)
                 <button type="button" class="btn btn-light" x-on:click="$dispatch('open-modal', 'edit-store')"><x-icon name="pencil" class="size-4"/> تعديل</button>
                 @if($store->status !== \App\Enums\StoreStatus::Archived)
@@ -81,6 +84,22 @@
     @isset($insights)
         @include('stores._insights')
     @endisset
+
+    @can('create', \App\Models\Issue::class)
+        <x-modal name="new-issue" title="فتح مشكلة على المتجر" :show="$errors->has('title') || $errors->has('description')">
+            <form method="POST" action="{{ route('stores.issues.store', $store) }}" class="space-y-3">
+                @csrf
+                <div><label class="label">العنوان</label><input name="title" class="input" maxlength="200" required value="{{ old('title') }}">@error('title')<p class="field-error">{{ $message }}</p>@enderror</div>
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <div><label class="label">النوع</label><select name="type" class="input">@foreach(\App\Enums\IssueType::cases() as $t)<option value="{{ $t->value }}">{{ $t->label() }}</option>@endforeach</select></div>
+                    <div><label class="label">الأولوية</label><select name="priority" class="input">@foreach(\App\Enums\IssuePriority::cases() as $p)<option value="{{ $p->value }}" @selected($p === \App\Enums\IssuePriority::Medium)>{{ $p->label() }}</option>@endforeach</select></div>
+                </div>
+                <div><label class="label">كود الشحنة (اختياري)</label><input name="shipment_code" class="input ltr" maxlength="80" value="{{ old('shipment_code') }}"></div>
+                <div><label class="label">الوصف</label><textarea name="description" rows="3" class="input" maxlength="5000" required>{{ old('description') }}</textarea>@error('description')<p class="field-error">{{ $message }}</p>@enderror</div>
+                <button class="btn btn-accent">فتح المشكلة</button>
+            </form>
+        </x-modal>
+    @endcan
 
     @can('update', $store)
         <x-modal name="edit-store" title="تعديل المتجر" :show="$errors->any() && old('_modal') === 'edit'">

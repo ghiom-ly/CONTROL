@@ -100,8 +100,15 @@
                 <h2 class="card-title">④ ملاحظات واستفسارات</h2>
                 <p>{{ $report->notes ?? '—' }}</p>
                 <p>{{ $report->inquiries ?? '' }}</p>
-                @foreach($report->issue_requests ?? [] as $iss)
-                    <p class="badge badge-orange">مشكلة: {{ $iss['title'] }}</p>
+                @php $opened = \App\Models\Issue::where('daily_report_id', $report->id)->get(); $openedKeys = $opened->pluck('source_key')->filter()->all(); @endphp
+                @foreach($opened as $iss_model)
+                    <p>
+                        <span class="badge badge-orange">مشكلة: {{ $iss_model->title }}</span> <x-badge :enum="$iss_model->status"/>
+                        @can('view', $iss_model)<a class="text-navy-700 underline text-xs" href="{{ route('issues.show', $iss_model) }}">{{ $iss_model->issue_number }}</a>@endcan
+                    </p>
+                @endforeach
+                @foreach(collect($report->issue_requests ?? [])->reject(fn ($i) => in_array($i['key'] ?? null, $openedKeys, true)) as $iss)
+                    <p><span class="badge badge-orange">مشكلة: {{ $iss['title'] }}</span> <span class="text-xs text-slate-500">تُفتح عند اعتماد التقرير</span></p>
                 @endforeach
             </section>
 

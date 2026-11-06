@@ -74,4 +74,21 @@ class Issue extends Model
     {
         return $this->morphMany(Attachment::class, 'attachable');
     }
+
+    public function report(): BelongsTo
+    {
+        return $this->belongsTo(DailyReport::class, 'daily_report_id');
+    }
+
+    /** متأخرة = لم تُحل/تُغلق ومضت المهلة */
+    public function isOverdue(): bool
+    {
+        return $this->due_at !== null && $this->due_at->isPast()
+            && ! in_array($this->status, [IssueStatus::Resolved, IssueStatus::Closed], true);
+    }
+
+    public function scopeOverdue($q)
+    {
+        return $q->whereNotNull('due_at')->where('due_at', '<', now())->whereNotIn('status', [IssueStatus::Resolved->value, IssueStatus::Closed->value]);
+    }
 }

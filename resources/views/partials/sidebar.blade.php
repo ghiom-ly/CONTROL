@@ -13,7 +13,7 @@
         ['استيراد الملفات', 'upload', 'imports.index', [], 'imports.view_all', 'imports.*', null],
         ['البحث بالكود', 'truck', 'shipments.index', [], 'shipments.view|shipments.lookup', 'shipments.*', null],
         ['سجل الاتصالات', 'phone', 'contacts.index', [], 'contacts.view', 'contacts.*', null],
-        ['إدارة المشكلات', 'alert', null, ['issues'], 'issues.view', null, 4],
+        ['إدارة المشكلات', 'alert', 'issues.index', [], 'issues.view', 'issues.*', null],
         ['الموظفون', 'users', 'users.index', [], 'users.view', 'users.*', null],
         ['الحضور والانصراف', 'clock', 'attendance.index', [], 'users.view', 'attendance.*', null],
         ['التحليلات', 'chart', null, ['analytics'], 'analytics.view', null, 5],

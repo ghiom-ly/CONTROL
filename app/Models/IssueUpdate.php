@@ -18,4 +18,9 @@ class IssueUpdate extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function newAssignee(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'new_assignee_id');
+    }
 }

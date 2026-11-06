@@ -47,7 +47,11 @@ Route::middleware(['auth', 'active'])->group(function () {
         // ---- البحث بالكود (المرحلة 6)
         Route::get('/shipments', [\App\Http\Controllers\ShipmentController::class, 'index'])->name('shipments.index');
         Route::get('/shipments/{code}', [\App\Http\Controllers\ShipmentController::class, 'show'])->where('code', '[^/]+')->name('shipments.show');
-        Route::get('/contacts', [\App\Http\Controllers\ContactController::class, 'index'])->name('contacts.index');
+        Route::get('/issues', [\App\Http\Controllers\IssueController::class, 'index'])->name('issues.index');
+        Route::get('/issues/{issue}', [\App\Http\Controllers\IssueController::class, 'show'])->whereNumber('issue')->name('issues.show');
+        Route::post('/issues/{issue}/updates', [\App\Http\Controllers\IssueController::class, 'update'])->whereNumber('issue')->name('issues.updates.store');
+        Route::post('/stores/{store}/issues', [\App\Http\Controllers\IssueController::class, 'store'])->whereNumber('store')->name('stores.issues.store');
+        Route::get('/contacts',[\App\Http\Controllers\ContactController::class, 'index'])->name('contacts.index');
         Route::post('/shipments/{code}/contacts', [\App\Http\Controllers\ContactController::class, 'storeForShipment'])->where('code', '[^/]+')->name('shipments.contacts.store');
         Route::post('/stores/{store}/contacts', [\App\Http\Controllers\ContactController::class, 'storeForStore'])->whereNumber('store')->name('stores.contacts.store');
         Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');

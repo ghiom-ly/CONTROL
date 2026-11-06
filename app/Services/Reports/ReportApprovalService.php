@@ -2,11 +2,9 @@
 
 namespace App\Services\Reports;
 
-use App\Enums\IssueStatus;
 use App\Enums\ProcessingStatus;
 use App\Enums\ReportStatus;
 use App\Models\DailyReport;
-use App\Models\Issue;
 use App\Models\Shipment;
 use App\Models\Store;
 use App\Models\User;
@@ -102,13 +100,9 @@ class ReportApprovalService
 
             // 6) المشكلات المطلوبة من القسم ④ (لا تتكرر ولا تُحذف)
             foreach ($report->issue_requests ?? [] as $req) {
-                Issue::firstOrCreate(
-                    ['daily_report_id' => $report->id, 'source_key' => $req['key']],
-                    [
-                        'store_id' => $req['store_id'], 'reported_by' => $report->user_id, 'reported_at' => now(),
-                        'type' => $req['type'], 'title' => $req['title'], 'description' => $req['description'],
-                        'status' => IssueStatus::New,
-                    ],
+                app(\App\Services\IssueService::class)->create(
+                    ['store_id' => $req['store_id'], 'type' => $req['type'], 'title' => $req['title'], 'description' => $req['description']],
+                    $report->loadMissing('user')->user, $report, $req['key'],
                 );
             }
 
