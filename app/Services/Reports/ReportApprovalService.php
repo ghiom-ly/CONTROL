@@ -128,6 +128,9 @@ class ReportApprovalService
 
             $report->loadMissing('user')->user?->notify(new ReportReviewedNotification($report));   // لا إشعار لموظف محذوف
 
+            // أرقام التحليلات تتغير بالاعتماد — امسح الكاش بعد نجاح المعاملة
+            \Illuminate\Support\Facades\DB::afterCommit(fn () => \App\Services\Analytics\AnalyticsService::flush());
+
             return $warnings;
         });
     }

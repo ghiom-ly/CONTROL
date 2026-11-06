@@ -13,6 +13,7 @@ use App\Services\ContactStatsService;
 use App\Support\ComparePeriod;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /** كل الأرقام من التقارير المعتمدة والمتابعات الرسمية فقط — بتجميعات SQL */
@@ -38,7 +39,25 @@ class AnalyticsService
         'issues_resolved' => ['مشكلات محلولة', 'count', false],
     ];
 
+    /** مدة الكاش (ثوانٍ) — يُمسح كله فوراً عند اعتماد تقرير عبر flush() */
+    public const CACHE_TTL = 600;
+
+    public static function flush(): void
+    {
+        Cache::forever('analytics:version', (int) Cache::get('analytics:version', 1) + 1);
+    }
+
+    private static function cacheKey(string $what, ComparePeriod $p): string
+    {
+        return 'analytics:'.Cache::get('analytics:version', 1).":{$what}:".$p->from->toDateString().':'.$p->to->toDateString();
+    }
+
     public function compare(ComparePeriod $p): array
+    {
+        return Cache::remember(self::cacheKey('compare', $p), self::CACHE_TTL, fn () => $this->computeCompare($p));
+    }
+
+    private function computeCompare(ComparePeriod $p): array
     {
         $cur = $this->kpis($p->from, $p->to);
         $prev = $this->kpis($p->prevFrom, $p->prevTo);
@@ -91,6 +110,11 @@ class AnalyticsService
     /** بيانات الرسوم الستة — مفاتيح ثابتة، السلسلة الفارغة [] */
     /** النتائج المحسوبة مسبقاً (من صفحة التحليلات) تُمرَّر حتى لا تُعاد الاستعلامات */
     public function charts(ComparePeriod $p, ?Collection $declining = null, ?Collection $employees = null, ?array $issueStats = null): array
+    {
+        return Cache::remember(self::cacheKey('charts', $p), self::CACHE_TTL, fn () => $this->computeCharts($p, $declining, $employees, $issueStats));
+    }
+
+    private function computeCharts(ComparePeriod $p, ?Collection $declining, ?Collection $employees, ?array $issueStats): array
     {
         $days = $p->days();
         $dates = collect(range(0, $days - 1))->map(fn ($i) => $p->from->addDays($i)->toDateString());
