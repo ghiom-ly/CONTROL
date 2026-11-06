@@ -10,7 +10,6 @@ use Illuminate\View\View;
 class ModulePlaceholderController extends Controller
 {
     public const MODULES = [
-        'analytics' => ['التحليلات', 5],
         'exports' => ['التقارير الإدارية', 6],
     ];
 

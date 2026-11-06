@@ -16,7 +16,7 @@
         ['إدارة المشكلات', 'alert', 'issues.index', [], 'issues.view', 'issues.*', null],
         ['الموظفون', 'users', 'users.index', [], 'users.view', 'users.*', null],
         ['الحضور والانصراف', 'clock', 'attendance.index', [], 'users.view', 'attendance.*', null],
-        ['التحليلات', 'chart', null, ['analytics'], 'analytics.view', null, 5],
+        ['التحليلات', 'chart', 'analytics.index', [], 'analytics.view', 'analytics.*', null],
         ['التقارير الإدارية', 'document-chart', null, ['exports'], 'exports.generate', null, 6],
         ['سجل العمليات', 'history', 'audit.index', [], 'audit.view', 'audit.*', null],
         ['الإعدادات', 'cog', 'settings.index', [], 'settings.manage', 'settings.*', null],

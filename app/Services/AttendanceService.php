@@ -58,6 +58,24 @@ class AttendanceService
         return ['days' => $days, 'summary' => $this->summarize($days, $reports)];
     }
 
+    /** التأخير والغياب ضمن فترة (قد تمتد على أكثر من شهر) — مبنية على month() */
+    public function range(User $user, CarbonImmutable $from, CarbonImmutable $to): array
+    {
+        [$a, $b] = [$from->toDateString(), $to->toDateString()];
+        $late = $absent = 0;
+        for ($m = $from->startOfMonth(); $m <= $to; $m = $m->addMonthNoOverflow()) {
+            foreach ($this->month($user, $m)['days'] as $d) {
+                if ($d['date'] < $a || $d['date'] > $b) {
+                    continue;
+                }
+                $late += $d['late_minutes'] ? 1 : 0;
+                $absent += $d['status'] === 'absent' ? 1 : 0;
+            }
+        }
+
+        return ['late' => $late, 'absent' => $absent];
+    }
+
     /** @return Collection<int, array{user: User, summary: array}> */
     public function summaryForAll(CarbonImmutable $month): Collection
     {
