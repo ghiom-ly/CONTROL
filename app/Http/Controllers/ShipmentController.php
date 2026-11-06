@@ -44,7 +44,10 @@ class ShipmentController extends Controller
 
         // سجل تأكيد الطلبيات لنفس الكود (تقرير التأكيد)
         $data['confirmations'] = \App\Models\ConfirmationOrder::with(['store:id,name', 'user:id,name', 'report:id,report_number,status,work_date'])
-            ->where('code', $code)->whereHas('report')->latest('id')->limit(50)->get();
+            ->where('code', $code)->whereHas('report')
+            // الموظف: المعتمد فقط، أو ما سجّله هو
+            ->when(! $full, fn ($q) => $q->where(fn ($w) => $w->where('user_id', $user->id)->orWhereHas('report', fn ($r) => $r->where('status', 'approved'))))
+            ->latest('id')->limit(50)->get();
 
         return view('shipments.show', $data);
     }

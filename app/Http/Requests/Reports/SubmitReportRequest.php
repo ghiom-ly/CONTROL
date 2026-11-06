@@ -9,7 +9,8 @@ class SubmitReportRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('submit', $this->route('report'));
+        // الإرسال لصاحب التقرير فقط — حتى المدير العام لا يرسل مسودة غيره (Gate::before لا يكفي هنا)
+        return $this->route('report')->user_id === $this->user()->id && $this->user()->can('submit', $this->route('report'));
     }
 
     protected function prepareForValidation(): void
@@ -21,7 +22,9 @@ class SubmitReportRequest extends FormRequest
 
     public function rules(): array
     {
-        return ['end_delivery_rate' => [\Illuminate\Validation\Rule::requiredIf(fn () => ! $this->route('report')->is_legacy), 'nullable', 'numeric', 'min:0', 'max:100']];
+        $r = $this->route('report');
+
+        return ['end_delivery_rate' => [\Illuminate\Validation\Rule::requiredIf(fn () => ! $r->is_legacy && ! $r->isConfirmation()), 'nullable', 'numeric', 'min:0', 'max:100']];
     }
 
     public function attributes(): array

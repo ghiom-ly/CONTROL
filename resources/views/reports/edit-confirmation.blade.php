@@ -83,6 +83,12 @@
                 </template>
                 <button type="button" class="btn btn-light btn-sm" x-on:click="attempts.push('')">+ إضافة محاولة</button>
             </div>
+            @php $maxA = \App\Services\Reports\ReportDraftService::maxAttempts(); @endphp
+            <div x-show="attempts.length > {{ $maxA }}" class="mt-3">
+                <p class="text-sm font-semibold text-amber-700">⚠ الحد الأقصى {{ $maxA }} محاولة في الشفت. اذكري سبب التجاوز:</p>
+                <input class="input mt-1" name="attempts_over_limit_reason" maxlength="1000" value="{{ old('attempts_over_limit_reason', $report->attempts_over_limit_reason) }}">
+            </div>
+            @error('attempts_over_limit_reason')<p class="field-error">{{ $message }}</p>@enderror
         </section>
 
         <section class="card p-5">

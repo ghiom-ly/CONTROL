@@ -11,7 +11,7 @@
                     <tbody>
                     @foreach($reports as $r)
                         <tr>
-                            <td class="ltr text-right">{{ $r->report_number }}</td>
+                            <td class="ltr text-right">{{ $r->report_number }} @if($r->isConfirmation())<span class="badge badge-blue">تأكيد طلبيات</span>@endif</td>
                             <td class="font-bold">{{ $r->user->name }} @if($r->is_legacy)<span class="badge badge-orange">تقرير قديم مستورد</span>@endif</td>
                             <td>{{ $r->work_date->format('Y/m/d') }}</td>
                             <td class="text-xs text-slate-500">{{ $r->submitted_at?->diffForHumans() }}</td>

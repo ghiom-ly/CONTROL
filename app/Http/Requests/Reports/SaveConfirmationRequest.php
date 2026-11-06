@@ -24,7 +24,21 @@ class SaveConfirmationRequest extends FormRequest
 
             return $s;
         })->values()->all();
-        $this->merge(['stores' => $stores, 'attempt_times' => array_values(array_filter((array) $this->input('attempt_times', []), fn ($t) => $t !== null && $t !== ''))]);
+        $times = collect((array) $this->input('attempt_times', []))
+            ->map(fn ($t) => $t === null ? null : \App\Support\ArabicNormalizer::digits(trim((string) $t)))
+            ->filter(fn ($t) => $t !== null && $t !== '')->values()->all();
+        $this->merge(['stores' => $stores, 'attempt_times' => $times]);
+    }
+
+    /** نفس قاعدة التقرير العادي: تجاوز الحد الأقصى للمحاولات يتطلب سبباً */
+    public function withValidator($v): void
+    {
+        $v->after(function ($v) {
+            $max = \App\Services\Reports\ReportDraftService::maxAttempts();
+            if (count($this->input('attempt_times', [])) > $max && ! filled($this->input('attempts_over_limit_reason'))) {
+                $v->errors()->add('attempts_over_limit_reason', "الحد الأقصى {$max} محاولة في الشفت — اذكر سبب التجاوز.");
+            }
+        });
     }
 
     public function rules(): array
@@ -42,6 +56,7 @@ class SaveConfirmationRequest extends FormRequest
             'stores.*.cancelled.*.other' => ['nullable', 'string', 'max:120', 'required_if:stores.*.cancelled.*.reason,'.CancelReasons::OTHER],
             'attempt_times' => ['array', 'max:20'],
             'attempt_times.*' => ['date_format:H:i'],
+            'attempts_over_limit_reason' => ['nullable', 'string', 'max:1000'],
             'notes' => ['nullable', 'string', 'max:5000'],
         ];
     }

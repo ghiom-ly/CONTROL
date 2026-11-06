@@ -44,7 +44,7 @@
                     <tbody>
                     @foreach($reports as $r)
                         <tr>
-                            <td class="ltr text-right">{{ $r->report_number }}</td>
+                            <td class="ltr text-right">{{ $r->report_number }} @if($r->isConfirmation())<span class="badge badge-blue">تأكيد طلبيات</span>@endif</td>
                             @if($all)<td class="font-bold">{{ $r->user->name }}</td>@endif
                             <td>{{ $r->work_date->format('Y/m/d') }}</td>
                             <td><x-badge :enum="$r->status"/></td>

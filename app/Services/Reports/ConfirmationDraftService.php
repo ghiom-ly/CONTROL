@@ -85,6 +85,7 @@ class ConfirmationDraftService
             }
             $report->fill([
                 'attempt_times' => $data['attempt_times'] ?? [],
+                'attempts_over_limit_reason' => count($data['attempt_times'] ?? []) > ReportDraftService::maxAttempts() ? ($data['attempts_over_limit_reason'] ?? null) : null,
                 'notes' => $data['notes'] ?? null,
                 'updated_by' => $actor->id,
             ])->save();

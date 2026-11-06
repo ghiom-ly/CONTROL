@@ -128,6 +128,7 @@ class DailyReportController extends Controller
         $approveAfter = $adminEdit || ($correcting && $request->boolean('approve_after'));
         if ($submit) {
             $this->authorize('submit', $report);
+            abort_if($report->user_id !== $actor->id, 403, 'الإرسال لصاحب التقرير فقط.');
         }
         if ($approveAfter) {
             if (! $adminEdit) {

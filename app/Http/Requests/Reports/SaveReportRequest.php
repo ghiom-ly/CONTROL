@@ -81,7 +81,9 @@ class SaveReportRequest extends FormRequest
             'inquiries' => ['nullable', 'string', 'max:5000'],
             'issue_requests' => ['array', 'max:50'],
             'issue_requests.*.key' => ['required', 'string', 'max:40', 'distinct'],
-            'issue_requests.*.store_id' => ['required', 'integer', 'exists:stores,id'],
+            // متجر المشكلة يجب أن يكون من متاجر التقرير نفسه
+            'issue_requests.*.store_id' => ['required', 'integer', 'exists:stores,id',
+                Rule::in(collect($this->input('stores', []))->pluck('store_id')->map(fn ($id) => (int) $id)->all())],
             'issue_requests.*.type' => ['required', Rule::enum(IssueType::class)],
             'issue_requests.*.title' => ['required', 'string', 'max:200'],
             'issue_requests.*.description' => ['required', 'string', 'max:5000'],
@@ -113,6 +115,7 @@ class SaveReportRequest extends FormRequest
 
     public function messages(): array
     {
-        return ['stores.*.store_id.exists' => 'المتجر غير موجود أو مؤرشف.', 'stores.*.store_id.distinct' => 'المتجر مضاف مرتين.'];
+        return ['stores.*.store_id.exists' => 'المتجر غير موجود أو مؤرشف.', 'stores.*.store_id.distinct' => 'المتجر مضاف مرتين.',
+            'issue_requests.*.store_id.in' => 'متجر المشكلة يجب أن يكون من متاجر التقرير.'];
     }
 }

@@ -56,7 +56,7 @@ class ReportApprovalService
             if ($report->isConfirmation()) {
                 $report->fill(['status' => ReportStatus::Approved, 'approved_by' => $actor->id, 'approved_at' => now(),
                     'reviewed_by' => $actor->id, 'reviewed_at' => now(), 'rejection_reason' => null])->save();
-                $report->loadMissing('user')->user?->notify(new ReportReviewedNotification($report));
+                DB::afterCommit(fn () => $report->loadMissing('user')->user?->notify(new ReportReviewedNotification($report)));
                 DB::afterCommit(fn () => \App\Services\Analytics\AnalyticsService::flush());
 
                 return [];
@@ -138,7 +138,7 @@ class ReportApprovalService
             }
 
             if ($notify) {
-                $report->loadMissing('user')->user?->notify(new ReportReviewedNotification($report));   // لا إشعار لموظف محذوف
+                DB::afterCommit(fn () => $report->loadMissing('user')->user?->notify(new ReportReviewedNotification($report)));   // لا إشعار لموظف محذوف
             }
 
             // أرقام التحليلات تتغير بالاعتماد — امسح الكاش بعد نجاح المعاملة
@@ -157,7 +157,7 @@ class ReportApprovalService
                 'status' => ReportStatus::Rejected, 'rejection_reason' => $reason,
                 'reviewed_by' => $actor->id, 'reviewed_at' => now(),
             ])->save();
-            $report->loadMissing('user')->user?->notify(new ReportReviewedNotification($report));   // لا إشعار لموظف محذوف
+            DB::afterCommit(fn () => $report->loadMissing('user')->user?->notify(new ReportReviewedNotification($report)));   // لا إشعار لموظف محذوف
         });
     }
 
