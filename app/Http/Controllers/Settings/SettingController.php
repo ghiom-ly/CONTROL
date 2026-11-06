@@ -48,6 +48,36 @@ class SettingController extends Controller
         return back()->with('success', 'تم حفظ الإعدادات.');
     }
 
+    public function uploadLogo(\Illuminate\Http\Request $request): RedirectResponse
+    {
+        $this->authorize('settings.manage');
+        $request->validate(['logo' => ['required', 'image', 'mimes:png,jpg,jpeg,webp', 'max:2048']], [], ['logo' => 'الشعار']);
+
+        $setting = SystemSetting::where('key', 'company_logo')->firstOrFail();
+        $old = $setting->value;
+        $path = $request->file('logo')->store('branding', \App\Support\Branding::DISK);
+        $setting->update(['value' => $path, 'updated_by' => $request->user()->id]);
+        if ($old && $old !== $path) {
+            \Illuminate\Support\Facades\Storage::disk(\App\Support\Branding::DISK)->delete($old);
+        }
+        AuditLogger::log('logo_updated', 'تحديث شعار الشركة');
+
+        return back()->with('success', 'تم رفع الشعار.');
+    }
+
+    public function deleteLogo(\Illuminate\Http\Request $request): RedirectResponse
+    {
+        $this->authorize('settings.manage');
+        $setting = SystemSetting::where('key', 'company_logo')->firstOrFail();
+        if ($setting->value) {
+            \Illuminate\Support\Facades\Storage::disk(\App\Support\Branding::DISK)->delete($setting->value);
+        }
+        $setting->update(['value' => null, 'updated_by' => $request->user()->id]);
+        AuditLogger::log('logo_deleted', 'حذف شعار الشركة');
+
+        return back()->with('success', 'تم حذف الشعار.');
+    }
+
     /** تعديل قواعد التنبيه: التفعيل والمستوى والمعاملات الموجودة فقط (لا مفاتيح جديدة) */
     public function updateAlertRules(\Illuminate\Http\Request $request): RedirectResponse
     {

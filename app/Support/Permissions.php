@@ -76,7 +76,7 @@ class Permissions
             ],
             Role::VIEWER => [
                 'dashboard.view', 'stores.view', 'reports.view_all', 'shipments.view',
-                'contacts.view', 'issues.view', 'analytics.view',
+                'contacts.view', 'issues.view', 'analytics.view', 'exports.generate',
             ],
         ];
     }

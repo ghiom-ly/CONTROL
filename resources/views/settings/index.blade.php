@@ -3,13 +3,31 @@
     @include('settings._tabs')
     @php $groupLabels = ['general' => 'بيانات الشركة', 'reports' => 'التقارير', 'stores' => 'المتاجر', 'issues' => 'المشكلات', 'imports' => 'الاستيراد', 'attendance' => 'الحضور والانصراف']; @endphp
 
+    @php $brandLogo = \App\Support\Branding::header()['logo_path']; @endphp
+    <div class="card mb-6 flex flex-wrap items-center gap-4 p-5">
+        <div>
+            <h2 class="card-title">شعار الشركة</h2>
+            <p class="hint">يظهر في رأس كل التقارير المستخرجة (PNG أو JPG، حتى 2MB)</p>
+        </div>
+        @if($brandLogo)
+            <img src="data:{{ mime_content_type($brandLogo) }};base64,{{ base64_encode(file_get_contents($brandLogo)) }}" alt="الشعار" class="h-14 rounded border border-slate-200 bg-white p-1">
+            <form method="POST" action="{{ route('settings.logo.destroy') }}">@csrf @method('DELETE')<button class="btn btn-light btn-sm text-red-600">حذف الشعار</button></form>
+        @endif
+        <form method="POST" action="{{ route('settings.logo.store') }}" enctype="multipart/form-data" class="flex items-center gap-2">
+            @csrf
+            <input type="file" name="logo" accept="image/png,image/jpeg,image/webp" required class="text-sm">
+            <button class="btn btn-primary btn-sm">رفع الشعار</button>
+            @error('logo')<p class="field-error">{{ $message }}</p>@enderror
+        </form>
+    </div>
+
     <form method="POST" action="{{ route('settings.update') }}" class="space-y-6">
         @csrf @method('PUT')
         @foreach($groups as $group => $settings)
             <div class="card">
                 <div class="card-header"><h2 class="card-title">{{ $groupLabels[$group] ?? $group }}</h2></div>
                 <div class="grid gap-5 p-5 md:grid-cols-2">
-                    @foreach($settings as $s)
+                    @foreach($settings->where('key', '!=', 'company_logo') as $s)
                         @php $name = "settings[{$s->key}]"; $val = old("settings.{$s->key}", $s->value); @endphp
                         <div>
                             @if($s->type === 'boolean')

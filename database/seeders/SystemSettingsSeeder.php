@@ -14,6 +14,7 @@ class SystemSettingsSeeder extends Seeder
             ['company_name', 'شركة النورس', 'string', 'general', 'اسم الشركة', 'يظهر في التقارير المستخرجة'],
             ['company_phone', null, 'string', 'general', 'هاتف الشركة', null],
             ['company_address', null, 'string', 'general', 'عنوان الشركة', null],
+            ['company_logo', null, 'string', 'general', 'شعار الشركة', 'يظهر في رأس التقارير المستخرجة'],
             ['report_submission_deadline', '18:00', 'time', 'reports', 'آخر موعد لتقديم التقرير اليومي', 'بعده يعتبر التقرير متأخراً'],
             ['report_review_sla_hours', '24', 'integer', 'reports', 'مهلة اعتماد التقرير (ساعات)', 'بعدها يظهر تنبيه تأخر الاعتماد'],
             ['employee_can_edit_rejected', '1', 'boolean', 'reports', 'السماح للموظف بتعديل التقرير المرفوض وإعادة تقديمه', null],
