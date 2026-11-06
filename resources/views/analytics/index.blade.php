@@ -49,16 +49,32 @@
         </div>
     </section>
 
-    <section class="card mb-5" x-data="{ sort: 'improvement', dir: 1 }">
-        <div class="card-header"><h2 class="card-title">أي الموظفين أداؤهم أقل؟</h2><span class="text-xs text-slate-500">مرتب بالتحسن تصاعدياً (الأضعف أولاً)</span></div>
+    {{-- الترتيب بالنقر على رأس العمود: الصفوف تحمل قيمها في data-* (الفارغ آخراً) --}}
+    <section class="card mb-5" x-data="{
+        sort: 'improvement', dir: 1,
+        setSort(key) {
+            this.dir = this.sort === key ? -this.dir : 1; this.sort = key;
+            const body = this.$refs.rows, d = this.dir;
+            [...body.rows].sort((a, b) => {
+                const x = a.dataset[key], y = b.dataset[key];
+                if (x === '' && y === '') return 0; if (x === '') return 1; if (y === '') return -1;
+                return isNaN(x) ? x.localeCompare(y, 'ar') * d : (parseFloat(x) - parseFloat(y)) * d;
+            }).forEach(r => body.appendChild(r));
+        } }">
+        <div class="card-header"><h2 class="card-title">أي الموظفين أداؤهم أقل؟</h2><span class="text-xs text-slate-500">اضغط على عنوان العمود للترتيب — الافتراضي: التحسن تصاعدياً (الأضعف أولاً)</span></div>
         @if($employees->isEmpty())
             <p class="p-5 text-slate-500">لا توجد بيانات</p>
         @else
             <div class="table-wrap"><table class="table">
-                <thead><tr><th>الموظف</th><th>التقارير المعتمدة</th><th>الطلبيات</th><th>متوسط التحسن</th><th>رد الزبون</th><th>رد المندوب</th><th>تأخير</th><th>غياب</th></tr></thead>
-                <tbody>
+                <thead><tr>
+                    @foreach(['name' => 'الموظف', 'reports' => 'التقارير المعتمدة', 'orders' => 'الطلبيات', 'improvement' => 'متوسط التحسن', 'customer' => 'رد الزبون', 'courier' => 'رد المندوب', 'late' => 'تأخير', 'absent' => 'غياب'] as $k => $l)
+                        <th class="cursor-pointer select-none" x-on:click="setSort('{{ $k }}')">{{ $l }} <span x-show="sort === '{{ $k }}'" x-text="dir > 0 ? '▲' : '▼'"></span></th>
+                    @endforeach
+                </tr></thead>
+                <tbody x-ref="rows">
                 @foreach($employees as $e)
-                    <tr>
+                    <tr data-name="{{ $e['user']->name }}" data-reports="{{ $e['reports'] }}" data-orders="{{ $e['orders'] }}" data-improvement="{{ $e['improvement'] }}"
+                        data-customer="{{ $e['customer_rate'] }}" data-courier="{{ $e['courier_rate'] }}" data-late="{{ $e['late'] }}" data-absent="{{ $e['absent'] }}">
                         <td class="font-bold">{{ $e['user']->name }}</td>
                         <td class="tabular-nums">{{ $e['reports'] }}</td>
                         <td class="tabular-nums">{{ $e['orders'] }}</td>

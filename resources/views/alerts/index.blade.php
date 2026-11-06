@@ -1,7 +1,7 @@
 <x-layouts.app title="التنبيهات">
     <x-page-header title="التنبيهات التلقائية" subtitle="تُفحص القواعد كل ساعة — التنبيه يُغلق تلقائياً عند زوال سببه">
         <x-slot:actions>
-            <a href="{{ route('alerts.whatsapp') }}" target="_blank" rel="noopener noreferrer" class="btn btn-accent"><x-icon name="phone" class="size-4"/> ملخص واتساب</a>
+            <a href="{{ route('alerts.whatsapp') }}" class="btn btn-accent"><x-icon name="phone" class="size-4"/> ملخص واتساب</a>
         </x-slot:actions>
     </x-page-header>
 

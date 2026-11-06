@@ -68,11 +68,9 @@ class AlertEngine
             });
         }
 
+        // إشعار واحد ملخص لكل تشغيل — لا سيل إشعارات
         if ($new) {
-            $recipients = self::recipients();
-            foreach ($new as $alert) {
-                Notification::send($recipients, new AlertNotification($alert));
-            }
+            Notification::send(self::recipients(), new AlertNotification($new));
         }
 
         return ['opened' => $opened, 'closed' => $closed];

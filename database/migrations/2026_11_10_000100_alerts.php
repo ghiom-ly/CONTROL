@@ -27,6 +27,9 @@ return new class extends Migration
             $table->enum('close_reason', ['auto', 'manual'])->nullable();
             $table->timestamps();
             $table->index(['rule_key', 'status']);
+            // تنبيه مفتوح واحد فقط لكل (قاعدة، بصمة) — المغلقة NULL فلا تتعارض
+            $table->string('open_key', 300)->nullable()
+                ->storedAs("IF(status = 'open', CONCAT(rule_key, ':', fingerprint), NULL)")->unique();
         });
     }
 

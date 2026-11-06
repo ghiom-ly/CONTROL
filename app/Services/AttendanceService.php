@@ -58,6 +58,41 @@ class AttendanceService
         return ['days' => $days, 'summary' => $this->summarize($days, $reports)];
     }
 
+    /**
+     * التأخير والغياب لعدة موظفين ضمن فترة — استعلامان فقط (تقارير + إجازات) ثم نفس منطق day().
+     *
+     * @return array<int, array{late: int, absent: int}>
+     */
+    public function rangeForAll(Collection $users, CarbonImmutable $from, CarbonImmutable $to): array
+    {
+        [$a, $b] = [$from->toDateString(), $to->toDateString()];
+        $today = CarbonImmutable::today()->toDateString();
+        $lateAfter = (string) SystemSetting::get('attendance_late_after', '10:00');
+        $grace = (int) SystemSetting::get('attendance_grace_minutes', 0);
+        $startSetting = (string) SystemSetting::get('attendance_start_date', $a);
+
+        $reports = DailyReport::whereIn('user_id', $users->pluck('id'))->whereBetween('work_date', [$a, $b])
+            ->get(['id', 'user_id', 'work_date', 'status', 'source', 'is_legacy', 'shift_started_at', 'first_submitted_at'])
+            ->groupBy('user_id');
+        $leaves = Leave::whereIn('user_id', $users->pluck('id'))->where('from_date', '<=', $b)->where('to_date', '>=', $a)->get()->groupBy('user_id');
+
+        $out = [];
+        foreach ($users as $u) {
+            $countFrom = max($startSetting, ($u->hired_at ?? $u->created_at)?->toDateString() ?? '0000-00-00');
+            $byDay = ($reports[$u->id] ?? collect())->groupBy(fn ($r) => $r->work_date->toDateString());
+            $late = $absent = 0;
+            for ($d = $from->startOfDay(); $d->toDateString() <= $b; $d = $d->addDay()) {
+                $date = $d->toDateString();
+                $day = $this->day($date, $byDay[$date] ?? collect(), $leaves[$u->id] ?? collect(), $today, $countFrom, $lateAfter, $grace);
+                $late += $day['late_minutes'] ? 1 : 0;
+                $absent += $day['status'] === 'absent' ? 1 : 0;
+            }
+            $out[$u->id] = ['late' => $late, 'absent' => $absent];
+        }
+
+        return $out;
+    }
+
     /** التأخير والغياب ضمن فترة (قد تمتد على أكثر من شهر) — مبنية على month() */
     public function range(User $user, CarbonImmutable $from, CarbonImmutable $to): array
     {

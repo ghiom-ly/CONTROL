@@ -114,11 +114,10 @@ class AlertEngineTest extends TestCase
     {
         $this->lateIssue();
         $this->runEngine();
-        $res = $this->actingAs($this->admin)->get('/alerts/whatsapp');
-        $res->assertRedirect();
-        $url = $res->headers->get('Location');
-        $this->assertStringStartsWith('https://wa.me/?text=', $url);
-        $this->assertStringContainsString(rawurlencode('مشكلة متأخرة'), $url);
+        $this->actingAs($this->admin)->get('/alerts/whatsapp')->assertOk()
+            ->assertSee('مشكلة متأخرة')
+            ->assertSee('https://wa.me/?text=', false)
+            ->assertSee(rawurlencode('مشكلة متأخرة'), false);
     }
 
     public function test_command_scheduled_hourly(): void

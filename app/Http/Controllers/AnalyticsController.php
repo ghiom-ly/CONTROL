@@ -14,15 +14,19 @@ class AnalyticsController extends Controller
         abort_unless($request->user()->hasPermission('analytics.view'), 403);
         $p = ComparePeriod::fromRequest($request);
 
+        $declining = $analytics->decliningStores($p);
+        $employees = $analytics->employees($p);
+        $issues = $analytics->issueStats($p);
+
         return view('analytics.index', [
             'p' => $p,
             'compare' => $analytics->compare($p),
-            'declining' => $analytics->decliningStores($p),
+            'declining' => $declining,
             'rateDrops' => $analytics->rateDropStores($p),
             'stopped' => $analytics->stoppedStores($p),
-            'employees' => $analytics->employees($p),
-            'issues' => $analytics->issueStats($p),
-            'charts' => $analytics->charts($p),
+            'employees' => $employees,
+            'issues' => $issues,
+            'charts' => $analytics->charts($p, $declining, $employees, $issues),
         ]);
     }
 }

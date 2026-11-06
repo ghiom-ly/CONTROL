@@ -14,6 +14,16 @@ class ComparePeriod
 {
     public const PRESETS = ['day' => 'يوم', 'week' => 'أسبوع', 'month' => 'شهر', 'custom' => 'فترة مخصصة'];
 
+    public const MAX_DAYS = 366;
+
+    /** فترة بطول أقصى MAX_DAYS تنتهي في to (للوحة التحكم التي تقبل فترات أطول) */
+    public static function clamped(CarbonImmutable $from, CarbonImmutable $to, string $preset = 'custom'): self
+    {
+        $min = $to->startOfDay()->subDays(self::MAX_DAYS - 1);
+
+        return self::between($from->lt($min) ? $min : $from, $to, $preset);
+    }
+
     public readonly CarbonImmutable $prevFrom;
 
     public readonly CarbonImmutable $prevTo;
@@ -53,7 +63,14 @@ class ComparePeriod
             'to' => ['required', 'date_format:Y-m-d', 'after_or_equal:from'],
         ], ['to.after_or_equal' => 'تاريخ النهاية يجب أن يكون بعد تاريخ البداية.'])->validate();
 
-        return self::between(CarbonImmutable::parse($data['from']), CarbonImmutable::parse($data['to']), 'custom');
+        $from = CarbonImmutable::parse($data['from']);
+        $to = CarbonImmutable::parse($data['to']);
+        // حماية الخادم: الفترة المخصصة سنة كحد أقصى
+        if ($from->diffInDays($to) + 1 > self::MAX_DAYS) {
+            throw ValidationException::withMessages(['to' => 'أقصى طول للفترة '.self::MAX_DAYS.' يوماً.']);
+        }
+
+        return self::between($from, $to, 'custom');
     }
 
     public function days(): int

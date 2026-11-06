@@ -14,4 +14,4 @@ Artisan::command('inspire', function () {
 \Illuminate\Support\Facades\Schedule::command('nours:attendance-alerts')->everyFifteenMinutes();
 
 // التنبيهات التلقائية كل ساعة (المرحلة 7)
-\Illuminate\Support\Facades\Schedule::command('nours:alerts')->hourly();
+\Illuminate\Support\Facades\Schedule::command('nours:alerts')->hourly()->withoutOverlapping();

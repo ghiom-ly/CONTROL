@@ -45,10 +45,10 @@ class AlertController extends Controller
     }
 
     /** ملخص كل التنبيهات المفتوحة كرسالة واتساب واحدة (المالك يختار المحادثة) */
-    public function whatsapp(Request $request): RedirectResponse
+    public function whatsapp(Request $request): View
     {
         abort_unless($request->user()->hasPermission('analytics.view'), 403);
-        $open = Alert::where('status', 'open')->get()->groupBy(fn (Alert $a) => $a->level->value);
+        $open = Alert::where('status', 'open')->orderByDesc('last_seen_at')->get()->groupBy(fn (Alert $a) => $a->level->value);
 
         $lines = ['*تنبيهات NOURS — '.now()->format('Y/m/d H:i').'*'];
         foreach (['critical', 'important', 'warning', 'info'] as $lvl) {
@@ -57,16 +57,23 @@ class AlertController extends Controller
             }
             $lines[] = '';
             $lines[] = '*'.AlertLevel::from($lvl)->label().' ('.$open[$lvl]->count().')*';
-            foreach ($open[$lvl] as $a) {
+            foreach ($open[$lvl]->take(self::WA_PER_LEVEL) as $a) {
                 $lines[] = '• '.$a->title;
+            }
+            if ($open[$lvl]->count() > self::WA_PER_LEVEL) {
+                $lines[] = 'و '.($open[$lvl]->count() - self::WA_PER_LEVEL).' أخرى';
             }
         }
         if ($open->isEmpty()) {
             $lines[] = 'لا توجد تنبيهات مفتوحة ✅';
         }
+        $text = implode("\n", $lines);
 
-        return redirect()->away('https://wa.me/?text='.rawurlencode(implode("\n", $lines)));
+        return view('alerts.whatsapp', ['text' => $text, 'waUrl' => 'https://wa.me/?text='.rawurlencode($text)]);
     }
+
+    /** حد السطور لكل مستوى حتى يبقى الرابط والرسالة بحجم معقول */
+    private const WA_PER_LEVEL = 20;
 
     private static function canClose(Request $request): bool
     {

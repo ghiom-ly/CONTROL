@@ -33,7 +33,7 @@ class AnalyticsService
         'delivered_after_followup' => ['سُلّمت بعد المتابعة', 'count', false],
         'customer_no_answer' => ['لم يرد الزبون', 'count', true],
         'courier_no_answer' => ['لم يرد المندوب', 'count', true],
-        'open_codes' => ['الأكواد المفتوحة', 'count', true],
+        'open_codes' => ['الأكواد المفتوحة حالياً (بلا مقارنة)', 'count', true],
         'issues_new' => ['مشكلات جديدة', 'count', true],
         'issues_resolved' => ['مشكلات محلولة', 'count', false],
     ];
@@ -46,7 +46,8 @@ class AnalyticsService
         return collect(self::LABELS)->map(function ($meta, $key) use ($cur, $prev) {
             [$label, $unit, $lower] = $meta;
             $c = $cur[$key];
-            $pv = $prev[$key];
+            // لا يوجد سجل تاريخي لحالة الكود، فلا قيمة سابقة صادقة له
+            $pv = $key === 'open_codes' ? null : $prev[$key];
             $diff = $c !== null && $pv !== null ? round($c - $pv, 2) : null;
 
             return [
@@ -88,7 +89,8 @@ class AnalyticsService
     }
 
     /** بيانات الرسوم الستة — مفاتيح ثابتة، السلسلة الفارغة [] */
-    public function charts(ComparePeriod $p): array
+    /** النتائج المحسوبة مسبقاً (من صفحة التحليلات) تُمرَّر حتى لا تُعاد الاستعلامات */
+    public function charts(ComparePeriod $p, ?Collection $declining = null, ?Collection $employees = null, ?array $issueStats = null): array
     {
         $days = $p->days();
         $dates = collect(range(0, $days - 1))->map(fn ($i) => $p->from->addDays($i)->toDateString());
@@ -106,9 +108,9 @@ class AnalyticsService
         $results = DB::table('shipment_followups')->where('is_official', true)
             ->whereBetween('followup_at', [$p->from->startOfDay(), $p->to->endOfDay()])
             ->selectRaw('result, COUNT(*) n')->groupBy('result')->orderByDesc('n')->pluck('n', 'result');
-        $declining = $this->decliningStores($p);
-        $employees = $this->employees($p)->filter(fn ($e) => $e['reports'] > 0)->values();
-        $issues = $this->issueStats($p)['by_type'];
+        $declining ??= $this->decliningStores($p);
+        $employees = ($employees ?? $this->employees($p))->filter(fn ($e) => $e['reports'] > 0)->values();
+        $issues = ($issueStats ?? $this->issueStats($p))['by_type'];
 
         return [
             'rate_trend' => [
@@ -199,8 +201,10 @@ class AnalyticsService
         $contacts = $this->contacts->perEmployee(\Illuminate\Support\Carbon::instance($p->from), \Illuminate\Support\Carbon::instance($p->to))
             ->keyBy(fn ($r) => $r['user']->id);
 
-        return $users->map(function (User $u) use ($p, $reports, $orders, $contacts) {
-            $att = $this->attendance->range($u, $p->from, $p->to);
+        $attendance = $this->attendance->rangeForAll($users, $p->from, $p->to);
+
+        return $users->map(function (User $u) use ($reports, $orders, $contacts, $attendance) {
+            $att = $attendance[$u->id] ?? ['late' => 0, 'absent' => 0];
             $imp = $reports[$u->id]->imp ?? null;
 
             return [
