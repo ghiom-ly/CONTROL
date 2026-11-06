@@ -10,7 +10,6 @@ use Illuminate\View\View;
 class ModulePlaceholderController extends Controller
 {
     public const MODULES = [
-        'exports' => ['التقارير الإدارية', 6],
     ];
 
     public function __invoke(string $module): View

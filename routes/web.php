@@ -47,7 +47,9 @@ Route::middleware(['auth', 'active'])->group(function () {
         // ---- البحث بالكود (المرحلة 6)
         Route::get('/shipments', [\App\Http\Controllers\ShipmentController::class, 'index'])->name('shipments.index');
         Route::get('/shipments/{code}', [\App\Http\Controllers\ShipmentController::class, 'show'])->where('code', '[^/]+')->name('shipments.show');
-        Route::get('/analytics', [\App\Http\Controllers\AnalyticsController::class, 'index'])->name('analytics.index');
+        Route::get('/reports-center', [\App\Http\Controllers\ReportCenterController::class, 'index'])->name('reports-center.index');
+        Route::get('/reports-center/{key}/{format}', [\App\Http\Controllers\ReportCenterController::class, 'export'])->name('reports-center.export');
+        Route::get('/analytics',[\App\Http\Controllers\AnalyticsController::class, 'index'])->name('analytics.index');
         Route::get('/alerts', [\App\Http\Controllers\AlertController::class, 'index'])->name('alerts.index');
         Route::get('/alerts/whatsapp', [\App\Http\Controllers\AlertController::class, 'whatsapp'])->name('alerts.whatsapp');
         Route::patch('/alerts/{alert}/close', [\App\Http\Controllers\AlertController::class, 'close'])->whereNumber('alert')->name('alerts.close');

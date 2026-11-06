@@ -19,7 +19,7 @@
         ['الحضور والانصراف', 'clock', 'attendance.index', [], 'users.view', 'attendance.*', null],
         ['التحليلات', 'chart', 'analytics.index', [], 'analytics.view', 'analytics.*', null],
         ['التنبيهات'.($openAlerts ? " ({$openAlerts})" : ''), 'alert', 'alerts.index', [], 'analytics.view', 'alerts.*', null],
-        ['التقارير الإدارية', 'document-chart', null, ['exports'], 'exports.generate', null, 6],
+        ['التقارير الإدارية', 'document-chart', 'reports-center.index', [], 'exports.generate', 'reports-center.*', null],
         ['سجل العمليات', 'history', 'audit.index', [], 'audit.view', 'audit.*', null],
         ['الإعدادات', 'cog', 'settings.index', [], 'settings.manage', 'settings.*', null],
     ];
