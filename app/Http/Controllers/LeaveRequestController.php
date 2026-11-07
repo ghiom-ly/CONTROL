@@ -176,7 +176,7 @@ class LeaveRequestController extends Controller
             .($r->decision_note ? "\n".($r->status === 'approved' ? 'ملاحظة: ' : 'السبب: ').$r->decision_note : '')
             ."\n— ".SystemSetting::get('company_name', 'شركة النورس');
 
-        return 'https://wa.me/'.$phone.'?text='.rawurlencode($body);
+        return \App\Support\WhatsAppText::url($phone, $body);
     }
 
     /** رسالة واتساب جاهزة من الموظف للمدير */
@@ -187,6 +187,6 @@ class LeaveRequestController extends Controller
         }
         $body = 'السلام عليكم، قدّمت طلب '.$r->summary().' في المنظومة.'."\nالسبب: ".$r->reason."\n".route('leave-requests.index');
 
-        return 'https://wa.me/'.$phone.'?text='.rawurlencode($body);
+        return \App\Support\WhatsAppText::url($phone, $body);
     }
 }

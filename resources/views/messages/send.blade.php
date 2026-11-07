@@ -33,7 +33,8 @@
         </form>
 
         <form method="POST" action="{{ route('stores.message.send', $store) }}" target="_blank" class="card p-5 space-y-3"
-              x-data="{ body: @js(old('body', $rendered['text'])), copied: false }" data-no-loading>
+              x-data="{ body: @js(old('body', $rendered['text'])), copied: false, pasteNote: false }" data-no-loading
+              x-on:submit="if (encodeURIComponent(body).length > {{ \App\Support\WhatsAppText::MAX_ENCODED }}) { navigator.clipboard?.writeText(body); pasteNote = true }">
             @csrf
             <input type="hidden" name="template_id" value="{{ $template->id }}">
             <input type="hidden" name="period" value="{{ $period }}">
@@ -44,7 +45,8 @@
             @if($template->type === 'open_codes' && ! $codes)<p class="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">لا توجد أكواد مفتوحة لهذا المتجر.</p>@endif
             @if($template->type === 'issue' && ! $issue)<p class="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">لا توجد مشكلات مفتوحة على هذا المتجر.</p>@endif
             @if($rendered['missing'])<p class="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">متغيرات بلا قيمة: {{ '{'.implode('}، {', $rendered['missing']).'}' }}</p>@endif
-            <p x-show="body.length > {{ \App\Http\Controllers\StoreMessageController::LONG }}" class="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">الرسالة طويلة — قد لا يفتحها واتساب كاملة؛ استعمل «نسخ النص» إن لزم.</p>
+            <p x-show="encodeURIComponent(body).length > {{ \App\Support\WhatsAppText::MAX_ENCODED }}" class="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">رسالة طويلة: عند الإرسال تُنسخ تلقائياً وتُفتح محادثة المتجر فارغة — اضغط مطولاً في خانة الكتابة واختر «لصق» ثم أرسل.</p>
+            <p x-show="pasteNote" x-cloak class="rounded-lg bg-green-50 p-3 text-sm font-bold text-green-800">✓ نُسخت الرسالة — الصقها في محادثة واتساب ثم أرسل.</p>
 
             <label class="label">نص الرسالة (يمكن تعديله قبل الإرسال)</label>
             <textarea name="body" rows="12" class="input leading-7" x-model="body" maxlength="4000">{{ old('body', $rendered['text']) }}</textarea>

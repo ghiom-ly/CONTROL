@@ -56,7 +56,7 @@ class StoreReportShareController extends Controller
             'meta' => ['from' => $from, 'to' => $to, 'url' => $url],
         ]);
 
-        return redirect()->away('https://wa.me/'.$phone.'?text='.rawurlencode($body));
+        return redirect()->away(\App\Support\WhatsAppText::url($phone, $body));
     }
 
     public function public(Request $request, int $store, PdfRenderer $pdf): Response

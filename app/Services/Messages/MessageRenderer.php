@@ -17,6 +17,6 @@ class MessageRenderer
             return $m[0];
         }, $body);
 
-        return ['text' => $text, 'missing' => array_values(array_unique($missing))];
+        return ['text' => \App\Support\WhatsAppText::clean($text), 'missing' => array_values(array_unique($missing))];
     }
 }

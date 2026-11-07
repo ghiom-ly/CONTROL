@@ -45,16 +45,18 @@
     @if($rows !== null)
         <div class="mt-5 space-y-3">
             <p class="text-sm text-slate-600">{{ $rows->count() }} متجر — {{ $rows->whereNull('skipped')->where('phone', '!=', null)->count() }} جاهزة للإرسال</p>
+            <p class="hint">الرسائل الطويلة (أكثر من نحو {{ \App\Support\WhatsAppText::MAX_CHARS }} حرف) تُنسخ تلقائياً عند الضغط وتُفتح محادثة المتجر فارغة — اضغط مطولاً في خانة الكتابة واختر «لصق» ثم أرسل.</p>
             @foreach($rows as $r)
-                <div class="card p-4" x-data="{ sent: false }">
+                <div class="card p-4" x-data="{ sent: false, pasted: false }">
                     <div class="flex flex-wrap items-center gap-2">
                         <b>{{ $r['store']->name }}</b>
                         <span class="ltr text-xs text-slate-500">{{ $r['store']->phone ?? '—' }}</span>
                         @if($r['skipped'])<span class="badge badge-gray">{{ $r['skipped'] }}</span>@elseif(! $r['phone'])<span class="badge badge-red">رقم غير صالح لواتساب</span>@endif
                         <span x-show="sent" class="badge badge-green">فُتح للإرسال ✓</span>
+                        <span x-show="pasted" x-cloak class="badge badge-yellow">نُسخت — الصقها في المحادثة</span>
                     </div>
                     @unless($r['skipped'])
-                        <form method="POST" action="{{ route('stores.message.send', $r['store']) }}" target="_blank" class="mt-2 space-y-2" x-on:submit="sent = true" data-no-loading>
+                        <form method="POST" action="{{ route('stores.message.send', $r['store']) }}" target="_blank" class="mt-2 space-y-2" x-on:submit="sent = true; const t = $el.querySelector('textarea').value; if (encodeURIComponent(t).length > {{ \App\Support\WhatsAppText::MAX_ENCODED }}) { navigator.clipboard?.writeText(t); pasted = true }" data-no-loading>
                             @csrf
                             <input type="hidden" name="template_id" value="{{ $template->id }}">
                             <input type="hidden" name="period" value="{{ $period }}">

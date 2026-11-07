@@ -69,7 +69,7 @@ class AlertController extends Controller
         }
         $text = implode("\n", $lines);
 
-        return view('alerts.whatsapp', ['text' => $text, 'waUrl' => 'https://wa.me/?text='.rawurlencode($text)]);
+        return view('alerts.whatsapp', ['text' => $text, 'waUrl' => \App\Support\WhatsAppText::url(null, $text)]);
     }
 
     /** حد السطور لكل مستوى حتى يبقى الرابط والرسالة بحجم معقول */

@@ -57,6 +57,7 @@ class StoreMessageController extends Controller
             'mark_forwarded' => ['nullable', 'boolean'],
         ], [], ['body' => 'نص الرسالة']);
 
+        $data['body'] = \App\Support\WhatsAppText::clean($data['body']);
         $template = MessageTemplate::find($data['template_id']);
         if (! $template || ! $template->isApproved()) {
             throw ValidationException::withMessages(['template_id' => 'القالب غير معتمد — لا يمكن الإرسال به.']);
@@ -93,6 +94,7 @@ class StoreMessageController extends Controller
             }
         });
 
-        return redirect()->away('https://wa.me/'.$phone.'?text='.rawurlencode($data['body']));
+        // رسالة طويلة ⇒ نُسخت في المتصفح، والمحادثة تُفتح بلا نص (واتساب يرفض الروابط الطويلة)
+        return redirect()->away(\App\Support\WhatsAppText::url($phone, $data['body']));
     }
 }
