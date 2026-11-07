@@ -21,7 +21,7 @@ class IssueResolutionDelay implements AlertRule
 
         return Issue::with('store:id,name')->whereNotIn('status', ['resolved', 'closed'])
             ->where(fn ($q) => $q->where('reported_at', '<', $now->subHours($hours))->orWhere('due_at', '<', $now))
-            ->limit(500)->get()
+            ->orderBy('id')->limit(\App\Alerts\AlertEngine::RULE_LIMIT)->get()
             ->map(fn (Issue $i) => new Finding("issue:{$i->id}", "تأخر حل المشكلة {$i->issue_number}: {$i->title}",
                 'المتجر: '.($i->store?->name ?? '—').' — منذ '.$i->reported_at->diffForHumans($now, true), 'issue', $i->id, $i->issue_number))
             ->all();

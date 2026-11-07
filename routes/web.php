@@ -62,6 +62,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/shipments', [\App\Http\Controllers\ShipmentController::class, 'index'])->name('shipments.index');
         Route::get('/shipments/{code}', [\App\Http\Controllers\ShipmentController::class, 'show'])->where('code', '[^/]+')->name('shipments.show');
         Route::post('/stores/{store}/report-share', [\App\Http\Controllers\StoreReportShareController::class, 'share'])->whereNumber('store')->name('stores.report.share');
+        Route::post('/reports-center/store-share', [\App\Http\Controllers\StoreReportShareController::class, 'shareByCode'])->name('reports-center.store-share');
         Route::get('/reports-center',[\App\Http\Controllers\ReportCenterController::class, 'index'])->name('reports-center.index');
         Route::get('/reports-center/{key}/{format}', [\App\Http\Controllers\ReportCenterController::class, 'export'])->name('reports-center.export');
         Route::get('/analytics',[\App\Http\Controllers\AnalyticsController::class, 'index'])->name('analytics.index');

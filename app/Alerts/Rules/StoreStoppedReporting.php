@@ -8,7 +8,7 @@ use App\Models\Store;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
-/** متجر نشط ظهر في آخر 30 يوماً ولم يظهر منذ days أيام */
+/** متجر نشط ظهر في آخر 90 يوماً ولم يظهر منذ days أيام */
 class StoreStoppedReporting implements AlertRule
 {
     public function key(): string
@@ -19,7 +19,7 @@ class StoreStoppedReporting implements AlertRule
     public function evaluate(array $params, CarbonImmutable $now): array
     {
         $days = (int) ($params['days'] ?? 3);
-        $rows = DB::table('store_daily_metrics')->where('metric_date', '>=', $now->subDays(30)->toDateString())
+        $rows = DB::table('store_daily_metrics')->where('metric_date', '>=', $now->subDays(90)->toDateString())
             ->where('shipments_count', '>', 0)->selectRaw('store_id, MAX(metric_date) d')->groupBy('store_id')
             ->havingRaw('MAX(metric_date) < ?', [$now->subDays($days)->toDateString()])->get();
         $stores = Store::whereIn('id', $rows->pluck('store_id'))->where('status', 'active')->pluck('name', 'id');

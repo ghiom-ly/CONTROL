@@ -17,6 +17,9 @@ use Illuminate\Support\Facades\Notification;
 class AlertEngine
 {
     /** key ⇒ صنف القاعدة */
+    /** حد نتائج القاعدة الواحدة (القواعد تطلب بالترتيب حتى هذا الحد) */
+    public const RULE_LIMIT = 500;
+
     public const RULES = [
         'shipments_below_average' => Rules\ShipmentsBelowAverage::class,
         'store_stopped_reporting' => Rules\StoreStoppedReporting::class,
@@ -46,14 +49,30 @@ class AlertEngine
                 continue;
             }
 
-            $findings = collect(app($class)->evaluate($rule->parameters ?? [], $now))->keyBy('fingerprint');
+            // قاعدة تتعطل لا توقف بقية القواعد ولا تُغلق تنبيهاتها
+            try {
+                $findings = collect(app($class)->evaluate($rule->parameters ?? [], $now))->keyBy('fingerprint');
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error("Alert rule {$rule->key} failed: ".$e->getMessage());
+
+                continue;
+            }
+            // نتيجة وصلت للحد الأقصى ⇒ قد تكون ناقصة، فلا إغلاق تلقائي في هذا التشغيل
+            $capped = $findings->count() >= self::RULE_LIMIT;
             $mutedToday = Alert::where('rule_key', $rule->key)->where('close_reason', 'manual')
                 ->where('closed_at', '>=', $now->startOfDay())->pluck('fingerprint')->flip();
 
-            DB::transaction(function () use ($findings, $open, $mutedToday, $rule, $now, &$opened, &$closed, &$new) {
+            DB::transaction(function () use ($findings, $open, $mutedToday, $rule, $now, $capped, &$opened, &$closed, &$new) {
+                // تحديث «آخر ظهور» دفعة واحدة؛ والعنوان/التفاصيل فقط إن تغيّرت
+                $seen = $open->toBase()->only($findings->keys()->all());
+                if ($seen->isNotEmpty()) {
+                    Alert::whereIn('id', $seen->pluck('id'))->update(['last_seen_at' => $now]);
+                }
                 foreach ($findings as $fp => $f) {
                     if ($open->has($fp)) {
-                        $open[$fp]->update(['last_seen_at' => $now, 'title' => $f->title, 'details' => $f->details]);
+                        if ($open[$fp]->title !== $f->title || $open[$fp]->details !== $f->details) {
+                            $open[$fp]->update(['title' => $f->title, 'details' => $f->details]);
+                        }
                     } elseif (! $mutedToday->has($fp)) {
                         $new[] = Alert::create([
                             'rule_key' => $rule->key, 'level' => $rule->level, 'title' => $f->title, 'details' => $f->details,
@@ -64,7 +83,9 @@ class AlertEngine
                     }
                 }
                 // toBase(): except في مجموعة Eloquent يحذف بالمعرّف لا بمفتاح المصفوفة
-                $closed += $this->close($open->toBase()->except($findings->keys()->all())->pluck('id')->all(), $now);
+                if (! $capped) {
+                    $closed += $this->close($open->toBase()->except($findings->keys()->all())->pluck('id')->all(), $now);
+                }
             });
         }
 

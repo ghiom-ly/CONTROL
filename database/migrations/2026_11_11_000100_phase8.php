@@ -25,5 +25,11 @@ return new class extends Migration
     public function down(): void
     {
         DB::table('system_settings')->where('key', 'company_logo')->delete();
+        $viewer = DB::table('roles')->where('name', 'viewer')->value('id');
+        $perm = DB::table('permissions')->where('name', 'exports.generate')->value('id');
+        if ($viewer && $perm) {
+            DB::table('permission_role')->where(['role_id' => $viewer, 'permission_id' => $perm])->delete();
+        }
+        Cache::forget('system_settings.all');
     }
 };

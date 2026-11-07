@@ -15,3 +15,6 @@ Artisan::command('inspire', function () {
 
 // التنبيهات التلقائية كل ساعة (المرحلة 7)
 \Illuminate\Support\Facades\Schedule::command('nours:alerts')->hourly()->withoutOverlapping();
+
+// تنظيف يومي للتنبيهات المغلقة القديمة والكاش المنتهي
+\Illuminate\Support\Facades\Schedule::command('nours:cleanup')->dailyAt('03:30');

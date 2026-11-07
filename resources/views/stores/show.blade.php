@@ -61,20 +61,26 @@
     @endcan
 
     @if(auth()->user()->hasPermission('exports.generate') || auth()->user()->hasPermission('messages.send'))
-        <div class="card mt-5 p-5 text-sm" x-data="{ preset: 'month' }">
+        <div class="card mt-5 p-5 text-sm" x-data="{ preset: 'month', from: '', to: '' }">
             <h3 class="card-title mb-3">تقرير المتجر لصاحبه</h3>
             <form method="POST" action="{{ route('stores.report.share', $store) }}" target="_blank" class="flex flex-wrap items-end gap-2">
                 @csrf
                 <div><label class="label">الفترة</label>
                     <select name="period" x-model="preset" class="input !w-32"><option value="week">أسبوع</option><option value="month">شهر</option><option value="custom">مخصصة</option></select></div>
-                <template x-if="preset === 'custom'"><span class="flex gap-1"><input type="date" name="from" class="input !w-36" required><input type="date" name="to" class="input !w-36" required></span></template>
+                <template x-if="preset === 'custom'"><span class="flex gap-1"><input type="date" name="from" x-model="from" class="input !w-36" required><input type="date" name="to" x-model="to" class="input !w-36" required></span></template>
                 @if(auth()->user()->hasPermission('messages.send'))
                     <button class="btn btn-accent"><x-icon name="phone" class="size-4"/> إرسال تقرير المتجر عبر واتساب</button>
                 @endif
-                @if(auth()->user()->hasPermission('exports.generate'))
-                    <button class="btn btn-light" formmethod="GET" formaction="{{ route('reports-center.export', ['store', 'pdf']) }}" name="store_id" value="{{ $store->id }}">تحميل تقرير المتجر PDF</button>
-                @endif
             </form>
+            @if(auth()->user()->hasPermission('exports.generate'))
+                {{-- نموذج GET مستقل: لا رمز CSRF في الرابط --}}
+                <form method="GET" action="{{ route('reports-center.export', ['store', 'pdf']) }}" target="_blank" class="mt-2" data-no-loading>
+                    <input type="hidden" name="store_id" value="{{ $store->id }}">
+                    <input type="hidden" name="period" :value="preset">
+                    <template x-if="preset === 'custom'"><span><input type="hidden" name="from" :value="from"><input type="hidden" name="to" :value="to"></span></template>
+                    <button class="btn btn-light">تحميل تقرير المتجر PDF</button>
+                </form>
+            @endif
             @error('phone')<p class="field-error mt-2">{{ $message }}</p>@enderror
             <p class="hint mt-2">يصل لصاحب المتجر رابط آمن يفتح تقرير PDF بلا دخول، صالح {{ \App\Http\Controllers\StoreReportShareController::LINK_DAYS }} أيام — بلا أسماء الموظفين.</p>
         </div>

@@ -33,7 +33,9 @@ class EmployeeMissingReport implements AlertRule
         $onLeave = Leave::where('from_date', '<=', $date)->where('to_date', '>=', $date)->pluck('user_id')
             ->merge(\App\Models\AttendanceOverride::whereDate('date', $date)->whereIn('type', ['excused', 'present'])->pluck('user_id'))->flip();
 
-        return $this->attendance->employees()->get(['id', 'name'])
+        // من لم يبدأ عمله بعد (تاريخ التعيين لاحق) لا يُنبَّه عليه
+        return $this->attendance->employees()
+            ->where(fn ($q) => $q->whereNull('hired_at')->orWhereDate('hired_at', '<=', $date))->get(['id', 'name'])
             ->reject(fn ($u) => $sent->has($u->id) || $onLeave->has($u->id))
             ->map(fn ($u) => new Finding('user:'.$u->id.':'.$date, $u->name.' لم يرسل تقرير اليوم', null, 'user', $u->id, $u->name))
             ->values()->all();

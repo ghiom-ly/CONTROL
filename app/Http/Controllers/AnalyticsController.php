@@ -9,10 +9,15 @@ use Illuminate\View\View;
 
 class AnalyticsController extends Controller
 {
-    public function index(Request $request, AnalyticsService $analytics): View
+    public function index(Request $request, AnalyticsService $analytics): View|\Illuminate\Http\RedirectResponse
     {
         abort_unless($request->user()->hasPermission('analytics.view'), 403);
-        $p = ComparePeriod::fromRequest($request);
+        try {
+            $p = ComparePeriod::fromRequest($request);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // العودة للصفحة بلا معاملات (لا حلقة إعادة توجيه) مع الخطأ
+            return redirect()->route('analytics.index')->withErrors($e->errors());
+        }
 
         $declining = $analytics->decliningStores($p);
         $employees = $analytics->employees($p);

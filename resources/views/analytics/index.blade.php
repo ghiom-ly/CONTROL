@@ -14,6 +14,7 @@
             </div>
         </x-slot:actions>
     </x-page-header>
+    @error('from')<p class="field-error mb-3">{{ $message }}</p>@enderror
     @error('to')<p class="field-error mb-3">{{ $message }}</p>@enderror
 
     @include('analytics._charts')

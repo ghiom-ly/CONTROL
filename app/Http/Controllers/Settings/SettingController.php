@@ -97,7 +97,7 @@ class SettingController extends Controller
                     $v = $in['parameters'][$key] ?? $current;
                     $params[$key] = $key === 'deadline'
                         ? (preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', (string) $v) ? (string) $v : $current)
-                        : max(1, min(720, (int) $v));
+                        : max(1, min($key === 'percent' ? 100 : 720, (int) $v));
                 }
                 $old = $rule->only(['is_enabled', 'level', 'parameters']);
                 $rule->update(['is_enabled' => (bool) ($in['is_enabled'] ?? false), 'level' => $in['level'],

@@ -18,7 +18,7 @@ class ReportApprovalDelay implements AlertRule
     public function evaluate(array $params, CarbonImmutable $now): array
     {
         return DailyReport::with('user:id,name')->where('status', 'pending_review')
-            ->where('submitted_at', '<', $now->subHours((int) ($params['hours'] ?? 24)))->limit(500)->get()
+            ->where('submitted_at', '<', $now->subHours((int) ($params['hours'] ?? 24)))->orderBy('id')->limit(\App\Alerts\AlertEngine::RULE_LIMIT)->get()
             ->map(fn (DailyReport $r) => new Finding("report:{$r->id}", "تأخر اعتماد التقرير {$r->report_number}",
                 'الموظف: '.($r->user?->name ?? '—').' — أُرسل '.$r->submitted_at->format('Y/m/d H:i'), 'report', $r->id, $r->report_number))
             ->all();

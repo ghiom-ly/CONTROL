@@ -12,7 +12,7 @@
                 @php $needs = $r->needs(); @endphp
                 <form method="GET" target="_blank" class="card flex flex-col gap-3 p-4" x-data="{ preset: 'week' }" data-no-loading>
                     <h3 class="font-bold text-navy-900">{{ $r->title() }}</h3>
-                    @if(in_array('period', $needs, true) || $needs === ['period'])
+                    @if(in_array('period', $needs, true))
                         <div class="flex flex-wrap items-center gap-2 text-sm">
                             <select name="period" x-model="preset" class="input !w-32">
                                 <option value="day">يوم</option><option value="week">أسبوع</option><option value="month">شهر</option><option value="custom">مخصصة</option>
@@ -42,5 +42,16 @@
             @endforeach
         </div>
     @endforeach
-    <p class="hint mt-4">تقرير المتجر يُرسل أيضاً لصاحبه عبر واتساب من صفحة المتجر.</p>
+    @if(auth()->user()->hasPermission('messages.send'))
+        <h2 class="mb-3 mt-6 text-sm font-bold text-slate-500">إرسال تقرير المتجر لصاحبه</h2>
+        <form method="POST" action="{{ route('reports-center.store-share') }}" target="_blank" class="card flex flex-wrap items-end gap-2 p-4 text-sm" x-data="{ preset: 'month' }">
+            @csrf
+            <div><label class="label">كود المتجر</label><input name="store_code" class="input ltr !w-44" placeholder="STR-00045" required></div>
+            <div><label class="label">الفترة</label>
+                <select name="period" x-model="preset" class="input !w-32"><option value="week">أسبوع</option><option value="month">شهر</option><option value="custom">مخصصة</option></select></div>
+            <template x-if="preset === 'custom'"><span class="flex gap-1"><input type="date" name="from" class="input !w-36" required><input type="date" name="to" class="input !w-36" required></span></template>
+            <button class="btn btn-accent"><x-icon name="phone" class="size-4"/> إرسال للمتجر عبر واتساب</button>
+        </form>
+    @endif
+    <p class="hint mt-4">يصل لصاحب المتجر رابط آمن يفتح تقرير PDF بلا دخول — ويمكن الإرسال أيضاً من صفحة المتجر.</p>
 </x-layouts.app>

@@ -44,7 +44,8 @@ class AnalyticsService
 
     public static function flush(): void
     {
-        Cache::forever('analytics:version', (int) Cache::get('analytics:version', 1) + 1);
+        Cache::add('analytics:version', 1);
+        Cache::increment('analytics:version');
     }
 
     private static function cacheKey(string $what, ComparePeriod $p): string
@@ -206,7 +207,8 @@ class AnalyticsService
 
     public function stoppedStores(ComparePeriod $p): Collection
     {
-        $ids = DB::query()->fromSub($this->storeOrders($p), 't')->where('prev', '>', 0)->where('cur', 0)->limit(50)->pluck('store_id');
+        $ids = DB::query()->fromSub($this->storeOrders($p), 't')->where('prev', '>', 0)->where('cur', 0)
+            ->whereIn('store_id', Store::where('status', StoreStatus::Active)->select('id'))->limit(50)->pluck('store_id');
 
         return Store::whereIn('id', $ids)->where('status', StoreStatus::Active)->orderBy('name')->get(['id', 'name', 'code']);
     }

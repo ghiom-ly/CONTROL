@@ -20,7 +20,7 @@ class DuplicateOrConflictingCodes implements AlertRule
         return DB::table('shipment_followups as f')->join('daily_reports as r', 'r.id', '=', 'f.daily_report_id')
             ->where('r.status', 'pending_review')->whereNull('r.deleted_at')->whereNotNull('f.store_id')
             ->selectRaw('f.shipment_code c, COUNT(DISTINCT f.store_id) n')->groupBy('f.shipment_code')->having('n', '>', 1)
-            ->limit(500)->get()
+            ->orderBy('c')->limit(\App\Alerts\AlertEngine::RULE_LIMIT)->get()
             ->map(fn ($r) => new Finding('code:'.$r->c, 'الكود '.$r->c.' مسجّل لـ '.$r->n.' متاجر في تقارير قيد المراجعة', null, 'code', null, $r->c))
             ->all();
     }

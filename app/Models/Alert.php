@@ -31,7 +31,7 @@ class Alert extends Model
             'issue' => route('issues.show', $this->subject_id),
             'report' => route('reports.show', $this->subject_id),
             'code' => route('shipments.show', $this->subject_label),
-            'user' => route('attendance.index'),
+            'user' => auth()->user()?->hasPermission('users.view') ? route('users.show', $this->subject_id) : route('attendance.index'),
             default => null,
         };
     }

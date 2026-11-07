@@ -68,7 +68,7 @@ class ReportCenterController extends Controller
             $request->merge(['store_id' => Store::withTrashed()->where('code', $code)->value('id') ?? 0]);
         }
         $data = $request->validate([
-            'month' => [in_array('month', $needs, true) ? 'nullable' : 'nullable', 'date_format:Y-m'],
+            'month' => ['nullable', 'date_format:Y-m'],
             'store_id' => [in_array('store', $needs, true) ? 'required' : 'nullable', 'integer', Rule::exists('stores', 'id')],
             'user_id' => [in_array('employee', $needs, true) ? 'required' : 'nullable', 'integer',
                 Rule::exists('users', 'id')->withoutTrashed()->where(fn ($q) => $q->whereIn('role_id', Role::where('name', Role::EMPLOYEE)->pluck('id')))],

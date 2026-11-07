@@ -22,6 +22,19 @@ class StoreReportShareController extends Controller
 {
     public const LINK_DAYS = 7;
 
+    /** من مركز التقارير: المتجر بكوده */
+    public function shareByCode(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()->hasPermission('messages.send'), 403);
+        $code = mb_strtoupper(trim((string) $request->input('store_code')));
+        $store = $code !== '' ? Store::where('code', $code)->first() : null;
+        if (! $store) {
+            throw ValidationException::withMessages(['store_code' => 'كود المتجر غير موجود.']);
+        }
+
+        return $this->share($request, $store);
+    }
+
     public function share(Request $request, Store $store): RedirectResponse
     {
         abort_unless($request->user()->hasPermission('messages.send'), 403);
@@ -46,9 +59,10 @@ class StoreReportShareController extends Controller
         return redirect()->away('https://wa.me/'.$phone.'?text='.rawurlencode($body));
     }
 
-    public function public(Request $request, Store $store, PdfRenderer $pdf): Response
+    public function public(Request $request, int $store, PdfRenderer $pdf): Response
     {
-        if (! $request->hasValidSignature()) {
+        // التوقيع أولاً، ثم المتجر — متجر محذوف يعرض صفحة انتهاء الرابط لا 404
+        if (! $request->hasValidSignature() || ! ($store = Store::find($store))) {
             return response()->view('reports-center.link-expired', [], 403);
         }
         $period = ComparePeriod::between(CarbonImmutable::parse((string) $request->query('from')), CarbonImmutable::parse((string) $request->query('to')));

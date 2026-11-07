@@ -81,13 +81,13 @@
                             <td><select name="rules[{{ $rule->id }}][level]" class="input !w-32">
                                 @foreach(\App\Enums\AlertLevel::cases() as $l)<option value="{{ $l->value }}" @selected($rule->level === $l)>{{ $l->label() }}</option>@endforeach
                             </select></td>
-                            <td class="flex flex-wrap gap-2">
+                            <td><div class="flex flex-wrap gap-2">
                                 @forelse($rule->parameters ?? [] as $key => $val)
                                     <label class="text-xs">{{ $paramLabels[$key] ?? $key }}
-                                        <input name="rules[{{ $rule->id }}][parameters][{{ $key }}]" value="{{ $val }}" class="input !w-24 ltr" {{ $key === 'deadline' ? 'pattern=[0-2][0-9]:[0-5][0-9]' : 'type=number min=1 max=720' }}>
+                                        <input name="rules[{{ $rule->id }}][parameters][{{ $key }}]" value="{{ $val }}" class="input !w-24 ltr" {{ $key === 'deadline' ? 'pattern=[0-2][0-9]:[0-5][0-9]' : ($key === 'percent' ? 'type=number min=1 max=100' : 'type=number min=1 max=720') }}>
                                     </label>
                                 @empty — @endforelse
-                            </td>
+                            </div></td>
                         </tr>
                     @endforeach
                     </tbody>
