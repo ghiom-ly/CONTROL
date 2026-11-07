@@ -86,13 +86,13 @@ class LeaveRequestTest extends TestCase
 
     public function test_optional_attachment_stored_and_type_checked(): void
     {
-        Storage::fake('local');
+        Storage::fake('private');
         $this->submit(['kind' => 'absence_excuse', 'from_date' => today()->toDateString(), 'attachment' => UploadedFile::fake()->create('x.exe', 10)])
             ->assertSessionHasErrors('attachment');
         $this->submit(['kind' => 'absence_excuse', 'from_date' => today()->toDateString(), 'attachment' => UploadedFile::fake()->create('شهادة.pdf', 100, 'application/pdf')])
             ->assertSessionHasNoErrors();
         $r = LeaveRequest::sole();
-        Storage::disk('local')->assertExists($r->attachment_path);
+        Storage::disk('private')->assertExists($r->attachment_path);
         $this->assertSame('شهادة.pdf', $r->attachment_name);
 
         $this->actingAs($this->emp)->get("/leave-requests/{$r->id}/attachment")->assertOk();
@@ -181,6 +181,44 @@ class LeaveRequestTest extends TestCase
         SystemSetting::where('key', 'manager_whatsapp')->update(['value' => '0923456789']);
         \Illuminate\Support\Facades\Cache::flush();
         $this->actingAs($this->emp)->get('/my-requests')->assertSee('تنبيه المدير عبر واتساب')->assertSee('https://wa.me/218923456789', false);
+    }
+
+    public function test_cannot_decide_own_request(): void
+    {
+        $perm = \App\Models\Permission::where('name', 'attendance.manage')->sole();
+        $this->emp->role->permissions()->attach($perm->id);
+        $r = $this->pending();
+        $this->actingAs($this->emp->fresh())->patch("/leave-requests/{$r->id}/approve")->assertSessionHasErrors('request');
+        $this->assertSame('pending', $r->fresh()->status);
+    }
+
+    public function test_approve_over_existing_manual_leave_reuses_it(): void
+    {
+        $manual = Leave::create(['user_id' => $this->emp->id, 'from_date' => today()->addDay(), 'to_date' => today()->addDays(5), 'type' => 'leave', 'created_by' => $this->admin->id]);
+        $r = $this->pending();
+        $this->actingAs($this->admin)->patch("/leave-requests/{$r->id}/approve")->assertSessionHasNoErrors();
+        $this->assertSame(1, Leave::count());
+        $this->assertSame($manual->id, $r->fresh()->leave_id);
+    }
+
+    public function test_attachment_uses_private_throwing_disk(): void
+    {
+        Storage::fake('private');
+        $this->submit(['kind' => 'absence_excuse', 'from_date' => today()->toDateString(), 'attachment' => UploadedFile::fake()->create('a.pdf', 10, 'application/pdf')]);
+        Storage::disk('private')->assertExists(LeaveRequest::sole()->attachment_path);
+    }
+
+    public function test_notification_failure_does_not_500(): void
+    {
+        \Illuminate\Support\Facades\Notification::shouldReceive('send')->andThrow(new \RuntimeException('db down'));
+        $this->submit(['kind' => 'late_excuse', 'from_date' => today()->toDateString()])->assertRedirect(route('my-requests.index'));
+        $this->assertSame(1, LeaveRequest::count());
+    }
+
+    public function test_leave_cannot_start_more_than_90_days_ahead(): void
+    {
+        $this->submit(['kind' => 'leave', 'leave_type' => 'leave', 'from_date' => today()->addDays(91)->toDateString(), 'to_date' => today()->addDays(92)->toDateString()])
+            ->assertSessionHasErrors('from_date');
     }
 
     public function test_purge_removes_requests(): void

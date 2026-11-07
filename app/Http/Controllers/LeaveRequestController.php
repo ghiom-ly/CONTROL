@@ -26,6 +26,8 @@ class LeaveRequestController extends Controller
 
     public const EXCUSE_DAYS_BACK = 30;
 
+    public const LEAVE_DAYS_AHEAD = 90;
+
     public function __construct(private readonly LeaveRequestService $service) {}
 
     private function ensureEmployee(Request $request): void
@@ -39,7 +41,7 @@ class LeaveRequestController extends Controller
         $phone = WhatsAppNumber::normalize((string) SystemSetting::get('manager_whatsapp'));
 
         return view('leave-requests.mine', [
-            'requests' => LeaveRequest::where('user_id', $request->user()->id)->latest()->paginate(20),
+            'requests' => LeaveRequest::with('decider:id,name')->where('user_id', $request->user()->id)->latest()->paginate(20),
             'managerPhone' => $phone,
         ]);
     }
@@ -59,7 +61,7 @@ class LeaveRequestController extends Controller
             'kind' => ['required', Rule::in(array_keys(LeaveRequest::KINDS))],
             'leave_type' => [Rule::requiredIf($kind === 'leave'), 'nullable', Rule::in(array_keys(Leave::TYPES))],
             'from_date' => $kind === 'leave'
-                ? ['required', 'date_format:Y-m-d', 'after_or_equal:'.$today->toDateString()]
+                ? ['required', 'date_format:Y-m-d', 'after_or_equal:'.$today->toDateString(), 'before_or_equal:'.$today->addDays(self::LEAVE_DAYS_AHEAD)->toDateString()]
                 : ['required', 'date_format:Y-m-d', 'before_or_equal:'.$today->toDateString(), 'after_or_equal:'.$today->subDays(self::EXCUSE_DAYS_BACK)->toDateString()],
             'to_date' => array_filter(['required', 'date_format:Y-m-d', 'after_or_equal:from_date',
                 $from ? 'before_or_equal:'.$from->addDays(self::MAX_LEAVE_DAYS - 1)->toDateString() : null]),
@@ -67,29 +69,43 @@ class LeaveRequestController extends Controller
             'attachment' => ['nullable', 'file', 'max:5120', 'mimes:jpg,jpeg,png,webp,pdf'],
         ], [
             'from_date.after_or_equal' => $kind === 'leave' ? 'الإجازة تبدأ من اليوم أو بعده.' : 'الأعذار لآخر '.self::EXCUSE_DAYS_BACK.' يوماً فقط.',
-            'from_date.before_or_equal' => 'العذر يكون عن يوم مضى أو اليوم.',
+            'from_date.before_or_equal' => $kind === 'leave' ? 'الإجازة تُطلب قبل '.self::LEAVE_DAYS_AHEAD.' يوماً كحد أقصى.' : 'العذر يكون عن يوم مضى أو اليوم.',
             'to_date.before_or_equal' => 'أقصى مدة للإجازة '.self::MAX_LEAVE_DAYS.' يوماً.',
             'attachment.mimes' => 'المرفق صورة أو PDF فقط.', 'attachment.max' => 'حجم المرفق حتى 5 ميغا.',
         ], ['kind' => 'نوع الطلب', 'leave_type' => 'نوع الإجازة', 'from_date' => 'التاريخ', 'to_date' => 'إلى تاريخ', 'reason' => 'السبب', 'attachment' => 'المرفق']);
 
         $user = $request->user();
-        $r = DB::transaction(function () use ($data, $user, $request) {
+        // الملف قبل المعاملة على قرص يرمي خطأ عند الفشل؛ ويُحذف إن فشل الحفظ
+        $file = $request->file('attachment');
+        $path = $file?->store('leave-requests/'.$user->id, LeaveRequest::DISK);
+        try {
+            $r = DB::transaction(function () use ($data, $user, $file, $path) {
             // قفل صفوف الموظف ثم فحص التداخل مع طلب معلّق أو مقبول
             LeaveRequest::where('user_id', $user->id)->lockForUpdate()->get(['id']);
             if (LeaveRequest::where('user_id', $user->id)->whereIn('status', ['pending', 'approved'])
                 ->where('from_date', '<=', $data['to_date'])->where('to_date', '>=', $data['from_date'])->exists()) {
                 throw ValidationException::withMessages(['from_date' => 'لديك طلب آخر معلّق أو مقبول لنفس الأيام.']);
             }
-            $file = $request->file('attachment');
 
             return LeaveRequest::create([
                 'user_id' => $user->id, 'kind' => $data['kind'], 'leave_type' => $data['kind'] === 'leave' ? $data['leave_type'] : null,
                 'from_date' => $data['from_date'], 'to_date' => $data['to_date'], 'reason' => $data['reason'], 'status' => 'pending',
-                'attachment_path' => $file?->store('leave-requests/'.$user->id, LeaveRequest::DISK),
+                'attachment_path' => $path ?: null,
                 'attachment_name' => $file ? mb_substr($file->getClientOriginalName(), 0, 190) : null,
             ]);
-        });
-        Notification::send(LeaveRequestService::managers(), new LeaveRequestNotification($r->load('user'), true));
+            }, 3);
+        } catch (\Throwable $e) {
+            if ($path) {
+                Storage::disk(LeaveRequest::DISK)->delete($path);
+            }
+            throw $e;
+        }
+        // الطلب حُفظ — فشل الإشعار لا يُظهر خطأ للموظف
+        try {
+            Notification::send(LeaveRequestService::managers()->reject(fn ($m) => $m->id === $user->id), new LeaveRequestNotification($r->load('user'), true));
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         return redirect()->route('my-requests.index')->with('success', 'تم إرسال طلبك للمراجعة.');
     }
@@ -97,10 +113,13 @@ class LeaveRequestController extends Controller
     public function cancel(Request $request, LeaveRequest $leaveRequest): RedirectResponse
     {
         abort_unless($leaveRequest->user_id === $request->user()->id, 403);
-        $done = LeaveRequest::whereKey($leaveRequest->id)->where('status', 'pending')->update(['status' => 'cancelled']);
-        if (! $done) {
-            throw ValidationException::withMessages(['request' => 'لا يمكن إلغاء طلب تم البت فيه.']);
-        }
+        DB::transaction(function () use ($leaveRequest) {
+            $r = LeaveRequest::whereKey($leaveRequest->id)->lockForUpdate()->first();
+            if (! $r?->isPending()) {
+                throw ValidationException::withMessages(['request' => 'لا يمكن إلغاء طلب تم البت فيه.']);
+            }
+            $r->update(['status' => 'cancelled']);   // عبر النموذج ⇒ يُسجَّل في سجل العمليات
+        });
 
         return back()->with('success', 'تم إلغاء الطلب.');
     }
@@ -111,7 +130,7 @@ class LeaveRequestController extends Controller
         abort_unless($leaveRequest->attachment_path && Storage::disk(LeaveRequest::DISK)->exists($leaveRequest->attachment_path), 404);
 
         return Storage::disk(LeaveRequest::DISK)->response($leaveRequest->attachment_path, $leaveRequest->attachment_name,
-            ['X-Content-Type-Options' => 'nosniff']);
+            ['X-Content-Type-Options' => 'nosniff', 'Content-Security-Policy' => 'sandbox']);
     }
 
     public function index(Request $request): View

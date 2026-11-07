@@ -17,7 +17,7 @@ class LeaveRequest extends Model
 
     public const STATUS_COLORS = ['pending' => 'yellow', 'approved' => 'green', 'rejected' => 'red', 'cancelled' => 'gray'];
 
-    public const DISK = 'local';
+    public const DISK = 'private';
 
     protected $fillable = ['user_id', 'kind', 'leave_type', 'from_date', 'to_date', 'reason', 'attachment_path', 'attachment_name',
         'status', 'decided_by', 'decided_at', 'decision_note', 'leave_id', 'override_id'];
