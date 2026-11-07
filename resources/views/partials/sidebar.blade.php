@@ -1,5 +1,7 @@
 @php
     $user = auth()->user();
+    $pendingRequests = $user->hasPermission('attendance.manage') ? \App\Models\LeaveRequest::where('status', 'pending')->count() : 0;
+    $isEmployee = $user->role?->name === \App\Models\Role::EMPLOYEE;
     $openAlerts = $user->hasPermission('analytics.view') ? \App\Models\Alert::where('status', 'open')->count() : 0;
     // [label, icon, route|null, params, permission, active pattern, phase(null = متاح)]
     $nav = [
@@ -17,11 +19,13 @@
         ['إدارة المشكلات', 'alert', 'issues.index', [], 'issues.view', 'issues.*', null],
         ['الموظفون', 'users', 'users.index', [], 'users.view', 'users.*', null],
         ['الحضور والانصراف', 'clock', 'attendance.index', [], 'users.view', 'attendance.*', null],
+        ['طلبات الإجازة والأعذار'.($pendingRequests ? " ({$pendingRequests})" : ''), 'calendar', 'leave-requests.index', [], 'attendance.manage', 'leave-requests.*', null],
         ['التحليلات', 'chart', 'analytics.index', [], 'analytics.view', 'analytics.*', null],
         ['التنبيهات'.($openAlerts ? " ({$openAlerts})" : ''), 'alert', 'alerts.index', [], 'analytics.view', 'alerts.*', null],
         ['التقارير الإدارية', 'document-chart', 'reports-center.index', [], 'exports.generate', 'reports-center.*', null],
         ['سجل العمليات', 'history', 'audit.index', [], 'audit.view', 'audit.*', null],
         ['الإعدادات', 'cog', 'settings.index', [], 'settings.manage', 'settings.*', null],
+        ...($isEmployee ? [['طلباتي (إجازة / عذر)', 'calendar', 'my-requests.index', [], 'dashboard.view', 'my-requests.*', null]] : []),
         ['دليل الاستخدام', 'document-chart', 'help', [], 'dashboard.view', 'help', null],
     ];
     $allowed = fn ($perm) => collect(explode('|', $perm))->contains(fn ($p) => $user->hasPermission($p));

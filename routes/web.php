@@ -164,6 +164,14 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::delete('/attendance/overrides/{override}', [AttendanceController::class, 'destroyOverride'])->name('attendance.overrides.destroy');
         Route::post('/attendance/holidays', [AttendanceController::class, 'storeHoliday'])->name('attendance.holidays.store');
         Route::delete('/attendance/holidays/{holiday}', [AttendanceController::class, 'destroyHoliday'])->name('attendance.holidays.destroy');
+        // طلبات الإجازة والأعذار
+        Route::get('/my-requests', [\App\Http\Controllers\LeaveRequestController::class, 'mine'])->name('my-requests.index');
+        Route::post('/my-requests', [\App\Http\Controllers\LeaveRequestController::class, 'store'])->middleware('throttle:20,1')->name('my-requests.store');
+        Route::patch('/my-requests/{leaveRequest}/cancel', [\App\Http\Controllers\LeaveRequestController::class, 'cancel'])->whereNumber('leaveRequest')->name('my-requests.cancel');
+        Route::get('/leave-requests', [\App\Http\Controllers\LeaveRequestController::class, 'index'])->name('leave-requests.index');
+        Route::get('/leave-requests/{leaveRequest}/attachment', [\App\Http\Controllers\LeaveRequestController::class, 'attachment'])->whereNumber('leaveRequest')->name('leave-requests.attachment');
+        Route::patch('/leave-requests/{leaveRequest}/approve', [\App\Http\Controllers\LeaveRequestController::class, 'approve'])->whereNumber('leaveRequest')->name('leave-requests.approve');
+        Route::patch('/leave-requests/{leaveRequest}/reject', [\App\Http\Controllers\LeaveRequestController::class, 'reject'])->whereNumber('leaveRequest')->name('leave-requests.reject');
         Route::post('/attendance/leaves',[LeaveController::class, 'store'])->name('attendance.leaves.store');
         Route::delete('/attendance/leaves/{leave}', [LeaveController::class, 'destroy'])->name('attendance.leaves.destroy');
 

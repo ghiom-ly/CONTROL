@@ -50,6 +50,8 @@ class UserPurgeService
                 $files[] = [$b->disk ?: 'private', $b->stored_path];
             }
             DB::table('import_batches')->where('uploaded_by', $id)->delete();
+            $files = array_merge($files, DB::table('leave_requests')->where('user_id', $id)->whereNotNull('attachment_path')->pluck('attachment_path')->map(fn ($p) => [\App\Models\LeaveRequest::DISK, $p])->all());
+            DB::table('leave_requests')->where('user_id', $id)->delete();
             DB::table('leaves')->where('user_id', $id)->delete();
             DB::table('attendance_overrides')->where('user_id', $id)->delete();
             DB::table('alerts')->where('subject_type', 'user')->where('subject_id', $id)->delete();
