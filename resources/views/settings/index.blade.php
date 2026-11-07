@@ -60,6 +60,45 @@
 
     <div class="card mt-8">
         <div class="card-header">
+            <h2 class="card-title">إلغاء التأخير والغياب لفترة</h2>
+            <span class="text-xs text-slate-500">لكل الموظفين — مثلاً عطل في المنظومة أو ظرف عام. يمكن التراجع بالحذف.</span>
+        </div>
+        <form method="POST" action="{{ route('settings.waivers.store') }}" class="grid gap-4 p-5 md:grid-cols-5 items-end">
+            @csrf
+            <div><label class="label">من تاريخ</label><input type="date" name="from_date" value="{{ old('from_date', today()->toDateString()) }}" class="input" required>
+                @error('from_date')<p class="field-error">{{ $message }}</p>@enderror</div>
+            <div><label class="label">إلى تاريخ</label><input type="date" name="to_date" value="{{ old('to_date', today()->toDateString()) }}" class="input" required>
+                @error('to_date')<p class="field-error">{{ $message }}</p>@enderror</div>
+            <div class="space-y-1 text-sm">
+                <label class="flex items-center gap-2"><input type="checkbox" name="cancel_late" value="1" @checked(old('cancel_late', true)) class="size-4"> إلغاء التأخير</label>
+                <label class="flex items-center gap-2"><input type="checkbox" name="cancel_absence" value="1" @checked(old('cancel_absence')) class="size-4"> إلغاء الغياب</label>
+                @error('cancel_late')<p class="field-error">{{ $message }}</p>@enderror
+            </div>
+            <div><label class="label">السبب (اختياري)</label><input name="reason" value="{{ old('reason') }}" maxlength="200" class="input" placeholder="عطل في المنظومة"></div>
+            <div><button class="btn btn-primary w-full">تطبيق الإلغاء</button></div>
+        </form>
+        @if($waivers->isNotEmpty())
+            <div class="table-wrap border-t border-slate-100">
+                <table class="table">
+                    <thead><tr><th>الفترة</th><th>يُلغى</th><th>السبب</th><th>بواسطة</th><th></th></tr></thead>
+                    <tbody>
+                    @foreach($waivers as $w)
+                        <tr>
+                            <td class="tabular-nums">{{ $w->from_date->format('Y-m-d') }} ← {{ $w->to_date->format('Y-m-d') }}</td>
+                            <td>@if($w->cancel_late)<span class="badge badge-yellow">التأخير</span>@endif @if($w->cancel_absence)<span class="badge badge-red">الغياب</span>@endif</td>
+                            <td class="text-slate-600">{{ $w->reason ?? '—' }}</td>
+                            <td class="text-slate-500">{{ $w->creator?->name ?? '—' }}</td>
+                            <td><x-confirm-form :action="route('settings.waivers.destroy', $w)" method="DELETE" class="btn btn-ghost btn-sm text-red-600" message="التراجع عن هذا الإلغاء؟ سيُعاد احتساب التأخير والغياب للفترة.">تراجع</x-confirm-form></td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+    </div>
+
+    <div class="card mt-8">
+        <div class="card-header">
             <h2 class="card-title">قواعد التنبيهات</h2>
             <span class="text-xs text-slate-500">تُفحص كل ساعة — النتائج في صفحة «التنبيهات»</span>
         </div>

@@ -52,6 +52,7 @@ class AttendanceService
         $overrides = self::overrides(collect([$user->id]), $from->toDateString(), $to->toDateString())[$user->id] ?? [];
         $holidays = self::holidays($from->toDateString(), $to->toDateString());
         $shiftHistory = \App\Models\EmployeeShiftTime::historyFor([$user->id])[$user->id] ?? [];
+        $waivers = \App\Models\AttendanceWaiver::forRange($from->toDateString(), $to->toDateString());
 
         $days = [];
         for ($d = $from; $d <= $to; $d = $d->addDay()) {
@@ -59,7 +60,7 @@ class AttendanceService
             $start = \App\Models\EmployeeShiftTime::resolve($shiftHistory, $date) ?? $lateAfter;   // وقت شفت الموظف أو العام
             $days[] = $this->applyExceptions(
                 $this->day($date, $byDay[$date] ?? collect(), $leaves, $today, $countFrom, $start, $grace),
-                $overrides[$date] ?? [], $holidays[$date] ?? null);
+                $overrides[$date] ?? [], $holidays[$date] ?? null, $waivers);
         }
 
         return ['days' => $days, 'summary' => $this->summarize($days, $reports)];
@@ -85,6 +86,7 @@ class AttendanceService
         $overrides = self::overrides($users->pluck('id'), $a, $b);
         $holidays = self::holidays($a, $b);
         $shiftHistory = \App\Models\EmployeeShiftTime::historyFor($users->pluck('id'));
+        $waivers = \App\Models\AttendanceWaiver::forRange($a, $b);
 
         $out = [];
         foreach ($users as $u) {
@@ -96,7 +98,7 @@ class AttendanceService
                 $day = $this->applyExceptions(
                     $this->day($date, $byDay[$date] ?? collect(), $leaves[$u->id] ?? collect(), $today, $countFrom,
                         \App\Models\EmployeeShiftTime::resolve($shiftHistory[$u->id] ?? [], $date) ?? $lateAfter, $grace),
-                    $overrides[$u->id][$date] ?? [], $holidays[$date] ?? null);
+                    $overrides[$u->id][$date] ?? [], $holidays[$date] ?? null, $waivers);
                 $late += $day['late_minutes'] ? 1 : 0;
                 $absent += $day['status'] === 'absent' ? 1 : 0;
             }
@@ -162,9 +164,13 @@ class AttendanceService
             ->mapWithKeys(fn ($h) => [$h->date->toDateString() => $h->name])->all();
     }
 
-    /** تطبيق استثناءات المدير العام والعطل الرسمية على يوم محسوب */
-    private function applyExceptions(array $day, array $types, ?string $holiday): array
+    /** تطبيق استثناءات المدير العام والعطل الرسمية وإلغاءات الإعدادات على يوم محسوب */
+    private function applyExceptions(array $day, array $types, ?string $holiday, ?array $waivers = null): array
     {
+        $w = $waivers['days'][$day['date']] ?? null;
+        if (($waivers['late_off'] ?? false) || ($w['late'] ?? false)) {
+            $types[] = 'late_excused';
+        }
         if (in_array('late_excused', $types, true) && $day['late_minutes']) {
             $day['late_minutes'] = null;
             if ($day['status'] === 'late') {
@@ -180,6 +186,11 @@ class AttendanceService
                 $day['manual'] = true;
             } elseif (in_array('excused', $types, true)) {
                 $day['status'] = 'excused';
+            } elseif (($w['absence'] ?? false) && $day['date'] <= CarbonImmutable::today()->toDateString()) {
+                $day['status'] = 'excused';
+                $day['leave_type'] = $w['reason'] ?? 'إلغاء جماعي للغياب';
+            } elseif ($day['status'] === 'absent' && ($waivers['absence_off'] ?? false)) {
+                $day['status'] = 'not_counted';
             }
         }
 

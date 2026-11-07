@@ -41,6 +41,10 @@ class AttendanceAlertsCommand extends Command
         if ($managers->isEmpty()) {
             return self::SUCCESS;
         }
+        // إلغاء التأخير/الغياب من الإعدادات (عام أو لفترة تشمل اليوم): لا تنبيه «لم يبدأ الشفت»
+        $waiver = \App\Models\AttendanceWaiver::forRange($today, $today);
+        $w = $waiver['days'][$today] ?? null;
+        $skipNotStarted = $waiver['late_off'] || $w !== null;
         $excused = \App\Models\AttendanceOverride::whereDate('date', $today)->whereIn('type', ['excused', 'present'])->pluck('user_id')->flip();
 
         $employees = $attendance->employees()->get();
@@ -57,7 +61,7 @@ class AttendanceAlertsCommand extends Command
                 continue;
             }
             $kind = match (true) {
-                ! $state['started'] && $now->greaterThanOrEqualTo($lateAt) => 'not_started',
+                ! $skipNotStarted && ! $state['started'] && $now->greaterThanOrEqualTo($lateAt) => 'not_started',
                 $state['started'] && ! $state['submitted_all'] && $now->greaterThanOrEqualTo($deadline) => 'not_submitted',
                 default => null,
             };

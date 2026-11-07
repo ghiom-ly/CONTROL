@@ -185,6 +185,8 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('/settings/logo', [SettingController::class, 'uploadLogo'])->name('settings.logo.store');
         Route::delete('/settings/logo', [SettingController::class, 'deleteLogo'])->name('settings.logo.destroy');
         Route::put('/settings/alert-rules',[SettingController::class, 'updateAlertRules'])->name('settings.alert-rules.update');
+        Route::post('/settings/attendance-waivers', [SettingController::class, 'storeWaiver'])->name('settings.waivers.store');
+        Route::delete('/settings/attendance-waivers/{waiver}', [SettingController::class, 'destroyWaiver'])->whereNumber('waiver')->name('settings.waivers.destroy');
         Route::get('/settings/roles', [RoleController::class, 'index'])->name('settings.roles');
         Route::put('/settings/roles', [RoleController::class, 'update'])->name('settings.roles.update');
 

@@ -22,6 +22,8 @@ class SystemSettingsSeeder extends Seeder
             ['attendance_late_after', '10:00', 'time', 'attendance', 'بعد هذه الساعة يُعتبر الموظف متأخراً', 'وقت بدء الشفت المرجعي للتأخير'],
             ['attendance_grace_minutes', '0', 'integer', 'attendance', 'دقائق السماح قبل احتساب التأخير', null],
             ['attendance_start_date', now()->toDateString(), 'date', 'attendance', 'بداية احتساب الحضور والغياب', 'لا يُحسب غياب قبل هذا التاريخ'],
+            ['attendance_track_late', '1', 'boolean', 'attendance', 'احتساب التأخير', 'عند الإيقاف لا يُحسب تأخير على أي موظف ولا تصل تنبيهات «لم يبدأ الشفت»'],
+            ['attendance_track_absence', '1', 'boolean', 'attendance', 'احتساب الغياب', 'عند الإيقاف لا يُحسب غياب على أي موظف'],
             ['store_inactive_days', '3', 'integer', 'stores', 'عدد الأيام المتتالية دون شحنات لاعتبار المتجر متوقفاً', 'لا يُصنف المتجر متوقفاً بناءً على يوم واحد'],
             ['store_decline_percent', '30', 'integer', 'stores', 'نسبة انخفاض الشحنات عن المتوسط لإطلاق تنبيه (%)', null],
             ['issue_resolution_sla_hours', '48', 'integer', 'issues', 'المهلة الافتراضية لحل المشكلة (ساعات)', null],
