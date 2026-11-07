@@ -51,12 +51,14 @@ class AttendanceService
             ->where('to_date', '>=', $from->toDateString())->get();
         $overrides = self::overrides(collect([$user->id]), $from->toDateString(), $to->toDateString())[$user->id] ?? [];
         $holidays = self::holidays($from->toDateString(), $to->toDateString());
+        $shiftHistory = \App\Models\EmployeeShiftTime::historyFor([$user->id])[$user->id] ?? [];
 
         $days = [];
         for ($d = $from; $d <= $to; $d = $d->addDay()) {
             $date = $d->toDateString();
+            $start = \App\Models\EmployeeShiftTime::resolve($shiftHistory, $date) ?? $lateAfter;   // وقت شفت الموظف أو العام
             $days[] = $this->applyExceptions(
-                $this->day($date, $byDay[$date] ?? collect(), $leaves, $today, $countFrom, $lateAfter, $grace),
+                $this->day($date, $byDay[$date] ?? collect(), $leaves, $today, $countFrom, $start, $grace),
                 $overrides[$date] ?? [], $holidays[$date] ?? null);
         }
 
@@ -82,6 +84,7 @@ class AttendanceService
         $leaves = Leave::whereIn('user_id', $users->pluck('id'))->where('from_date', '<=', $b)->where('to_date', '>=', $a)->get()->groupBy('user_id');
         $overrides = self::overrides($users->pluck('id'), $a, $b);
         $holidays = self::holidays($a, $b);
+        $shiftHistory = \App\Models\EmployeeShiftTime::historyFor($users->pluck('id'));
 
         $out = [];
         foreach ($users as $u) {
@@ -91,7 +94,8 @@ class AttendanceService
             for ($d = $from->startOfDay(); $d->toDateString() <= $b; $d = $d->addDay()) {
                 $date = $d->toDateString();
                 $day = $this->applyExceptions(
-                    $this->day($date, $byDay[$date] ?? collect(), $leaves[$u->id] ?? collect(), $today, $countFrom, $lateAfter, $grace),
+                    $this->day($date, $byDay[$date] ?? collect(), $leaves[$u->id] ?? collect(), $today, $countFrom,
+                        \App\Models\EmployeeShiftTime::resolve($shiftHistory[$u->id] ?? [], $date) ?? $lateAfter, $grace),
                     $overrides[$u->id][$date] ?? [], $holidays[$date] ?? null);
                 $late += $day['late_minutes'] ? 1 : 0;
                 $absent += $day['status'] === 'absent' ? 1 : 0;

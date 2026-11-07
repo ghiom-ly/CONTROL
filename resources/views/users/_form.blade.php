@@ -47,6 +47,19 @@
             </select>
             @error('work_type')<p class="field-error">{{ $message }}</p>@enderror
         </div>
+        @php $currentShift = $isEdit ? \App\Models\EmployeeShiftTime::currentFor($user->id) : null; @endphp
+        <div>
+            <label class="label">وقت بداية الشفت</label>
+            <input name="shift_start" type="time" value="{{ old('shift_start', $currentShift) }}" class="input ltr @error('shift_start') input-error @enderror">
+            <p class="hint">فارغ = الوقت العام في الإعدادات ({{ \App\Models\SystemSetting::get('attendance_late_after', '10:00') }}). التأخير يُحسب من هذا الوقت.</p>
+            @error('shift_start')<p class="field-error">{{ $message }}</p>@enderror
+        </div>
+        <div>
+            <label class="label">يسري وقت الشفت من</label>
+            <input name="shift_effective_from" type="date" value="{{ old('shift_effective_from', now()->toDateString()) }}" class="input">
+            <p class="hint">الأيام قبل هذا التاريخ تبقى على الوقت السابق.</p>
+            @error('shift_effective_from')<p class="field-error">{{ $message }}</p>@enderror
+        </div>
         <div>
             <label class="label">الحالة <span class="text-red-500">*</span></label>
             <select name="status" required class="input">

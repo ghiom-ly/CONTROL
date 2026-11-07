@@ -31,6 +31,7 @@
                     'الهاتف' => $user->phone ?? '—',
                     'البريد الإلكتروني' => $user->email ?? '—',
                     'تاريخ التعيين' => $user->hired_at?->format('Y/m/d') ?? '—',
+                    'وقت بداية الشفت' => ($shiftNow = \App\Models\EmployeeShiftTime::currentFor($user->id)) ?? \App\Models\SystemSetting::get('attendance_late_after', '10:00').' (الوقت العام)',
                     'آخر دخول' => $user->last_login_at?->format('Y/m/d H:i') ?? 'لم يسجل دخول',
                     'أُنشئ بواسطة' => $user->creator?->name ?? 'النظام',
                 ] as $k => $val)

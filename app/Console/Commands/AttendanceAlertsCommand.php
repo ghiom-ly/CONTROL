@@ -29,8 +29,8 @@ class AttendanceAlertsCommand extends Command
         if ($today < (string) SystemSetting::get('attendance_start_date', $today)) {
             return self::SUCCESS;
         }
-        $lateAt = CarbonImmutable::parse($today.' '.SystemSetting::get('attendance_late_after', '10:00'))
-            ->addMinutes((int) SystemSetting::get('attendance_grace_minutes', 0));
+        $globalStart = (string) SystemSetting::get('attendance_late_after', '10:00');
+        $grace = (int) SystemSetting::get('attendance_grace_minutes', 0);
         $deadline = CarbonImmutable::parse($today.' '.SystemSetting::get('report_submission_deadline', '18:00'));
 
         // العطلة الرسمية: لا تنبيهات حضور لأحد
@@ -43,7 +43,11 @@ class AttendanceAlertsCommand extends Command
         }
         $excused = \App\Models\AttendanceOverride::whereDate('date', $today)->whereIn('type', ['excused', 'present'])->pluck('user_id')->flip();
 
-        foreach ($attendance->employees()->get() as $emp) {
+        $employees = $attendance->employees()->get();
+        $shiftHistory = \App\Models\EmployeeShiftTime::historyFor($employees->pluck('id'));
+        foreach ($employees as $emp) {
+            // وقت شفت الموظف الساري اليوم، أو الوقت العام
+            $lateAt = CarbonImmutable::parse($today.' '.(\App\Models\EmployeeShiftTime::resolve($shiftHistory[$emp->id] ?? [], $today) ?? $globalStart))->addMinutes($grace);
             // موظف لم يبدأ عمله بعد (تاريخ التعيين في المستقبل)
             if (($emp->hired_at ?? $emp->created_at)?->toDateString() > $today) {
                 continue;

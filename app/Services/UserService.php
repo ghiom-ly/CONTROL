@@ -15,10 +15,16 @@ class UserService
         return DB::transaction(function () use ($data, $actor) {
             $this->guardRoleAssignment($actor, (int) $data['role_id']);
 
-            return User::create($data + [
+            $shift = self::pullShift($data);
+            $user = User::create($data + [
                 'created_by' => $actor->id,
                 'must_change_password' => true,
             ]);
+            if ($shift) {
+                \App\Models\EmployeeShiftTime::set($user->id, $shift['time'], $shift['from'], $actor->id);
+            }
+
+            return $user;
         });
     }
 
@@ -38,10 +44,29 @@ class UserService
             if (empty($data['password'])) {
                 unset($data['password']);
             }
+            $shift = self::pullShift($data);
             $user->fill($data + ['updated_by' => $actor->id])->save();
+            if ($shift) {
+                \App\Models\EmployeeShiftTime::set($user->id, $shift['time'], $shift['from'], $actor->id);
+                \App\Services\Analytics\AnalyticsService::flush();
+            }
 
             return $user;
         });
+    }
+
+    /** يُخرج حقلي الشفت من البيانات (ليسا أعمدة في users) — null إن لم يُرسلا */
+    private static function pullShift(array &$data): ?array
+    {
+        if (! array_key_exists('shift_start', $data)) {
+            unset($data['shift_effective_from']);
+
+            return null;
+        }
+        $shift = ['time' => $data['shift_start'] ?: null, 'from' => $data['shift_effective_from'] ?? now()->toDateString()];
+        unset($data['shift_start'], $data['shift_effective_from']);
+
+        return $shift;
     }
 
     public function setStatus(User $user, string $status, User $actor): void

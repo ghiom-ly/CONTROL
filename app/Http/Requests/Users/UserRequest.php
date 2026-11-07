@@ -39,6 +39,8 @@ class UserRequest extends FormRequest
             'work_type' => ['sometimes', 'required', Rule::in(['followup', 'confirmation'])],
             'status' => ['required', Rule::enum(UserStatus::class)],
             'hired_at' => ['nullable', 'date', 'before_or_equal:today'],
+            'shift_start' => ['nullable', 'date_format:H:i'],
+            'shift_effective_from' => ['nullable', 'date_format:Y-m-d'],
             'password' => [$creating ? 'required' : 'nullable', 'confirmed', Password::min(8)->letters()->numbers()],
         ];
     }
@@ -47,7 +49,7 @@ class UserRequest extends FormRequest
     {
         return [
             'name' => 'الاسم', 'username' => 'اسم المستخدم', 'email' => 'البريد الإلكتروني', 'phone' => 'رقم الهاتف',
-            'role_id' => 'الدور الوظيفي', 'status' => 'الحالة', 'hired_at' => 'تاريخ التعيين', 'password' => 'كلمة المرور',
+            'role_id' => 'الدور الوظيفي', 'status' => 'الحالة', 'hired_at' => 'تاريخ التعيين', 'password' => 'كلمة المرور', 'shift_start' => 'وقت بداية الشفت', 'shift_effective_from' => 'يسري من',
         ];
     }
 

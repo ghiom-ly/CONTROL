@@ -1,5 +1,6 @@
 <x-layouts.app :title="'حضور '.$user->name">
-    <x-page-header :title="'حضور '.$user->name" :subtitle="'شهر '.$month->format('Y-m')">
+    @php $shiftNow = \App\Models\EmployeeShiftTime::currentFor($user->id); @endphp
+    <x-page-header :title="'حضور '.$user->name" :subtitle="'شهر '.$month->format('Y-m').' — وقت بداية الشفت: '.($shiftNow ?? \App\Models\SystemSetting::get('attendance_late_after', '10:00').' (الوقت العام)')">
         <x-slot:actions>
             @include('attendance._month-filter')
             <a href="{{ route('attendance.print', [$user, 'month' => $month->format('Y-m')]) }}" target="_blank" class="btn btn-light">طباعة</a>
