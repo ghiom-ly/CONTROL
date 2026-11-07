@@ -68,6 +68,21 @@ class ReportAdminController extends Controller
         return back()->with('success', 'تم تعديل وقت الشفت — الحضور يُحسب حسب الوقت الجديد.');
     }
 
+    /** إلغاء شفت بُدئ بالخطأ (مسودة لم تُرسل) — للمسؤول والمدير العام؛ يُحذف ناعماً ويستطيع الموظف البدء من جديد */
+    public function cancelShift(Request $request, DailyReport $report, ReportDeletionService $deletion): RedirectResponse
+    {
+        abort_unless($request->user()->can('attendance.manage') && $report->user_id !== $request->user()->id, 403);
+        $data = $request->validate(['reason' => ['nullable', 'string', 'max:200']]);
+        if ($report->status !== ReportStatus::Draft || $report->first_submitted_at !== null) {
+            return back()->withErrors(['shift' => 'لا يمكن إلغاء شفت أُرسل تقريره — استخدم أدوات المدير العام.']);
+        }
+        $deletion->delete($report, $request->user());
+        \App\Services\AuditLogger::log('shift_cancelled', 'إلغاء شفت '.$report->user?->name.' ('.$report->report_number.')'
+            .(! empty($data['reason']) ? ' — '.$data['reason'] : ''), $report);
+
+        return redirect()->route('reports.index')->with('success', 'تم إلغاء الشفت — يستطيع الموظف بدء شفت جديد.');
+    }
+
     public function destroy(Request $request, DailyReport $report, ReportDeletionService $deletion): RedirectResponse
     {
         abort_unless($request->user()->isSuperAdmin(), 403);

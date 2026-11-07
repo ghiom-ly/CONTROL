@@ -112,6 +112,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::put('/reports/{report}', [DailyReportController::class, 'update'])->name('reports.update');
         Route::put('/reports/{report}/shift-time', [\App\Http\Controllers\ReportAdminController::class, 'shiftTime'])->name('reports.shift-time');
         Route::delete('/reports/{report}', [\App\Http\Controllers\ReportAdminController::class, 'destroy'])->name('reports.destroy');
+        Route::delete('/reports/{report}/cancel-shift', [\App\Http\Controllers\ReportAdminController::class, 'cancelShift'])->name('reports.cancel-shift');
         Route::patch('/reports/{id}/restore', [\App\Http\Controllers\ReportAdminController::class, 'restore'])->whereNumber('id')->name('reports.restore');
         Route::put('/reports/{report}/confirmation',[\App\Http\Controllers\ConfirmationReportController::class, 'update'])->name('reports.confirmation.update');
         Route::get('/reports/{report}', [DailyReportController::class, 'show'])->name('reports.show');
