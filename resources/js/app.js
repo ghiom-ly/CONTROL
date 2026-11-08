@@ -37,11 +37,12 @@ Alpine.store('layout', {
 document.addEventListener('submit', (e) => {
     const form = e.target;
     if (form.dataset.noLoading !== undefined) return;
-    form.querySelectorAll('button:not([type="button"])').forEach((btn) => {
+    // التعطيل بعد تكوين بيانات النموذج: الزر المعطّل وقت الإرسال لا تصل قيمته (name/value) للخادم
+    setTimeout(() => form.querySelectorAll('button:not([type="button"])').forEach((btn) => {
         btn.disabled = true;
         btn.dataset.originalText = btn.innerHTML;
         btn.innerHTML = '<svg class="size-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity=".25"/><path d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" stroke-width="3"/></svg> جارٍ التنفيذ...';
-    });
+    }), 0);
 });
 
 window.addEventListener('pageshow', () => {
