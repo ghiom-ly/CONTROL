@@ -3,6 +3,9 @@
                    :subtitle="'الموظف: '.$report->user->name.' — '.$report->report_number.' — '.$report->status->label()">
         @if(Route::has('reports.show'))
             <x-slot:actions>
+                @if($report->user_id === auth()->id() && auth()->user()->can('submit', $report))
+                    <a href="#submit-bar" class="btn btn-accent">إنهاء الشفت والإرسال</a>
+                @endif
                 <a href="{{ route('reports.show', $report) }}" class="btn btn-light"><x-icon name="eye" class="size-4"/> عرض</a>
             </x-slot:actions>
         @endif
@@ -68,6 +71,14 @@
                         <span class="text-xs text-slate-400" x-text="`${s.codes.length} كود`"></span>
                         <button type="button" class="btn btn-ghost btn-sm ms-auto" x-on:click="removeStore(i)"><x-icon name="trash" class="size-4"/></button>
                         <input type="hidden" :name="`stores[${i}][store_id]`" :value="s.store_id">
+                    </div>
+                    <div class="border-t border-emerald-100 bg-emerald-50/50 p-3">
+                        <label class="label">الأكواد المسلّمة بعد المتابعة — <span x-text="deliveredCodes(s).length"></span> كود</label>
+                        <div class="flex flex-wrap items-start gap-2">
+                            <textarea class="input !w-72 ltr" rows="1" x-model="s.deliveredPaste" x-on:change="addDelivered(s)" placeholder="اكتب أو الصق الأكواد المسلّمة"></textarea>
+                            <button type="button" class="btn btn-light btn-sm" x-on:click="addDelivered(s)">إضافة</button>
+                        </div>
+                        <p x-show="deliveredCodes(s).length" class="mt-2 text-xs text-emerald-800 ltr" x-text="deliveredCodes(s).join('  ')"></p>
                     </div>
                     <div x-show="s.open" class="border-t border-slate-200 p-3 space-y-2">
                         <p class="label">أكواد تابعتها في هذا المتجر (اختياري) ونتيجة كل كود</p>
@@ -194,7 +205,7 @@
             @foreach($errors->get('issue_requests.*') as $msgs) @foreach($msgs as $m)<p class="field-error">{{ $m }}</p>@endforeach @endforeach
         </section>
 
-        <div class="card p-5 flex flex-wrap items-end gap-3">
+        <div id="submit-bar" class="card p-5 flex flex-wrap items-end gap-3 scroll-mt-20">
             <input type="hidden" name="action" value="save" x-ref="action">
             <button type="submit" class="btn btn-primary" x-on:click="$refs.action.value = 'save'">حفظ مسودة</button>
             @can('submit', $report)

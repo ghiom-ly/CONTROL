@@ -65,6 +65,17 @@ class ReportWhatsappFormatter
             $lines[] = '- '.trim($n);
         }
 
+        // قسم إضافي بعد القالب المعتمد: يظهر فقط عند وجود أكواد مسلّمة
+        $delivered = $report->followups->sortBy('id')->filter(fn ($f) => $f->result === \App\Enums\FollowupResult::DeliveredAfterFollowup);
+        if ($delivered->isNotEmpty()) {
+            $lines[] = '';
+            $lines[] = '5) الأكواد المسلّمة بعد المتابعة:';
+            foreach ($report->stores->sortBy('id') as $rs) {
+                $codes = $delivered->where('store_id', $rs->store_id)->pluck('shipment_code');
+                $lines[] = '- '.$rs->store->name.($codes->isEmpty() ? ': لا يوجد' : ' ('.$codes->count().'): '.$codes->implode(' '));
+            }
+        }
+
         return implode("\n", $lines);
     }
 }

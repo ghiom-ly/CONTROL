@@ -11,7 +11,7 @@ use App\Support\CodeParser;
  */
 class LegacyReportParser
 {
-    private const SECTION_TITLES = [1 => 'ملخص', 2 => 'المحاولات', 3 => 'الأكواد', 4 => 'ملاحظات'];
+    private const SECTION_TITLES = [1 => 'ملخص', 2 => 'المحاولات', 3 => 'الأكواد', 4 => 'ملاحظات', 5 => 'المتابعة'];
 
     /** @return list<array> */
     public function parse(string $text): array
@@ -104,7 +104,7 @@ class LegacyReportParser
     private function sectionOf(string $line): ?int
     {
         // «1) ملخص…» عنوان قسم؛ «1- متجر الأمل: 34» سطر متجر مرقّم وليس عنواناً
-        if (preg_match('/^([1-4])\s*[\)\-.]\s*(.*)$/u', $line, $m) && str_contains($m[2], self::SECTION_TITLES[(int) $m[1]])) {
+        if (preg_match('/^([1-5])\s*[\)\-.]\s*(.*)$/u', $line, $m) && str_contains($m[2], self::SECTION_TITLES[(int) $m[1]])) {
             return (int) $m[1];
         }
         foreach (self::SECTION_TITLES as $n => $title) {

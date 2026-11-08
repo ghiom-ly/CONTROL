@@ -75,6 +75,22 @@ TXT;
         $this->assertSame('ملاحظة', $r['notes']);
     }
 
+    public function test_delivered_codes_section_is_not_imported_as_notes(): void
+    {
+        $emp = $this->makeUser('employee', ['name' => 'سارة']);
+        $s = Store::factory()->create(['name' => 'متجر النجمة']);
+        $rep = DailyReport::factory()->draft()->for($emp)->create(['work_date' => Carbon::parse('2026-09-01'), 'attempt_times' => ['09:05'], 'notes' => 'ملاحظة']);
+        $rs = ReportStore::create(['daily_report_id' => $rep->id, 'store_id' => $s->id, 'shipments_count' => 12]);
+        ShipmentFollowup::create(['daily_report_id' => $rep->id, 'report_store_id' => $rs->id, 'store_id' => $s->id,
+            'shipment_code' => 'DLV-1', 'user_id' => $emp->id, 'followup_at' => now(), 'result' => 'delivered_after_followup']);
+
+        $text = ReportWhatsappFormatter::format($rep->fresh());
+        $this->assertStringContainsString('DLV-1', $text);
+        [$r] = $this->parse($text);
+        $this->assertSame('ملاحظة', $r['notes']);
+        $this->assertSame([], $r['errors']);
+    }
+
     public function test_tolerates_whatsapp_formatting(): void
     {
         $text = "*ريبورت تاريخ:* ٤/١١/٢٠٢٦\n\n*اسم الموظف:* _علي_\n\n\n*1) ملخص حركة الأوردرات:*\n• كام متجر تم العمل عليه: ١\n• متجر الأمل: ٣٤\n• متجر الريم: غير متوفر\n\n*3) الأكواد غير المُجاب عليها:*\n• أكواد لم يرد عليها الزبون (لتحويلها للمتاجر): لا يوجد\n";

@@ -50,6 +50,8 @@
         </div>
     @endif
 
+    @include('reports._submit')
+
     <div class="grid gap-5 lg:grid-cols-3">
         <div class="lg:col-span-2 space-y-5">
             <section class="card p-5 grid gap-3 sm:grid-cols-4 text-sm">
@@ -94,6 +96,16 @@
                 <h2 class="card-title">③ الأكواد غير المُجاب عليها</h2>
                 <p><b>الزبون لم يرد:</b> @forelse($report->followups->where('result', \App\Enums\FollowupResult::CustomerNoAnswer) as $f)<x-code :code="$f->shipment_code"/> @empty لا يوجد @endforelse</p>
                 <p><b>المندوب لم يرد:</b> @forelse($report->followups->where('result', \App\Enums\FollowupResult::CourierNoAnswer) as $f)<x-code :code="$f->shipment_code"/> @empty لا يوجد @endforelse</p>
+            </section>
+
+            @php $delivered = $report->followups->filter(fn ($f) => $f->result === \App\Enums\FollowupResult::DeliveredAfterFollowup); @endphp
+            <section class="card p-5 text-sm space-y-2">
+                <h2 class="card-title">الأكواد المسلّمة بعد المتابعة ({{ $delivered->count() }})</h2>
+                @foreach($report->stores as $rs)
+                    @php $storeCodes = $delivered->where('store_id', $rs->store_id); @endphp
+                    <p><b>{{ $rs->store->name }}@if($storeCodes->isNotEmpty()) ({{ $storeCodes->count() }})@endif:</b>
+                        @forelse($storeCodes as $f)<x-code :code="$f->shipment_code"/> @empty لا يوجد @endforelse</p>
+                @endforeach
             </section>
 
             <section class="card p-5 text-sm space-y-2">

@@ -28,7 +28,7 @@ export default function reportForm(state, storeOptions, results, maxAttempts) {
             start_orders: s.start_orders ?? '', start_rate: s.start_rate ?? '', start_source: s.start_source ?? null,
             notes: s.notes ?? '',
             codes: (s.codes || []).map((c) => ({ code: c.code, result: c.result })),
-            open: false, paste: '', pasteResult: 'courier_promised_delivery',
+            open: false, paste: '', pasteResult: 'courier_promised_delivery', deliveredPaste: '',
         })),
         unanswered: Object.assign({ customer: '', courier: '', customer_store_id: '', courier_store_id: '' }, state.unanswered || {}),
         attempts: [...(state.attempt_times || [])],
@@ -46,11 +46,22 @@ export default function reportForm(state, storeOptions, results, maxAttempts) {
         addStoreFromSearch() {
             const found = storeOptions.find((o) => `${o.name} — ${o.code}` === this.storeSearch || o.name === this.storeSearch);
             if (found && !this.stores.some((s) => s.store_id === found.id)) {
-                this.stores.push({ store_id: found.id, shipments_count: '', start_orders: '', start_rate: '', start_source: null, notes: '', codes: [], open: true, paste: '', pasteResult: 'courier_promised_delivery' });
+                this.stores.push({ store_id: found.id, shipments_count: '', start_orders: '', start_rate: '', start_source: null, notes: '', codes: [], open: true, paste: '', pasteResult: 'courier_promised_delivery', deliveredPaste: '' });
             }
             this.storeSearch = '';
         },
         removeStore(i) { this.stores.splice(i, 1); },
+        deliveredCodes(s) {
+            return s.codes.filter((c) => c.result === 'delivered_after_followup' && c.code).map((c) => c.code);
+        },
+        // كود مسجّل بنتيجة أخرى يتحول إلى «تم التسليم» بدل أن يتكرر
+        addDelivered(s) {
+            splitCodes(s.deliveredPaste).forEach((code) => {
+                const found = s.codes.find((c) => c.code.toUpperCase() === code.toUpperCase());
+                if (found) { found.result = 'delivered_after_followup'; } else { s.codes.push({ code, result: 'delivered_after_followup' }); }
+            });
+            s.deliveredPaste = '';
+        },
         pasteInto(s) {
             const existing = new Set(s.codes.map((c) => c.code.toUpperCase()));
             splitCodes(s.paste).forEach((code) => { if (!existing.has(code)) s.codes.push({ code, result: s.pasteResult }); });
