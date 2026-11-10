@@ -122,10 +122,10 @@ class EmployeeShiftTimeTest extends TestCase
     {
         Notification::fake();
         EmployeeShiftTime::create(['user_id' => $this->emp->id, 'start_time' => '14:00', 'effective_from' => '2026-11-01']);
-        $this->travelTo(CarbonImmutable::parse('2026-11-20 11:00'));
+        $this->travelTo(CarbonImmutable::parse('2026-11-19 11:00'));   // خميس
         $this->artisan('nours:attendance-alerts')->assertSuccessful();
         Notification::assertNothingSent();
-        $this->travelTo(CarbonImmutable::parse('2026-11-20 14:05'));
+        $this->travelTo(CarbonImmutable::parse('2026-11-19 14:05'));
         $this->artisan('nours:attendance-alerts')->assertSuccessful();
         Notification::assertSentTo($this->admin, AttendanceAlertNotification::class, fn ($n) => $n->kind === 'not_started');
     }

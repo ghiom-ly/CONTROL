@@ -104,8 +104,8 @@ class AttendanceWaiverTest extends TestCase
         $d = $this->day('2026-11-10');
         $this->assertSame('excused', $d['status']);
         $this->assertSame('انقطاع النت', $d['leave_type']);
-        $this->assertSame('absent', $this->day('2026-11-13')['status']);
-        $r = app(AttendanceService::class)->rangeForAll(collect([$this->emp]), CarbonImmutable::parse('2026-11-10'), CarbonImmutable::parse('2026-11-13'));
+        $this->assertSame('absent', $this->day('2026-11-14')['status']);   // 13 جمعة
+        $r = app(AttendanceService::class)->rangeForAll(collect([$this->emp]), CarbonImmutable::parse('2026-11-10'), CarbonImmutable::parse('2026-11-14'));
         $this->assertSame(1, $r[$this->emp->id]['absent']);
     }
 
@@ -149,13 +149,13 @@ class AttendanceWaiverTest extends TestCase
     {
         Notification::fake();
         $admin = $this->makeUser(Role::ADMIN);
-        $this->travelTo(CarbonImmutable::parse('2026-11-20 11:00'));
+        $this->travelTo(CarbonImmutable::parse('2026-11-19 11:00'));   // خميس
         $this->setting('attendance_track_late', '0');
         $this->artisan('nours:attendance-alerts')->assertSuccessful();
         Notification::assertNothingSent();
 
         $this->setting('attendance_track_late', '1');
-        AttendanceWaiver::create(['from_date' => '2026-11-20', 'to_date' => '2026-11-20', 'cancel_late' => false, 'cancel_absence' => true]);
+        AttendanceWaiver::create(['from_date' => '2026-11-19', 'to_date' => '2026-11-19', 'cancel_late' => false, 'cancel_absence' => true]);
         $this->artisan('nours:attendance-alerts')->assertSuccessful();
         Notification::assertNothingSent();
 

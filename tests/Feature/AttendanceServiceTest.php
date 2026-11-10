@@ -66,10 +66,11 @@ class AttendanceServiceTest extends TestCase
 
     public function test_absent_and_leave(): void
     {
-        Leave::create(['user_id' => $this->emp->id, 'from_date' => '2026-11-05', 'to_date' => '2026-11-06', 'type' => 'sick']);
-        $this->assertSame('absent', $this->day('2026-11-04')['status']);
-        $this->assertSame('leave', $this->day('2026-11-05')['status']);
-        $this->assertSame('مرضية', $this->day('2026-11-06')['leave_type']);
+        Leave::create(['user_id' => $this->emp->id, 'from_date' => '2026-11-04', 'to_date' => '2026-11-05', 'type' => 'sick']);
+        $this->assertSame('absent', $this->day('2026-11-03')['status']);
+        $this->assertSame('leave', $this->day('2026-11-04')['status']);
+        $this->assertSame('مرضية', $this->day('2026-11-05')['leave_type']);
+        $this->assertSame('weekend', $this->day('2026-11-06')['status']);   // الجمعة عطلة لا غياب
     }
 
     public function test_future_and_pre_start_days_not_absent(): void
@@ -80,8 +81,10 @@ class AttendanceServiceTest extends TestCase
         $oct = app(AttendanceService::class)->month($this->emp, CarbonImmutable::parse('2026-10-01'));
         $this->assertSame([], array_filter(array_column($oct['days'], 'status'), fn ($s) => $s === 'absent'));
         $this->assertSame(0, $oct['summary']['absent']);
-        // اليوم الحالي لا يُحسب غياباً قبل نهايته
-        $this->assertSame('future', collect($nov['days'])->firstWhere('date', '2026-11-20')['status']);
+        // اليوم الحالي لا يُحسب غياباً قبل نهايته (يوم عمل — الخميس)
+        $this->travelTo(CarbonImmutable::parse('2026-11-19 12:00'));
+        $nov = app(AttendanceService::class)->month($this->emp, CarbonImmutable::parse('2026-11-01'));
+        $this->assertSame('future', collect($nov['days'])->firstWhere('date', '2026-11-19')['status']);
     }
 
     public function test_incomplete_shift(): void
@@ -138,7 +141,7 @@ class AttendanceServiceTest extends TestCase
         $this->assertSame(30, $s['late_minutes']);
         $this->assertSame(1, $s['incomplete']);
         $this->assertSame(1, $s['leave']);
-        $this->assertSame(19 - 4, $s['absent']);   // 1..19 نوفمبر ماضية، منها 4 غير غياب
+        $this->assertSame(19 - 4 - 2, $s['absent']);   // 1..19 نوفمبر ماضية، منها 4 غير غياب وجمعتان (6 و13)
         $this->assertSame(300, $s['avg_minutes']);  // (360 + 240) / 2
         $this->assertSame(3, $s['reports_total']);
         $this->assertSame(1, $s['reports_approved']);

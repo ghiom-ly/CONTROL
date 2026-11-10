@@ -169,6 +169,15 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/my-requests', [\App\Http\Controllers\LeaveRequestController::class, 'mine'])->name('my-requests.index');
         Route::post('/my-requests', [\App\Http\Controllers\LeaveRequestController::class, 'store'])->middleware('throttle:20,1')->name('my-requests.store');
         Route::patch('/my-requests/{leaveRequest}/cancel', [\App\Http\Controllers\LeaveRequestController::class, 'cancel'])->whereNumber('leaveRequest')->name('my-requests.cancel');
+        // الرواتب (المدير العام)
+        Route::get('/payroll', [\App\Http\Controllers\PayrollController::class, 'index'])->name('payroll.index');
+        Route::post('/payroll/compute', [\App\Http\Controllers\PayrollController::class, 'compute'])->name('payroll.compute');
+        Route::post('/payroll/approve', [\App\Http\Controllers\PayrollController::class, 'approve'])->name('payroll.approve');
+        Route::post('/payroll/reopen', [\App\Http\Controllers\PayrollController::class, 'reopen'])->name('payroll.reopen');
+        Route::get('/payroll/export', [\App\Http\Controllers\PayrollController::class, 'export'])->name('payroll.export');
+        Route::post('/payroll/adjustments', [\App\Http\Controllers\PayrollController::class, 'storeAdjustment'])->name('payroll.adjustments.store');
+        Route::delete('/payroll/adjustments/{adjustment}', [\App\Http\Controllers\PayrollController::class, 'destroyAdjustment'])->whereNumber('adjustment')->name('payroll.adjustments.destroy');
+        Route::get('/payroll/items/{item}/slip', [\App\Http\Controllers\PayrollController::class, 'slip'])->whereNumber('item')->name('payroll.slip');
         // كروت التعبئة (ليبيانا/المدار)
         Route::get('/my-topups', [\App\Http\Controllers\TopupRequestController::class, 'mine'])->name('my-topups.index');
         Route::post('/my-topups', [\App\Http\Controllers\TopupRequestController::class, 'store'])->middleware('throttle:20,1')->name('my-topups.store');

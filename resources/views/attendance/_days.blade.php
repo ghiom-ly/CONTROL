@@ -1,6 +1,6 @@
 @php
     $h = fn ($m) => $m === null ? '—' : sprintf('%d:%02d', intdiv($m, 60), $m % 60);
-    $colors = ['present' => 'green', 'late' => 'yellow', 'incomplete' => 'orange', 'absent' => 'red', 'leave' => 'blue', 'future' => 'gray', 'not_counted' => 'gray', 'excused' => 'blue', 'holiday' => 'gray'];
+    $colors = ['present' => 'green', 'late' => 'yellow', 'incomplete' => 'orange', 'absent' => 'red', 'leave' => 'blue', 'future' => 'gray', 'not_counted' => 'gray', 'excused' => 'blue', 'holiday' => 'gray', 'weekend' => 'gray'];
     $canControl = auth()->user()->isSuperAdmin() && isset($user);
     $overrides = $overrides ?? collect();
     $s = $data['summary'];

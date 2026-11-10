@@ -30,6 +30,7 @@ class UpdateSettingsRequest extends FormRequest
             'settings.attendance_late_after' => ['sometimes', 'required', 'date_format:H:i'],
             'settings.attendance_grace_minutes' => ['sometimes', 'required', 'integer', 'min:0', 'max:240'],
             'settings.attendance_start_date' => ['sometimes', 'required', 'date_format:Y-m-d'],
+            'settings.payroll_incomplete_percent' => ['sometimes', 'required', 'integer', 'min:0', 'max:100'],
             'settings.attendance_track_late' => ['nullable', 'boolean'],
             'settings.attendance_track_absence' => ['nullable', 'boolean'],
         ];

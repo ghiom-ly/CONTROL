@@ -16,6 +16,7 @@ class UserService
             $this->guardRoleAssignment($actor, (int) $data['role_id']);
 
             $shift = self::pullShift($data);
+            $salary = self::pullSalary($data, $actor);
             $user = User::create($data + [
                 'created_by' => $actor->id,
                 'must_change_password' => true,
@@ -23,6 +24,7 @@ class UserService
             if ($shift) {
                 \App\Models\EmployeeShiftTime::set($user->id, $shift['time'], $shift['from'], $actor->id);
             }
+            self::applySalary($user, $salary, $actor);
 
             return $user;
         });
@@ -45,7 +47,9 @@ class UserService
                 unset($data['password']);
             }
             $shift = self::pullShift($data);
+            $salary = self::pullSalary($data, $actor);
             $user->fill($data + ['updated_by' => $actor->id])->save();
+            self::applySalary($user, $salary, $actor);
             if ($shift) {
                 \App\Models\EmployeeShiftTime::set($user->id, $shift['time'], $shift['from'], $actor->id);
                 \App\Services\Analytics\AnalyticsService::flush();
@@ -53,6 +57,25 @@ class UserService
 
             return $user;
         });
+    }
+
+    /** حقلا الراتب (ليسا أعمدة في users) — للمدير العام فقط، وإلا يُتجاهلان */
+    private static function pullSalary(array &$data, User $actor): ?array
+    {
+        $sent = array_key_exists('base_salary', $data);
+        $salary = $sent ? ['amount' => $data['base_salary'] === null || $data['base_salary'] === '' ? null : round((float) $data['base_salary'], 3),
+            'from' => $data['salary_effective_from'] ?? now()->toDateString()] : null;
+        unset($data['base_salary'], $data['salary_effective_from']);
+
+        return $sent && $actor->isSuperAdmin() ? $salary : null;
+    }
+
+    /** المبلغ لا يُكتب في سجل العمليات */
+    private static function applySalary(User $user, ?array $salary, User $actor): void
+    {
+        if ($salary && \App\Models\EmployeeSalary::set($user->id, $salary['amount'], $salary['from'], $actor->id)) {
+            AuditLogger::log('salary_changed', 'تعديل الراتب الأساسي لـ '.$user->name.' (يسري من '.$salary['from'].')', $user);
+        }
     }
 
     /** يُخرج حقلي الشفت من البيانات (ليسا أعمدة في users) — null إن لم يُرسلا */

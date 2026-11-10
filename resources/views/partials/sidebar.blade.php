@@ -21,6 +21,7 @@
         ['الموظفون', 'users', 'users.index', [], 'users.view', 'users.*', null],
         ['الحضور والانصراف', 'clock', 'attendance.index', [], 'users.view', 'attendance.*', null],
         ['طلبات الإجازة والأعذار'.($pendingRequests ? " ({$pendingRequests})" : ''), 'calendar', 'leave-requests.index', [], 'attendance.manage', 'leave-requests.*', null],
+        ...($user->isSuperAdmin() ? [['الرواتب', 'chart', 'payroll.index', [], 'dashboard.view', 'payroll.*', null]] : []),
         ...($user->isSuperAdmin() ? [['طلبات كروت التعبئة'.($pendingTopups ? " ({$pendingTopups})" : ''), 'phone', 'topups.index', [], 'dashboard.view', 'topups.*', null]] : []),
         ['التحليلات', 'chart', 'analytics.index', [], 'analytics.view', 'analytics.*', null],
         ['التنبيهات'.($openAlerts ? " ({$openAlerts})" : ''), 'alert', 'alerts.index', [], 'analytics.view', 'alerts.*', null],

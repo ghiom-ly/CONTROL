@@ -1,7 +1,7 @@
 <x-layouts.app title="الإعدادات">
     <x-page-header title="الإعدادات" subtitle="إعدادات النظام وقواعد العمل"/>
     @include('settings._tabs')
-    @php $groupLabels = ['general' => 'بيانات الشركة', 'reports' => 'التقارير', 'stores' => 'المتاجر', 'issues' => 'المشكلات', 'imports' => 'الاستيراد', 'attendance' => 'الحضور والانصراف']; @endphp
+    @php $groupLabels = ['general' => 'بيانات الشركة', 'reports' => 'التقارير', 'stores' => 'المتاجر', 'issues' => 'المشكلات', 'imports' => 'الاستيراد', 'attendance' => 'الحضور والانصراف', 'payroll' => 'الرواتب']; @endphp
 
     @php $brandLogo = \App\Support\Branding::header()['logo_path']; @endphp
     <div class="card mb-6 flex flex-wrap items-center gap-4 p-5">

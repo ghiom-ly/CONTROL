@@ -110,10 +110,10 @@ class AdminControlReviewFixesTest extends TestCase
 
     public function test_can_excuse_today(): void
     {
-        $this->travelTo(CarbonImmutable::parse('2026-11-20 12:00'));
+        $this->travelTo(CarbonImmutable::parse('2026-11-19 12:00'));   // خميس — الجمعة عطلة
         \App\Models\SystemSetting::where('key', 'attendance_start_date')->update(['value' => '2026-11-01']);
         cache()->flush();
         $emp = $this->makeUser(Role::EMPLOYEE, ['hired_at' => '2026-01-01']);
-        $this->actingAs($this->boss)->get("/attendance/{$emp->id}?month=2026-11")->assertOk()->assertSee('name="date" value="2026-11-20"', false);
+        $this->actingAs($this->boss)->get("/attendance/{$emp->id}?month=2026-11")->assertOk()->assertSee('name="date" value="2026-11-19"', false);
     }
 }

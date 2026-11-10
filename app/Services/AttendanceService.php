@@ -20,7 +20,7 @@ class AttendanceService
     public const STATUS_LABELS = [
         'present' => 'حاضر', 'late' => 'متأخر', 'incomplete' => 'شفت غير مكتمل', 'absent' => 'غائب',
         'leave' => 'إجازة', 'future' => '—', 'not_counted' => 'خارج الاحتساب',
-        'excused' => 'غياب بعذر', 'holiday' => 'عطلة رسمية',
+        'excused' => 'غياب بعذر', 'holiday' => 'عطلة رسمية', 'weekend' => 'عطلة الجمعة',
     ];
 
     /** الموظفون الذين يُحسب حضورهم: دور «موظف»، نشطون */
@@ -227,6 +227,9 @@ class AttendanceService
         }
         if ($date < $countFrom) {
             return array_merge($out, ['status' => 'not_counted']);
+        }
+        if (CarbonImmutable::parse($date)->isFriday()) {   // الجمعة عطلة أسبوعية — لا غياب (ومن يعمل فيها يُحسب حاضراً أعلاه)
+            return array_merge($out, ['status' => 'weekend']);
         }
         $leave = $leaves->first(fn (Leave $l) => $l->covers(CarbonImmutable::parse($date)));
         if ($leave) {

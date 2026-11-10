@@ -30,6 +30,7 @@ class SystemSettingsSeeder extends Seeder
             ['shipment_url_template', 'https://backoffice.nawris.algoriza.com/orders/{code}', 'string', 'reports', 'رابط صفحة الشحنة في منظومة الشحن', '{code} مكان الكود — اتركه فارغاً لإلغاء الروابط'],
             ['confirmation_cancel_reasons', "ماطلبتش\nسعر غالي\nالطلب مكرر\nالزبون لا يرد", 'text', 'reports', 'أسباب إلغاء الطلبيات (سطر لكل سبب)', 'تظهر لموظفات التأكيد عند إلغاء طلب — «أخرى» تُضاف دائماً'],
             ['manager_whatsapp', null, 'string', 'attendance', 'رقم واتساب المدير لطلبات الإجازة', 'يظهر للموظف زر لتنبيه المدير بطلبه — اتركه فارغاً لإخفائه'],
+            ['payroll_incomplete_percent', '50', 'integer', 'payroll', 'خصم الشفت غير المكتمل (% من قيمة اليوم)', 'يوم بدأ فيه الموظف الشفت ولم يرسل تقريره'],
             ['import_max_rows', '5000', 'integer', 'imports', 'الحد الأقصى لعدد الصفوف في ملف الاستيراد', null],
         ];
 

@@ -60,6 +60,21 @@
             <p class="hint">الأيام قبل هذا التاريخ تبقى على الوقت السابق.</p>
             @error('shift_effective_from')<p class="field-error">{{ $message }}</p>@enderror
         </div>
+        @if(auth()->user()->isSuperAdmin())
+            @php $currentSalary = $isEdit ? \App\Models\EmployeeSalary::currentFor($user->id) : null; @endphp
+            <div>
+                <label class="label">الراتب الأساسي (د.ل)</label>
+                <input name="base_salary" inputmode="decimal" value="{{ old('base_salary', $currentSalary === null ? '' : \App\Models\PayrollItem::money($currentSalary)) }}" class="input ltr @error('base_salary') input-error @enderror">
+                <p class="hint">يظهر للمدير العام فقط. فارغ = لا يدخل كشف الرواتب.</p>
+                @error('base_salary')<p class="field-error">{{ $message }}</p>@enderror
+            </div>
+            <div>
+                <label class="label">يسري الراتب من</label>
+                <input name="salary_effective_from" type="date" value="{{ old('salary_effective_from', now()->startOfMonth()->toDateString()) }}" class="input">
+                <p class="hint">الكشف يأخذ الراتب الساري أول الشهر — الشهور السابقة لا تتأثر.</p>
+                @error('salary_effective_from')<p class="field-error">{{ $message }}</p>@enderror
+            </div>
+        @endif
         <div>
             <label class="label">الحالة <span class="text-red-500">*</span></label>
             <select name="status" required class="input">

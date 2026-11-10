@@ -37,6 +37,8 @@ class UserRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:30', 'regex:/^[0-9+\-\s().\/]{6,30}$/'],
             'role_id' => ['required', 'integer', Rule::exists('roles', 'id')],
             'work_type' => ['sometimes', 'required', Rule::in(['followup', 'confirmation'])],
+            'base_salary' => ['nullable', 'numeric', 'min:0', 'max:1000000'],
+            'salary_effective_from' => ['nullable', 'date_format:Y-m-d'],
             'status' => ['required', Rule::enum(UserStatus::class)],
             'hired_at' => ['nullable', 'date', 'before_or_equal:today'],
             'shift_start' => ['nullable', 'date_format:H:i'],

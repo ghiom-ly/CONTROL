@@ -33,6 +33,10 @@ class AttendanceAlertsCommand extends Command
         $grace = (int) SystemSetting::get('attendance_grace_minutes', 0);
         $deadline = CarbonImmutable::parse($today.' '.SystemSetting::get('report_submission_deadline', '18:00'));
 
+        // الجمعة عطلة أسبوعية
+        if ($now->isFriday()) {
+            return self::SUCCESS;
+        }
         // العطلة الرسمية: لا تنبيهات حضور لأحد
         if (\App\Models\Holiday::whereDate('date', $today)->exists()) {
             return self::SUCCESS;
