@@ -192,6 +192,28 @@ class TopupRequestTest extends TestCase
         $this->assertStringContainsString('spreadsheetml', $x->headers->get('Content-Type'));
     }
 
+    public function test_boss_deletes_request_and_it_leaves_costs(): void
+    {
+        $r = $this->issued('70000000000001');
+        $this->actingAs($this->boss)->get('/topups?status=issued')->assertSee(route('topups.destroy', $r), false);
+        $this->actingAs($this->boss)->delete("/topups/{$r->id}")->assertRedirect()->assertSessionHasNoErrors();
+        $this->assertSame(0, TopupRequest::count());
+        $this->assertSame(0, \App\Http\Controllers\TopupRequestController::costsFor(CarbonImmutable::parse('2026-11-01'))['total']);
+        $log = AuditLog::where('event', 'topup_deleted')->sole();
+        $this->assertStringContainsString('سالم', $log->description);
+        $this->assertStringNotContainsString('70000000000001', json_encode([$log->old_values, $log->new_values, $log->description], JSON_UNESCAPED_UNICODE));
+        $this->issued('70000000000001');   // الرقم يصبح متاحاً من جديد
+    }
+
+    public function test_only_boss_can_delete(): void
+    {
+        $this->request();
+        $r = TopupRequest::sole();
+        $this->actingAs($this->emp)->delete("/topups/{$r->id}")->assertForbidden();
+        $this->actingAs($this->makeUser(Role::ADMIN))->delete("/topups/{$r->id}")->assertForbidden();
+        $this->assertSame(1, TopupRequest::count());
+    }
+
     public function test_sidebar_links(): void
     {
         $this->request();

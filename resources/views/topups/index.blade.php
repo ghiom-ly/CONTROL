@@ -50,6 +50,12 @@
                                 @if($r->decided_at)<p class="text-xs text-slate-400">{{ $r->decider?->name }} — {{ $r->decided_at->format('Y-m-d H:i') }}</p>@endif
                                 @if($r->used_at)<p class="text-xs text-emerald-700">عُبّئ {{ $r->used_at->format('Y-m-d H:i') }}</p>@endif
                             @endif
+                            <div class="mt-2">
+                                <x-confirm-form :action="route('topups.destroy', $r)" method="DELETE" class="btn btn-ghost btn-sm text-red-600"
+                                                message="حذف هذا الطلب نهائياً؟ يُستخدم للطلبات الخاطئة أو التجريبية، ويخرج من التكاليف ولا يمكن استعادته.">
+                                    <x-icon name="trash" class="size-4"/> حذف
+                                </x-confirm-form>
+                            </div>
                         </td>
                     </tr>
                 @empty

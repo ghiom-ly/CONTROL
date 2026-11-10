@@ -152,6 +152,17 @@ class TopupRequestController extends Controller
         return back()->with('success', 'تم رفض الطلب.');
     }
 
+    /** حذف نهائي لطلب أُدخل بالخطأ أو للتجربة — يخرج من التكاليف، والرقم لا يُسجَّل */
+    public function destroy(Request $request, TopupRequest $topup): RedirectResponse
+    {
+        $this->ensureBoss($request);
+        $label = $topup->user?->name.': '.$topup->summary().' ('.TopupRequest::STATUSES[$topup->status].')';
+        $topup->delete();
+        AuditLogger::log('topup_deleted', 'حذف طلب كرت — '.$label);
+
+        return back()->with('success', 'تم حذف الطلب.');
+    }
+
     public function costs(Request $request): View
     {
         $this->ensureBoss($request);

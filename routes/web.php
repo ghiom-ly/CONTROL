@@ -179,6 +179,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/topups/costs', [\App\Http\Controllers\TopupRequestController::class, 'costs'])->name('topups.costs');
         Route::get('/topups/costs/export', [\App\Http\Controllers\TopupRequestController::class, 'export'])->name('topups.costs.export');
         Route::patch('/topups/{topup}/approve', [\App\Http\Controllers\TopupRequestController::class, 'approve'])->whereNumber('topup')->name('topups.approve');
+        Route::delete('/topups/{topup}', [\App\Http\Controllers\TopupRequestController::class, 'destroy'])->whereNumber('topup')->name('topups.destroy');
         Route::patch('/topups/{topup}/reject', [\App\Http\Controllers\TopupRequestController::class, 'reject'])->whereNumber('topup')->name('topups.reject');
         Route::get('/leave-requests',[\App\Http\Controllers\LeaveRequestController::class, 'index'])->name('leave-requests.index');
         Route::get('/leave-requests/{leaveRequest}/attachment', [\App\Http\Controllers\LeaveRequestController::class, 'attachment'])->whereNumber('leaveRequest')->name('leave-requests.attachment');
