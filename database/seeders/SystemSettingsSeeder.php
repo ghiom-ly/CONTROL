@@ -28,6 +28,8 @@ class SystemSettingsSeeder extends Seeder
             ['store_decline_percent', '30', 'integer', 'stores', 'نسبة انخفاض الشحنات عن المتوسط لإطلاق تنبيه (%)', null],
             ['issue_resolution_sla_hours', '48', 'integer', 'issues', 'المهلة الافتراضية لحل المشكلة (ساعات)', null],
             ['shipment_url_template', 'https://backoffice.nawris.algoriza.com/orders/{code}', 'string', 'reports', 'رابط صفحة الشحنة في منظومة الشحن', '{code} مكان الكود — اتركه فارغاً لإلغاء الروابط'],
+            ['fulfillment_code_prefix', 'SX', 'string', 'reports', 'بداية أكواد منظومة التجهيز', 'الأكواد اللي تبدأ بهذه الحروف: الضغط عليها ينسخ الكود ويفتح منظومة التجهيز — اتركه فارغاً للإلغاء'],
+            ['fulfillment_url', 'https://fulfillment.nawris.com/', 'string', 'reports', 'رابط منظومة التجهيز', 'الصفحة اللي تنفتح بعد نسخ الكود (صفحة البحث عن الطلبيات)'],
             ['confirmation_cancel_reasons', "ماطلبتش\nسعر غالي\nالطلب مكرر\nالزبون لا يرد", 'text', 'reports', 'أسباب إلغاء الطلبيات (سطر لكل سبب)', 'تظهر لموظفات التأكيد عند إلغاء طلب — «أخرى» تُضاف دائماً'],
             ['manager_whatsapp', null, 'string', 'attendance', 'رقم واتساب المدير لطلبات الإجازة', 'يظهر للموظف زر لتنبيه المدير بطلبه — اتركه فارغاً لإخفائه'],
             ['payroll_incomplete_percent', '50', 'integer', 'payroll', 'خصم الشفت غير المكتمل (% من قيمة اليوم)', 'يوم بدأ فيه الموظف الشفت ولم يرسل تقريره'],

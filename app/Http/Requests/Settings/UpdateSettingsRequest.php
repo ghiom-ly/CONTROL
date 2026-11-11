@@ -25,6 +25,8 @@ class UpdateSettingsRequest extends FormRequest
             'settings.store_decline_percent' => ['required', 'integer', 'min:1', 'max:100'],
             'settings.issue_resolution_sla_hours' => ['required', 'integer', 'min:1', 'max:2160'],
             'settings.shipment_url_template' => ['nullable', 'string', 'max:300', 'regex:/^https?:\/\/[^\s]+$/', 'regex:/\{code\}/'],
+            'settings.fulfillment_code_prefix' => ['sometimes', 'nullable', 'string', 'max:10', 'regex:/^[A-Za-z0-9]+$/'],
+            'settings.fulfillment_url' => ['sometimes', 'nullable', 'string', 'max:300', 'regex:/^https:\/\/[^\s<>"]+$/'],
             'settings.confirmation_cancel_reasons' => ['sometimes', 'required', 'string', 'max:3000'],
             'settings.import_max_rows' => ['required', 'integer', 'min:10', 'max:100000'],
             'settings.attendance_late_after' => ['sometimes', 'required', 'date_format:H:i'],
@@ -38,7 +40,11 @@ class UpdateSettingsRequest extends FormRequest
 
     public function messages(): array
     {
-        return ['settings.shipment_url_template.regex' => 'رابط الشحنة يجب أن يبدأ بـ https:// ويحتوي {code} مكان الكود.'];
+        return [
+            'settings.shipment_url_template.regex' => 'رابط الشحنة يجب أن يبدأ بـ https:// ويحتوي {code} مكان الكود.',
+            'settings.fulfillment_code_prefix.regex' => 'بداية الأكواد حروف وأرقام إنجليزية فقط، مثل SX.',
+            'settings.fulfillment_url.regex' => 'رابط منظومة التجهيز يجب أن يبدأ بـ https://',
+        ];
     }
 
     public function attributes(): array
