@@ -50,4 +50,14 @@ class AnalyticsChartsTest extends TestCase
     {
         $this->actingAs($this->makeUser(Role::ADMIN))->get('/')->assertOk()->assertSee('لا توجد بيانات في هذه الفترة');
     }
+
+    public function test_employee_chart_explains_it_needs_approved_reports(): void
+    {
+        // تقرير بانتظار المراجعة لا يدخل المقارنة — والرسالة تشرح السبب بدل «لا توجد بيانات»
+        $emp = $this->makeUser();
+        \App\Models\DailyReport::factory()->pendingReview()->for($emp)->create(['work_date' => today()->subDay()]);
+        $this->actingAs($this->makeUser(Role::ADMIN))->get('/')->assertOk()
+            ->assertSee('لا توجد تقارير متابعة معتمدة في هذه الفترة')
+            ->assertSee('تظهر المقارنة بعد اعتماد التقارير من صفحة المراجعة');
+    }
 }

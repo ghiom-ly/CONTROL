@@ -20,7 +20,15 @@
             @if($has[$key])
                 <div class="relative h-56"><canvas id="chart-{{ $key }}"></canvas></div>
             @else
-                <p class="flex h-56 items-center justify-center text-sm text-slate-400">لا توجد بيانات في هذه الفترة</p>
+                @if(in_array($key, ['employees', 'rate_trend'], true))
+                    {{-- هذان الرسمان يعتمدان على تقارير المتابعة المعتمدة فقط --}}
+                    <div class="flex h-56 flex-col items-center justify-center gap-1 px-4 text-center text-sm text-slate-400">
+                        <p>لا توجد تقارير متابعة معتمدة في هذه الفترة.</p>
+                        <p class="text-xs">تظهر المقارنة بعد اعتماد التقارير من صفحة المراجعة، أو اختر فترة أطول.</p>
+                    </div>
+                @else
+                    <p class="flex h-56 items-center justify-center text-sm text-slate-400">لا توجد بيانات في هذه الفترة</p>
+                @endif
             @endif
         </section>
     @endforeach
