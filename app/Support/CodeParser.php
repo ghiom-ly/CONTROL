@@ -18,7 +18,8 @@ class CodeParser
         $out = [];
         foreach ($parts as $part) {
             $code = Shipment::normalizeCode($part);
-            if ($code === null) {
+            // كود الشحنة فيه رقم دايماً — «لا يوجد» و«ما فيش» و«-» كلام مش أكواد
+            if ($code === null || ! preg_match('/\d/', $code)) {
                 continue;
             }
             if (mb_strlen($code) > self::MAX_LENGTH) {

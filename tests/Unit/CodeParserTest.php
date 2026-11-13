@@ -14,7 +14,7 @@ class CodeParserTest extends TestCase
 
     public function test_semicolons_tabs_and_empty_input(): void
     {
-        $this->assertSame(['A', 'B', 'C'], CodeParser::split("A;B\tC"));
+        $this->assertSame(['A1', 'B2', 'C3'], CodeParser::split("A1;B2\tC3"));
         $this->assertSame([], CodeParser::split("  \n ،, "));
     }
 
@@ -23,9 +23,18 @@ class CodeParserTest extends TestCase
         $this->assertSame(['AB12', '345'], CodeParser::split("\u{200F}ab12\u{200E} \u{FEFF}۳۴٥\u{2066}"));
     }
 
+    public function test_words_without_digits_are_not_codes(): void
+    {
+        // الموظف يكتب «لا يوجد» أو «لايوجد» بدل ما يخلي الخانة فاضية — مش أكواد
+        $this->assertSame([], CodeParser::split('لايوجد'));
+        $this->assertSame([], CodeParser::split('لا يوجد'));
+        $this->assertSame([], CodeParser::split('ما فيش - لا شيء'));
+        $this->assertSame(['4749558', 'SX2611110037'], CodeParser::split('4749558 لايوجد sx2611110037'));
+    }
+
     public function test_too_long_code_throws(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        CodeParser::split(str_repeat('X', 81));
+        CodeParser::split(str_repeat('X1', 41));
     }
 }
