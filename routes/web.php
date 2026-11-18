@@ -200,6 +200,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         // ---- الأكواد المفتوحة (المرحلة 2)
         Route::get('/open-codes', [OpenCodesController::class, 'index'])->name('open-codes.index');
         Route::post('/open-codes/mark', [OpenCodesController::class, 'mark'])->name('open-codes.mark');
+        Route::get('/open-codes/branch-message', [OpenCodesController::class, 'branchMessage'])->name('open-codes.branch-message');
 
         // ---- الإعدادات والصلاحيات
         Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
@@ -211,6 +212,10 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::delete('/settings/attendance-waivers/{waiver}', [SettingController::class, 'destroyWaiver'])->whereNumber('waiver')->name('settings.waivers.destroy');
         Route::get('/settings/roles', [RoleController::class, 'index'])->name('settings.roles');
         Route::put('/settings/roles', [RoleController::class, 'update'])->name('settings.roles.update');
+        Route::get('/settings/branches', [\App\Http\Controllers\Settings\BranchController::class, 'index'])->name('settings.branches');
+        Route::post('/settings/branches', [\App\Http\Controllers\Settings\BranchController::class, 'store'])->name('settings.branches.store');
+        Route::put('/settings/branches/{branch}', [\App\Http\Controllers\Settings\BranchController::class, 'update'])->whereNumber('branch')->name('settings.branches.update');
+        Route::delete('/settings/branches/{branch}', [\App\Http\Controllers\Settings\BranchController::class, 'destroy'])->whereNumber('branch')->name('settings.branches.destroy');
 
         // ---- سجل العمليات
         Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit.index');

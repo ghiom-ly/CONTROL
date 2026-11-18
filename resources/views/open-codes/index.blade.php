@@ -34,7 +34,7 @@
     @php $openCodesTemplate = auth()->user()->can('messages.send') ? \App\Models\MessageTemplate::where('status', 'approved')->where('type', 'open_codes')->value('id') : null; @endphp
     @foreach($groups as $storeId => $items)
         @php $store = $items->first()->store; @endphp
-        <form method="POST" action="{{ route('open-codes.mark') }}" class="card mb-4" x-data="{ all: false }">
+        <form method="POST" action="{{ route('open-codes.mark') }}" class="card mb-4" x-data="{ all: false, branch: '' }">
             @csrf
             <div class="card-header">
                 <h3 class="card-title">{{ $store->name }} <span class="text-sm text-slate-400">({{ $items->count() }})</span></h3>
@@ -51,13 +51,13 @@
             <div class="table-wrap">
                 <table class="table">
                     <thead><tr>
-                        @if($canMark)<th><input type="checkbox" x-model="all" class="size-4"></th>@endif
+                        @if($canMark || $tab === 'courier')<th><input type="checkbox" x-model="all" class="size-4" aria-label="تحديد الكل"></th>@endif
                         <th>الكود</th><th>الحالة</th><th>آخر متابعة</th><th>الموظف</th><th>عدد المتابعات</th>
                     </tr></thead>
                     <tbody>
                     @foreach($items as $s)
                         <tr>
-                            @if($canMark)<td><input type="checkbox" name="shipment_ids[]" value="{{ $s->id }}" :checked="all" class="size-4"></td>@endif
+                            @if($canMark || $tab === 'courier')<td><input type="checkbox" name="shipment_ids[]" value="{{ $s->id }}" :checked="all" class="size-4"></td>@endif
                             <td class="text-right font-bold"><x-code :code="$s->code"/></td>
                             <td><x-badge :enum="$s->processing_status"/></td>
                             <td class="text-xs">{{ $s->last_followup_at?->format('Y/m/d H:i') ?? '—' }}</td>
@@ -68,6 +68,27 @@
                     </tbody>
                 </table>
             </div>
+            @if($tab === 'courier')
+                <div class="flex flex-wrap items-center gap-2 p-4 border-t border-slate-100">
+                    @if($branches->isEmpty())
+                        <span class="text-sm text-slate-500">لإرسال الأكواد لمسؤول المناديب سجّل الفروع أولاً@can('settings.manage') من <a href="{{ route('settings.branches') }}" class="underline">الإعدادات ← الفروع</a>@endcan.</span>
+                    @else
+                        <select x-model="branch" class="input !w-56" aria-label="الفرع">
+                            <option value="">اختر الفرع…</option>
+                            @foreach($branches as $b)<option value="{{ $b->id }}">{{ $b->name }}</option>@endforeach
+                        </select>
+                        <button type="button" class="btn btn-accent btn-sm" :disabled="!branch"
+                                x-on:click="const boxes = [...$root.querySelectorAll('input[name=&quot;shipment_ids[]&quot;]')];
+                                    const picked = boxes.filter(b => b.checked);
+                                    const p = new URLSearchParams({ branch_id: branch });
+                                    (picked.length ? picked : boxes).forEach(b => p.append('shipment_ids[]', b.value));
+                                    window.location = {{ \Illuminate\Support\Js::from(route('open-codes.branch-message')) }} + '?' + p">
+                            <x-icon name="phone" class="size-4"/> إرسال لمسؤول المناديب
+                        </button>
+                        <span class="text-xs text-slate-400">بدون تحديد = كل أكواد المتجر</span>
+                    @endif
+                </div>
+            @endif
             @if($canMark)
                 <div class="flex flex-wrap items-center gap-2 p-4 border-t border-slate-100">
                     <input name="note" class="input !w-72" placeholder="ملاحظة (اختياري)" maxlength="500">
