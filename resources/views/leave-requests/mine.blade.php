@@ -40,7 +40,7 @@
             @error('reason')<p class="field-error">{{ $message }}</p>@enderror
         </div>
         <div><label class="label">مرفق (اختياري) — صورة أو PDF حتى 5 ميغا، مثل شهادة طبية</label>
-            <input type="file" name="attachment" accept=".jpg,.jpeg,.png,.webp,.pdf" class="input">
+            <input type="file" name="attachment" accept=".jpg,.jpeg,.png,.webp,.pdf" data-compress-images class="input">
             @error('attachment')<p class="field-error">{{ $message }}</p>@enderror
         </div>
         <div class="flex justify-end"><button class="btn btn-primary">إرسال الطلب</button></div>

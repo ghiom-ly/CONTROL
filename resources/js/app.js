@@ -2,6 +2,9 @@ import Alpine from 'alpinejs';
 import Chart from 'chart.js/auto';
 import reportForm from './report-form';
 import { renderNoursCharts } from './charts';
+import { initImageCompression } from './image-compress';
+
+initImageCompression();
 
 document.addEventListener('DOMContentLoaded', () => renderNoursCharts(Chart));
 

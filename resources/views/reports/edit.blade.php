@@ -162,7 +162,7 @@
                 @foreach(\App\Models\Attachment::REPORT_CATEGORIES as $cat => $catLabel)
                     <div>
                         <label class="label">رفع {{ $catLabel }}</label>
-                        <input type="file" name="screens[{{ $cat }}][]" accept="image/png,image/jpeg,image/webp" multiple class="text-sm">
+                        <input type="file" name="screens[{{ $cat }}][]" accept="image/png,image/jpeg,image/webp" multiple data-compress-images class="text-sm">
                     </div>
                 @endforeach
             </div>
